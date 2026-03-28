@@ -1,0 +1,27 @@
+{
+  "server_port": 8000,
+  "broadcast_hz": 2,
+  "baselines": {
+    "vibration_rms": 2.1,
+    "vibration_peak": 4.8,
+    "discharge_pressure": 4.2,
+    "suction_pressure": 1.8,
+    "flow_rate": 120.0,
+    "motor_current": 18.5,
+    "fluid_temp": 42.0
+  },
+  "noise_pct": 0.03,
+  "health_thresholds": { "healthy": 70, "warning": 40 },
+  "subsystem_weights": {
+    "bearing": 0.40,
+    "seal": 0.30,
+    "impeller": 0.20,
+    "casing": 0.10
+  },
+  "rul_slope": 2.5,
+  "isolation_forest": {
+    "contamination": 0.0657,
+    "n_estimators": 200,
+    "random_state": 42
+  }
+}

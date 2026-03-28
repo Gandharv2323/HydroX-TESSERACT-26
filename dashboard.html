@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Pump Digital Twin — Trimiti Innovations P-09</title>
+  <meta name="description" content="Real-time pump health monitoring dashboard with ML anomaly detection" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* â”€â”€ Design System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    :root {
+      --bg:           #090c10;
+      --surface:      #0e1318;
+      --surface-hi:   #141c24;
+      --border:       #1e2d3d;
+      --border-hi:    #2a4060;
+
+      --cyan:         #00d4ff;
+      --cyan-dim:     rgba(0,212,255,.15);
+      --cyan-glow:    rgba(0,212,255,.35);
+      --amber:        #f0a500;
+      --amber-dim:    rgba(240,165,0,.15);
+      --red:          #ff3b5c;
+      --red-dim:      rgba(255,59,92,.15);
+      --green:        #00e676;
+      --green-dim:    rgba(0,230,118,.12);
+
+      --text-primary: #e8edf2;
+      --text-dim:     #5a7080;
+      --text-muted:   #2e4050;
+
+      --mono:   'Share Tech Mono', monospace;
+      --body:   'Barlow', sans-serif;
+      --display:'Barlow Condensed', sans-serif;
+
+      --r:      4px;
+      --r-lg:   8px;
+      --transition: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--body);
+      font-size: 14px;
+      line-height: 1.4;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Scanline overlay â€” the memorable anchor */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.06) 2px,
+        rgba(0,0,0,.06) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .layout {
+      display: grid;
+      grid-template-rows: 56px 1fr;
+      grid-template-columns: 280px 1fr 300px;
+      grid-template-areas:
+        "header header header"
+        "sidebar main panel";
+      height: 100vh;
+      gap: 1px;
+      background: var(--border);
+    }
+
+    /* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    header {
+      grid-area: header;
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-mark {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan-glow);
+    }
+    .logo-mark span { color: var(--text-dim); font-weight: 300; }
+
+    .header-divider { width: 1px; height: 28px; background: var(--border-hi); }
+
+    .header-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: .08em;
+    }
+
+    .ws-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .ws-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background var(--transition), box-shadow var(--transition);
+    }
+    .ws-dot.live {
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    .ws-dot.error { background: var(--red); box-shadow: 0 0 10px var(--red); }
+    @keyframes pulse-dot {
+      0%,100% { opacity:1; } 50% { opacity:.4; }
+    }
+
+    .header-timestamp {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-left: 16px;
+    }
+
+    /* â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .panel-label {
+      font-family: var(--display);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      padding: 14px 16px 8px;
+    }
+
+    /* Scenario buttons */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 0 12px 12px;
+    }
+
+    .scenario-btn {
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 10px 8px;
+      cursor: pointer;
+      text-align: center;
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .scenario-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .scenario-btn:hover { border-color: var(--border-hi); color: var(--text-primary); }
+    .scenario-btn.active { color: var(--bg); font-weight: 700; }
+
+    .scenario-btn[data-mode="normal"]        { --btn-c: var(--green); }
+    .scenario-btn[data-mode="cavitation"]    { --btn-c: var(--amber); }
+    .scenario-btn[data-mode="bearing_wear"]  { --btn-c: #ff6b3d; }
+    .scenario-btn[data-mode="dry_run"]       { --btn-c: var(--red); }
+
+    .scenario-btn::before { background: var(--btn-c); }
+    .scenario-btn.active::before { opacity: 1; }
+    .scenario-btn.active { border-color: var(--btn-c); box-shadow: 0 0 14px color-mix(in srgb, var(--btn-c) 40%, transparent); }
+    .scenario-btn:hover:not(.active) { border-color: color-mix(in srgb, var(--btn-c) 50%, var(--border)); }
+
+    .scenario-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+    /* Sensor readings list */
+    .sensor-list { padding: 0 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+
+    .sensor-row {
+      display: flex;
+      align-items: center;
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 8px 10px;
+      gap: 8px;
+      transition: border-color var(--transition);
+    }
+    .sensor-row.alert { border-color: var(--amber); }
+    .sensor-row.critical { border-color: var(--red); }
+
+    .sensor-name {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: .04em;
+      flex: 1;
+      min-width: 0;
+    }
+    .sensor-val {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--cyan);
+      transition: color var(--transition);
+      white-space: nowrap;
+    }
+    .sensor-row.alert .sensor-val { color: var(--amber); }
+    .sensor-row.critical .sensor-val { color: var(--red); }
+    .sensor-unit {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-left: 2px;
+    }
+
+    /* Minibar inside sensor row */
+    .sensor-bar-wrap {
+      width: 50px;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .sensor-bar {
+      height: 100%;
+      background: var(--cyan);
+      border-radius: 2px;
+      transition: width .5s ease, background .5s ease;
+    }
+    .sensor-row.alert .sensor-bar { background: var(--amber); }
+    .sensor-row.critical .sensor-bar { background: var(--red); }
+
+    /* â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .main {
+      grid-area: main;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Three.js canvas area */
+    #threejs-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #threejs-container canvas { display: block; width: 100% !important; height: 100% !important; }
+
+    /* Bottom sensor strip */
+    .sensor-strip {
+      display: flex;
+      gap: 1px;
+      background: var(--border);
+      border-top: 1px solid var(--border);
+    }
+
+    .strip-cell {
+      flex: 1;
+      background: var(--surface-hi);
+      padding: 10px 14px;
+      min-width: 0;
+    }
+    .strip-cell-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .strip-cell-val {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cyan);
+      transition: color var(--transition);
+    }
+    .strip-cell.warn .strip-cell-val { color: var(--amber); }
+    .strip-cell.crit .strip-cell-val { color: var(--red); }
+
+    /* Mode badge overlay on canvas */
+    .mode-badge {
+      position: absolute;
+      top: 14px; left: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(9,12,16,.8);
+      border: 1px solid var(--border-hi);
+      border-radius: 20px;
+      padding: 5px 12px 5px 8px;
+      backdrop-filter: blur(8px);
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: all var(--transition);
+    }
+    .mode-badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .step-badge {
+      position: absolute;
+      top: 14px; right: 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: rgba(9,12,16,.7);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 4px 10px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* â”€â”€ Right Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .panel {
+      grid-area: panel;
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Health gauge */
+    .health-gauge-wrap {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gauge-svg { width: 180px; height: 110px; }
+
+    .health-number {
+      font-family: var(--display);
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      margin-top: -8px;
+      transition: color var(--transition);
+    }
+    .health-label {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-top: 2px;
+      text-align: center;
+    }
+
+    .rul-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .rul-val {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    /* Subsystem bars */
+    .subsystem-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+    .sub-row { display: flex; flex-direction: column; gap: 4px; }
+    .sub-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .sub-name { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: .06em; }
+    .sub-val  { font-family: var(--mono); font-size: 12px; font-weight: bold; }
+    .sub-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .sub-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .6s ease, background .6s ease;
+    }
+
+    /* Anomaly alert card */
+    .alert-card {
+      margin: 12px;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      padding: 14px;
+      background: var(--surface-hi);
+      transition: border-color var(--transition), background var(--transition),
+                  box-shadow var(--transition);
+    }
+    .alert-card.active {
+      border-color: var(--red);
+      background: var(--red-dim);
+      box-shadow: 0 0 24px rgba(255,59,92,.2);
+      animation: alert-pulse 1.5s ease-in-out infinite;
+    }
+    .alert-card.degraded {
+      border-color: var(--amber);
+      background: var(--amber-dim);
+    }
+    @keyframes alert-pulse {
+      0%,100% { box-shadow: 0 0 24px rgba(255,59,92,.2); }
+      50%      { box-shadow: 0 0 40px rgba(255,59,92,.45); }
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .alert-icon { font-size: 18px; }
+    .alert-mode {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .alert-confidence {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .alert-action {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* Anomaly score bar */
+    .score-bar-wrap {
+      margin: 0 12px 12px;
+      display: flex;
+    }
+
+    .strip-cell {
+      flex: 1;
+      background: var(--surface-hi);
+      padding: 10px 14px;
+      min-width: 0;
+    }
+    .strip-cell-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .strip-cell-val {
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--cyan);
+      transition: color var(--transition);
+    }
+    .strip-cell.warn .strip-cell-val { color: var(--amber); }
+    .strip-cell.crit .strip-cell-val { color: var(--red); }
+
+    /* Mode badge overlay on canvas */
+    .mode-badge {
+      position: absolute;
+      top: 14px; left: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(9,12,16,.8);
+      border: 1px solid var(--border-hi);
+      border-radius: 20px;
+      padding: 5px 12px 5px 8px;
+      backdrop-filter: blur(8px);
+      font-family: var(--display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: all var(--transition);
+    }
+    .mode-badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .step-badge {
+      position: absolute;
+      top: 14px; right: 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+      background: rgba(9,12,16,.7);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 4px 10px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ── Right Panel ────────────────────────────────────────────────── */
+    .panel {
+      grid-area: panel;
+      background: var(--surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Health gauge */
+    .health-gauge-wrap {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .gauge-svg { width: 180px; height: 110px; }
+
+    .health-number {
+      font-family: var(--display);
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      margin-top: -8px;
+      transition: color var(--transition);
+    }
+    .health-label {
+      font-family: var(--display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-top: 2px;
+      text-align: center;
+    }
+
+    .rul-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .rul-val {
+      font-family: var(--display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    /* Subsystem bars */
+    .subsystem-list { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+    .sub-row { display: flex; flex-direction: column; gap: 4px; }
+    .sub-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .sub-name { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: .06em; }
+    .sub-val  { font-family: var(--mono); font-size: 12px; font-weight: bold; }
+    .sub-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .sub-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .6s ease, background .6s ease;
+    }
+
+    /* Anomaly alert card */
+    .alert-card {
+      margin: 12px;
+      border-radius: var(--r-lg);
+      border: 1px solid var(--border);
+      padding: 14px;
+      background: var(--surface-hi);
+      transition: border-color var(--transition), background var(--transition),
+                  box-shadow var(--transition);
+    }
+    .alert-card.active {
+      border-color: var(--red);
+      background: var(--red-dim);
+      box-shadow: 0 0 24px rgba(255,59,92,.2);
+      animation: alert-pulse 1.5s ease-in-out infinite;
+    }
+    .alert-card.degraded {
+      border-color: var(--amber);
+      background: var(--amber-dim);
+    }
+    @keyframes alert-pulse {
+      0%,100% { box-shadow: 0 0 24px rgba(255,59,92,.2); }
+      50%      { box-shadow: 0 0 40px rgba(255,59,92,.45); }
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .alert-icon { font-size: 18px; }
+    .alert-mode {
+      font-family: var(--display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+    .alert-confidence {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .alert-action {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* Anomaly score bar */
+    .score-bar-wrap {
+      margin: 0 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .score-bar-header { display: flex; justify-content: space-between; }
+    .score-bar-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); letter-spacing: .06em; }
+    .score-bar-val   { font-family: var(--mono); font-size: 12px; font-weight: bold; }
+    .score-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .score-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width .6s ease, background .6s ease;
+    }
+
+    /* History sparkline */
+    .sparkline-wrap { padding: 12px; border-top: 1px solid var(--border); }
+    .sparkline-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-bottom: 6px; letter-spacing: .06em; }
+    #sparkline { width: 100%; height: 50px; }
+
+    /* ── Utilities ────────────────────────────────────────────────── */
+    .status-healthy { color: var(--green); }
+    .status-warning { color: var(--amber); }
+    .status-critical { color: var(--red); }
+
+    .divider { height: 1px; background: var(--border); margin: 0; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
+    /* ── Alert Banner ───────────────────────────────────────────────── */
+    .alert-banner {
+      position: fixed;
+      top: 56px; left: 0; right: 0;
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background: rgba(255,59,92,.12);
+      border-bottom: 2px solid var(--red);
+      backdrop-filter: blur(10px);
+      transform: translateY(-100%);
+      transition: transform 350ms cubic-bezier(0.16,1,0.3,1), opacity 350ms ease;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .alert-banner.visible {
+      transform: translateY(0);
+      pointer-events: auto;
+      opacity: 1;
+      animation: banner-pulse 2s ease-in-out infinite;
+    }
+    @keyframes banner-pulse {
+      0%,100% { border-bottom-color: var(--red); }
+      50%      { border-bottom-color: rgba(255,59,92,.3); }
+    }
+    .banner-icon { font-size: 20px; }
+    .banner-mode {
+      font-family: var(--display);
+      font-size: 14px; font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--red);
+      text-transform: uppercase;
+    }
+    .banner-sep { width: 1px; height: 18px; background: rgba(255,59,92,.4); }
+    .banner-action { font-family: var(--mono); font-size: 11px; color: var(--text-dim); flex: 1; }
+    .banner-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-dim); font-size: 16px;
+      padding: 2px 6px; border-radius: var(--r);
+      transition: color var(--transition);
+    }
+    .banner-close:hover { color: var(--red); }
+    /* ── WS Latency Badge ─────────────────────────────────────────── */
+    .latency-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      color: var(--green);
+      transition: color var(--transition), border-color var(--transition);
+      letter-spacing: .04em;
+    }
+    .latency-badge.warn { color: var(--amber); border-color: var(--amber); }
+    .latency-badge.crit { color: var(--red);   border-color: var(--red); }
+
+
+    /* ── Event Log (#2) ───────────────────────────────────────────────── */
+    .event-log-header { font-family:var(--display); font-size:10px; font-weight:700;
+      letter-spacing:.18em; color:var(--text-muted); text-transform:uppercase;
+      padding:14px 12px 6px; }
+    .event-log { display:flex; flex-direction:column; gap:3px;
+      max-height:160px; overflow-y:auto; padding:0 12px 12px; }
+    .log-entry { display:flex; gap:8px; font-family:var(--mono); font-size:10px;
+      padding:4px 8px; background:var(--surface-hi); border-radius:var(--r);
+      border-left:2px solid var(--border); }
+    .log-ts  { color:var(--text-muted); white-space:nowrap; }
+    .log-msg { color:var(--text-dim); }
+    .log-entry.ev-info { border-left-color:var(--cyan); }
+    .log-entry.ev-info .log-msg { color:var(--cyan); }
+    .log-entry.ev-warn { border-left-color:var(--amber); }
+    .log-entry.ev-warn .log-msg { color:var(--amber); }
+    .log-entry.ev-crit { border-left-color:var(--red); }
+    .log-entry.ev-crit .log-msg { color:var(--red); }
+
+    /* ── Sensor Chart (#1) ─────────────────────────────────────────────── */
+    .chart-wrap { padding:0 12px 12px; }
+    .chart-header { display:flex; align-items:center; gap:8px; padding:10px 0 6px;
+      font-family:var(--display); font-size:10px; font-weight:700;
+      letter-spacing:.18em; color:var(--text-muted); text-transform:uppercase; }
+    .chart-header select { background:var(--surface-hi); border:1px solid var(--border);
+      color:var(--text-primary); font-family:var(--mono); font-size:10px;
+      padding:2px 6px; border-radius:var(--r); cursor:pointer; flex:1; }
+    .chart-canvas-wrap { position:relative; height:100px; }
+
+    /* ── Dual Arc Gauges (#3) ──────────────────────────────────────────── */
+    .dual-arc-row   { display:flex; gap:8px; padding:12px 12px 0; }
+    .arc-gauge-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+      background:var(--surface-hi); border:1px solid var(--border); border-radius:var(--r-lg); padding:10px 8px; }
+    .arc-svg { width:80px; height:80px; }
+    .arc-track { fill:none; stroke:var(--border); stroke-width:8; }
+    .arc-fill  { fill:none; stroke-width:8; stroke-linecap:round;
+      transform-origin:50px 50px; transform:rotate(-90deg);
+      transition:stroke-dashoffset 0.8s ease, stroke 0.8s ease; }
+    .arc-value { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--text-primary); }
+    .arc-label { font-family:var(--display); font-size:9px; font-weight:700;
+      letter-spacing:.15em; color:var(--text-muted); text-transform:uppercase; }
+
+    /* ── Maintenance Countdown (#10) ──────────────────────────────────── */
+    .maint-wrap  { padding:12px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .maint-title { font-family:var(--display); font-size:10px; font-weight:700;
+      letter-spacing:.15em; color:var(--text-muted); text-transform:uppercase; }
+    .maint-timer { font-family:var(--mono); font-size:20px; font-weight:700; color:var(--green); }
+    .maint-date  { font-family:var(--mono); font-size:10px; color:var(--text-muted); }
+    .maint-ring-wrap { position:relative; width:60px; height:60px; }
+    .maint-ring  { width:60px; height:60px; transform:rotate(-90deg); }
+    .maint-ring-track { fill:none; stroke:var(--border); stroke-width:6; }
+    .maint-ring-fill  { fill:none; stroke:var(--green); stroke-width:6; stroke-linecap:round;
+      stroke-dasharray:163; stroke-dashoffset:0;
+      transition:stroke-dashoffset 1s ease, stroke 1s ease; }
+
+    /* ── Settings Drawer (#5) ─────────────────────────────────────────── */
+    .settings-gear { background:none; border:none; cursor:pointer; font-size:18px;
+      color:var(--text-dim); padding:4px 8px; border-radius:var(--r);
+      transition:color var(--transition); line-height:1; }
+    .settings-gear:hover { color:var(--cyan); }
+    .settings-backdrop { position:fixed; inset:0; z-index:800; background:rgba(0,0,0,.4);
+      opacity:0; pointer-events:none; transition:opacity 300ms ease; }
+    .settings-backdrop.open { opacity:1; pointer-events:auto; }
+    .settings-drawer { position:fixed; top:0; right:0; bottom:0; width:280px; z-index:810;
+      background:var(--surface); border-left:1px solid var(--border-hi);
+      transform:translateX(100%); transition:transform 350ms cubic-bezier(0.16,1,0.3,1);
+      display:flex; flex-direction:column; }
+    .settings-drawer.open { transform:translateX(0); }
+    .settings-drawer-header { display:flex; align-items:center; justify-content:space-between;
+      padding:16px 18px; border-bottom:1px solid var(--border); }
+    .settings-drawer-title { font-family:var(--display); font-size:14px; font-weight:700;
+      letter-spacing:.12em; color:var(--text-primary); }
+    .settings-close { background:none; border:none; cursor:pointer; color:var(--text-dim);
+      font-size:20px; padding:2px 6px; border-radius:var(--r); transition:color var(--transition); }
+    .settings-close:hover { color:var(--red); }
+    .settings-body  { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:20px; }
+    .stg-group-label { font-family:var(--display); font-size:10px; font-weight:700;
+      letter-spacing:.15em; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px; }
+    .stg-row { display:flex; align-items:center; gap:10px; }
+    .stg-row label { font-family:var(--mono); font-size:11px; color:var(--text-dim); width:90px; }
+    .stg-row input[type=range] { flex:1; accent-color:var(--cyan); }
+    .stg-val { font-family:var(--mono); font-size:11px; color:var(--cyan); width:36px; text-align:right; }
+    .stg-apply { width:100%; padding:9px; margin-top:4px;
+      background:linear-gradient(135deg,#005870,#003040);
+      border:1px solid var(--cyan); border-radius:var(--r);
+      color:var(--cyan); font-family:var(--display); font-size:12px;
+      font-weight:700; letter-spacing:.12em; cursor:pointer;
+      transition:background 300ms ease; }
+    .stg-apply:hover { background:linear-gradient(135deg,#007090,#004060); }
+
+    /* ── Correlation Heatmap (#9) ──────────────────────────────────────── */
+    .tab-bar  { display:flex; gap:0; border-bottom:1px solid var(--border); }
+    .tab-btn  { flex:1; padding:8px 0; background:none; border:none; cursor:pointer;
+      font-family:var(--display); font-size:11px; font-weight:700; letter-spacing:.12em;
+      color:var(--text-muted); text-transform:uppercase; border-bottom:2px solid transparent;
+      transition:all 300ms ease; }
+    .tab-btn.active    { color:var(--cyan); border-bottom-color:var(--cyan); }
+    .tab-btn:hover:not(.active) { color:var(--text-dim); }
+    .tab-pane { display:none; flex:1; overflow:hidden; }
+    .tab-pane.active   { display:flex; flex-direction:column; }
+    .heatmap-wrap { flex:1; overflow:auto; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; padding:16px; gap:4px; }
+    .heatmap-title { font-family:var(--display); font-size:10px; font-weight:700;
+      letter-spacing:.18em; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; }
+    .hm-grid { display:grid; gap:2px; }
+    .hm-cell { display:flex; align-items:center; justify-content:center;
+      font-family:var(--mono); font-size:8px; border-radius:2px;
+      transition:background 600ms ease; cursor:default; }
+    .hm-cell:hover { outline:1px solid var(--border-hi); }
+    .hm-axislabel { font-family:var(--mono); font-size:8px; color:var(--text-muted);
+      display:flex; align-items:center; justify-content:center; }
+  </style>
+</head>
+<body>
+
+<!-- ── Alert Banner (fixed, below header) ── -->
+<div class="alert-banner" id="alertBanner">
+  <span class="banner-icon" id="bannerIcon">🚨</span>
+  <span class="banner-mode" id="bannerMode">FAULT DETECTED</span>
+  <div class="banner-sep"></div>
+  <span class="banner-action" id="bannerAction">--</span>
+  <button class="banner-close" onclick="document.getElementById('alertBanner').classList.remove('visible')">×</button>
+</div>
+
+<div class="layout">
+
+  <!-- ── Header ── -->
+  <header>
+    <div class="logo-mark">PUMP<span>TWIN</span></div>
+    <div class="header-divider"></div>
+    <div class="header-meta">TRIMITI INNOVATIONS · P-09 · DIGITAL TWIN</div>
+    <div class="ws-status">
+      <div class="ws-dot" id="wsDot"></div>
+      <span id="wsLabel">CONNECTING</span>
+      <span class="latency-badge" id="latencyBadge">-- ms</span>
+    </div>
+    <button class="settings-gear" onclick="openSettings()" title="Settings">&#9881;</button>
+    <div class="header-timestamp" id="headerTs">--:--:--</div>
+  </header>
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="panel-label">Scenario Control</div>
+    <div class="scenario-grid">
+      <button class="scenario-btn active" data-mode="normal" id="btn-normal">
+        <span class="scenario-icon">🟢</span>Normal
+      </button>
+      <button class="scenario-btn" data-mode="cavitation" id="btn-cavitation">
+        <span class="scenario-icon">💥</span>Cavitation
+      </button>
+      <button class="scenario-btn" data-mode="bearing_wear" id="btn-bearing_wear">
+        <span class="scenario-icon">⚙️</span>Bearing Wear
+      </button>
+      <button class="scenario-btn" data-mode="dry_run" id="btn-dry_run">
+        <span class="scenario-icon">🏜️</span>Dry Run
+      </button>
+    </div>
+
+    <div class="divider"></div>
+    <div class="panel-label">Live Sensors</div>
+    <div class="sensor-list" id="sensorList">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="divider"></div>
+    <div class="event-log-header">Event Log</div>
+    <div class="event-log" id="eventLog"></div>
+  </aside>
+
+  <!-- ── Main (Three.js) ── -->
+  <main class="main">
+        <!-- Tab bar (#9) -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('3d')" id="tab3dBtn">3D Model</button>
+      <button class="tab-btn" onclick="switchTab('heatmap')" id="tabHmBtn">Correlation</button>
+    </div>
+    <div class="tab-pane active" id="pane3d">
+<div id="threejs-container">
+      <div class="mode-badge" id="modeBadge">
+        <div class="mode-badge-dot" id="modeDot"></div>
+        <span id="modeLabel">NORMAL</span>
+      </div>
+      <div class="step-badge">STEP <span id="stepCount">0</span></div>
+    </div>
+    <div class="sensor-strip">
+      <div class="strip-cell" id="strip-vib">
+        <div class="strip-cell-label">Vibration RMS</div>
+        <div class="strip-cell-val">—</div>
+      </div>
+      <div class="strip-cell" id="strip-flow">
+        <div class="strip-cell-label">Flow Rate</div>
+        <div class="strip-cell-val">—</div>
+      </div>
+      <div class="strip-cell" id="strip-suct">
+        <div class="strip-cell-label">Suction Press.</div>
+        <div class="strip-cell-val">—</div>
+      </div>
+      <div class="strip-cell" id="strip-disc">
+        <div class="strip-cell-label">Discharge Press.</div>
+        <div class="strip-cell-val">—</div>
+      </div>
+      <div class="strip-cell" id="strip-temp">
+        <div class="strip-cell-label">Fluid Temp</div>
+        <div class="strip-cell-val">—</div>
+      </div>
+    </div>
+    </div><!-- close tab pane 3d -->
+    <!-- Heatmap tab (#9) -->
+    <div class="tab-pane" id="paneHm">
+      <div class="heatmap-wrap">
+        <div class="heatmap-title">Sensor Correlation Matrix</div>
+        <div id="hmGrid" class="hm-grid" style="grid-template-columns:repeat(8,44px)"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- â”€â”€ Right Panel â”€â”€ -->
+  <aside class="panel">
+    <div class="health-gauge-wrap">
+      <svg class="gauge-svg" viewBox="0 0 180 110" id="gaugeSvg">
+        <defs>
+          <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="#ff3b5c" />
+            <stop offset="35%"  stop-color="#f0a500" />
+            <stop offset="70%"  stop-color="#00d4ff" />
+            <stop offset="100%" stop-color="#00e676" />
+          </linearGradient>
+        </defs>
+        <!-- Track -->
+        <path d="M 20 95 A 70 70 0 0 1 160 95" fill="none" stroke="#1e2d3d" stroke-width="10" stroke-linecap="round"/>
+        <!-- Fill -->
+        <path id="gaugeFill" d="M 20 95 A 70 70 0 0 1 160 95" fill="none"
+              stroke="url(#gaugeGrad)" stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="220" stroke-dashoffset="220"
+              style="transition: stroke-dashoffset 0.8s cubic-bezier(0.16,1,0.3,1)"/>
+        <!-- Needle -->
+        <line id="gaugeNeedle" x1="90" y1="95" x2="90" y2="30"
+              stroke="#e8edf2" stroke-width="2" stroke-linecap="round"
+              style="transform-origin:90px 95px; transform:rotate(-90deg); transition:transform 0.8s cubic-bezier(0.16,1,0.3,1)"/>
+        <circle cx="90" cy="95" r="5" fill="#e8edf2"/>
+      </svg>
+      <div class="health-number" id="healthNum">â€”</div>
+      <div class="health-label" id="healthStatus">INITIALISING</div>
+      <div class="rul-row">
+        <span>RUL</span>
+        <span class="rul-val" id="rulVal">â€”</span>
+        <span>hrs remaining</span>
+      </div>
+    </div>
+
+    <div class="panel-label">Subsystem Health</div>
+    <div class="subsystem-list" id="subsystemList">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="divider"></div>
+    <div class="score-bar-wrap">
+      <div class="score-bar-header">
+        <span class="score-bar-label">ANOMALY SCORE</span>
+        <span class="score-bar-val" id="anomalyScoreVal">â€”</span>
+      </div>
+      <div class="score-track">
+        <div class="score-fill" id="anomalyScoreFill" style="width:0%;background:var(--green)"></div>
+      </div>
+    </div>
+
+    <div class="alert-card" id="alertCard">
+      <div class="alert-header">
+        <span class="alert-icon" id="alertIcon">â„¹ï¸</span>
+        <span class="alert-mode" id="alertMode">Initialising</span>
+        <span class="alert-confidence" id="alertConf">â€”</span>
+      </div>
+      <div class="alert-action" id="alertAction">Connecting to backendâ€¦</div>
+    </div>
+
+        <div class="chart-wrap">
+      <div class="chart-header">
+        <span>SENSOR HISTORY</span>
+        <select id="chartSensorSel" onchange="switchChartSensor(this.value)">
+          <option value="vibration_rms">Vibration RMS</option>
+          <option value="discharge_pressure">Discharge P</option>
+          <option value="suction_pressure">Suction P</option>
+          <option value="flow_rate">Flow Rate</option>
+          <option value="motor_current">Motor I</option>
+          <option value="fluid_temp">Fluid Temp</option>
+        </select>
+      </div>
+      <div class="chart-canvas-wrap">
+        <canvas id="sensorHistChart"></canvas>
+      </div>
+    </div>
+    <div class="divider"></div>
+<div class="sparkline-wrap">
+      <div class="sparkline-label">HEALTH TREND Â· LAST 60 POINTS</div>
+      <svg id="sparkline" viewBox="0 0 276 50" preserveAspectRatio="none">
+        <polyline id="sparkPoly" fill="none" stroke="var(--cyan)" stroke-width="1.5" points=""/>
+        <polyline id="sparkArea" fill="rgba(0,212,255,.08)" stroke="none" points=""/>
+      </svg>
+    </div>
+
+    <!-- Export Button (#8) -->
+    <div style="padding:12px;">
+      <button onclick="exportReport()" style="width:100%;padding:9px;background:var(--surface-hi);border:1px solid var(--border-hi);border-radius:var(--r);color:var(--cyan);font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:background 300ms">&#128196; EXPORT REPORT</button>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Three.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+'use strict';
+
+// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const WS_URL  = 'ws://localhost:8000/ws';
+const API_URL = 'http://localhost:8000';
+const BASELINES = {
+  vibration_rms: 2.1, vibration_peak: 4.8,
+  discharge_pressure: 4.2, suction_pressure: 1.8,
+  flow_rate: 120.0, motor_current: 18.5, fluid_temp: 42.0
+};
+const SENSOR_META = [
+  { key:'vibration_rms',      label:'VIB RMS',      unit:'mm/s', max:10  },
+  { key:'vibration_peak',     label:'VIB PEAK',     unit:'mm/s', max:20  },
+  { key:'discharge_pressure', label:'DISC PRESS',   unit:'bar',  max:8   },
+  { key:'suction_pressure',   label:'SUCT PRESS',   unit:'bar',  max:4   },
+  { key:'flow_rate',          label:'FLOW RATE',    unit:'L/min',max:180 },
+  { key:'motor_current',      label:'MOTOR CURR',   unit:'A',    max:35  },
+  { key:'fluid_temp',         label:'FLUID TEMP',   unit:'Â°C',   max:80  },
+];
+const SUBSYSTEM_ORDER = ['bearing_front','bearing_rear','seal','impeller','casing'];
+const SUBSYSTEM_LABEL = { bearing_front:'BEARING FWD', bearing_rear:'BEARING AFT',
+  seal:'SEAL', impeller:'IMPELLER', casing:'CASING' };
+
+const MODE_COLOR  = { normal:'#00e676', cavitation:'#f0a500', bearing_wear:'#ff6b3d', dry_run:'#ff3b5c' };
+const MODE_ICON   = { normal:'ðŸŸ¢', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥' };
+const ALERT_ICON  = { none:'âœ…', degraded:'âš ï¸', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥', none2:'âœ…' };
+
+let healthHistory = [];
+let currentState  = null;
+let ws = null;
+let _wsSentAt = 0;  // timestamp of last frame request (for latency)
+
+// â”€â”€ Build initial sensor rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const sensorList = document.getElementById('sensorList');
+SENSOR_META.forEach(m => {
+  const row = document.createElement('div');
+  row.className = 'sensor-row';
+  row.id = `sr-${m.key}`;
+  row.innerHTML = `
+    <div class="sensor-name">${m.label}</div>
+    <div class="sensor-bar-wrap"><div class="sensor-bar" id="sb-${m.key}"></div></div>
+    <div class="sensor-val" id="sv-${m.key}">â€”</div>
+    <div class="sensor-unit">${m.unit}</div>`;
+  sensorList.appendChild(row);
+});
+
+// Build subsystem rows
+const subList = document.getElementById('subsystemList');
+SUBSYSTEM_ORDER.forEach(k => {
+  const row = document.createElement('div');
+  row.className = 'sub-row';
+  row.id = `sub-${k}`;
+  row.innerHTML = `
+    <div class="sub-header">
+      <span class="sub-name">${SUBSYSTEM_LABEL[k]}</span>
+      <span class="sub-val" id="subv-${k}">â€”</span>
+    </div>
+    <div class="sub-track"><div class="sub-fill" id="subf-${k}" style="width:0%;background:var(--cyan)"></div></div>`;
+  subList.appendChild(row);
+});
+
+// â”€â”€ Scenario buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+document.querySelectorAll('.scenario-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const mode = btn.dataset.mode;
+    try {
+      await fetch(`${API_URL}/scenario`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({mode})
+      });
+    } catch(e) { console.warn('POST /scenario failed', e); }
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// â”€â”€ Gauge helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function updateGauge(pct) { // 0â€“100
+  const total = 220;
+  const fill  = (pct / 100) * total;
+  document.getElementById('gaugeFill').style.strokeDashoffset = total - fill;
+  // Needle: âˆ’90deg (0%) to +90deg (100%)
+  const deg = -90 + (pct / 100) * 180;
+  document.getElementById('gaugeNeedle').style.transform = `rotate(${deg}deg)`;
+}
+
+function healthColor(v) {
+  if (v > 70) return 'var(--green)';
+  if (v > 40) return 'var(--amber)';
+  return 'var(--red)';
+}
+function healthClass(s) {
+  if (s === 'healthy')  return 'status-healthy';
+  if (s === 'warning')  return 'status-warning';
+  return 'status-critical';
+}
+function subColor(v) {
+  if (v > 70) return '#00e676';
+  if (v > 40) return '#f0a500';
+  return '#ff3b5c';
+}
+
+// â”€â”€ Sparkline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function updateSparkline() {
+  if (healthHistory.length < 2) return;
+  const W = 276, H = 50, N = 60;
+  const pts = healthHistory.slice(-N);
+  const step = W / (N - 1);
+  const coords = pts.map((v, i) => `${i * step},${H - (v / 100) * H}`);
+  const line = coords.join(' ');
+  document.getElementById('sparkPoly').setAttribute('points', line);
+  const area = `0,${H} ` + line + ` ${(pts.length-1)*step},${H}`;
+  document.getElementById('sparkArea').setAttribute('points', area);
+}
+
+// â”€â”€ Strip cells â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function setStrip(id, val, unit, crit) {
+  const el = document.getElementById(id);
+  el.querySelector('.strip-cell-val').textContent = val + unit;
+  el.className = 'strip-cell' + (crit === 2 ? ' crit' : crit === 1 ? ' warn' : '');
+}
+
+// â”€â”€ Main state update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function applyState(s) {
+  currentState = s;
+  const sensors = s.sensors || {};
+  const anomaly = s.anomaly || {};
+  const health  = s.health  || {};
+
+  // Header timestamp
+  const d = new Date(s.timestamp * 1000);
+  document.getElementById('headerTs').textContent =
+    d.toLocaleTimeString('en-GB', {hour12:false});
+
+  // Step
+  document.getElementById('stepCount').textContent = s.step || 0;
+
+  // Mode badge
+  const mode = s.mode || 'normal';
+  const mc = MODE_COLOR[mode] || '#00d4ff';
+  document.getElementById('modeLabel').textContent  = mode.replace('_',' ').toUpperCase();
+  document.getElementById('modeDot').style.background   = mc;
+  document.getElementById('modeDot').style.boxShadow    = `0 0 8px ${mc}`;
+
+  // Sensor rows + strip
+  SENSOR_META.forEach(m => {
+    const val = sensors[m.key];
+    if (val === undefined) return;
+    const bl   = BASELINES[m.key];
+    const rng  = m.max - 0;
+    const pct  = Math.min(100, (val / rng) * 100);
+    const dev  = Math.abs(val - bl) / bl;
+    const level = dev > 0.35 ? 2 : dev > 0.15 ? 1 : 0;
+
+    const row = document.getElementById(`sr-${m.key}`);
+    row.className = 'sensor-row' + (level===2?' critical':level===1?' alert':'');
+    document.getElementById(`sv-${m.key}`).textContent = val.toFixed(2);
+    document.getElementById(`sb-${m.key}`).style.width = pct + '%';
+  });
+
+  // Bottom strip
+  const v = sensors;
+  const vDev = v.vibration_rms ? Math.abs(v.vibration_rms - 2.1)/2.1 : 0;
+  const fDev = v.flow_rate     ? Math.abs(v.flow_rate - 120)/120   : 0;
+  setStrip('strip-vib',  (v.vibration_rms||0).toFixed(2),  ' mm/s', vDev>0.35?2:vDev>0.15?1:0);
+  setStrip('strip-flow', (v.flow_rate||0).toFixed(1),      ' L/m',  fDev>0.35?2:fDev>0.15?1:0);
+  setStrip('strip-suct', (v.suction_pressure||0).toFixed(2),' bar',
+    (v.suction_pressure||1.8)<1.0?2:(v.suction_pressure||1.8)<1.4?1:0);
+  setStrip('strip-disc', (v.discharge_pressure||0).toFixed(2),' bar', 0);
+  setStrip('strip-temp', (v.fluid_temp||0).toFixed(1),     'Â°C',
+    (v.fluid_temp||42)>60?2:(v.fluid_temp||42)>52?1:0);
+
+  // Health gauge
+  const oh = health.overall_health || 0;
+  updateGauge(oh);
+  const hn = document.getElementById('healthNum');
+  hn.textContent = oh.toFixed(1);
+  hn.style.color = healthColor(oh);
+  const hs = document.getElementById('healthStatus');
+  hs.textContent = (health.status || 'â€”').toUpperCase();
+  hs.className = 'health-label ' + healthClass(health.status);
+  document.getElementById('rulVal').textContent = (health.rul_hours || 0).toFixed(1);
+
+  // Subsystems
+  const sh = health.subsystem_health || {};
+  SUBSYSTEM_ORDER.forEach(k => {
+    const v2 = sh[k] || 0;
+    const el = document.getElementById(`subv-${k}`);
+    const fill = document.getElementById(`subf-${k}`);
+    if (!el) return;
+    el.textContent = v2.toFixed(1);
+    el.style.color = subColor(v2);
+    fill.style.width = v2 + '%';
+    fill.style.background = subColor(v2);
+  });
+
+  // Anomaly score bar
+  const score = (anomaly.anomaly_score || 0) * 100;
+  document.getElementById('anomalyScoreVal').textContent = (anomaly.anomaly_score||0).toFixed(3);
+  const sf = document.getElementById('anomalyScoreFill');
+  sf.style.width = score + '%';
+  sf.style.background = healthColor(score);
+
+
+  // Dual arc gauge update (#3)
+  var C = 239; // 2*pi*38
+  var sc = anomaly.anomaly_score || 0;
+  var cf = anomaly.confidence    || 0;
+  var arcS = document.getElementById('arcScore');
+  var arcC = document.getElementById('arcConf');
+  if (arcS) { arcS.style.strokeDashoffset = (C - sc * C).toFixed(1); arcS.style.stroke = sc>0.6?'#ff3b5c':sc>0.3?'#f0a500':'#00d4ff'; }
+  if (arcC) { arcC.style.strokeDashoffset = (C - cf * C).toFixed(1); arcC.style.stroke = cf>0.7?'#00e676':'#f0a500'; }
+  var av = document.getElementById('arcScoreVal'); if(av) av.textContent = sc.toFixed(3);
+  var cv = document.getElementById('arcConfVal');  if(cv) cv.textContent = (cf*100).toFixed(0)+'%';
+  // Alert banner (#4)
+  const banner = document.getElementById('alertBanner');
+  const fm2 = anomaly.failure_mode || 'none';
+  if (anomaly.is_anomaly && fm2 !== 'none' && fm2 !== 'degraded') {
+    document.getElementById('bannerIcon').textContent   = ALERT_ICON[fm2] || '🚨';
+    document.getElementById('bannerMode').textContent   = fm2.replace(/_/g,' ').toUpperCase();
+    document.getElementById('bannerAction').textContent = anomaly.recommended_action || '--';
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+
+  // Alert card
+  const ac  = document.getElementById('alertCard');
+  const fm  = anomaly.failure_mode || 'none';
+  ac.className = 'alert-card' + (anomaly.is_anomaly && fm!=='degraded' ? ' active' :
+                                  fm==='degraded' ? ' degraded' : '');
+  document.getElementById('alertIcon').textContent   = ALERT_ICON[fm] || 'âœ…';
+  document.getElementById('alertMode').textContent   = fm.replace('_',' ').toUpperCase();
+  document.getElementById('alertConf').textContent   = ((anomaly.confidence||0)*100).toFixed(0)+'%';
+  document.getElementById('alertAction').textContent = anomaly.recommended_action || 'â€”';
+
+  _updateSensorChart(sensors);
+
+  // Sparkline history
+  healthHistory.push(oh);
+  if (healthHistory.length > 120) healthHistory.shift();
+  updateSparkline();
+
+
+
+  // Maintenance countdown (#10)
+  var rul = (health.rul_hours || 0);
+  var maintRing = document.getElementById('maintRingFill');
+  var maintTimer = document.getElementById('maintTimer');
+  var maintDate  = document.getElementById('maintDate');
+  if (maintRing && rul > 0) {
+    var maxH = 720; // 30 days reference
+    var ratio = Math.min(1, rul / maxH);
+    var dash = 163;
+    maintRing.style.strokeDashoffset = (dash - ratio * dash).toFixed(1);
+    maintRing.style.stroke = rul < 24 ? '#ff3b5c' : rul < 168 ? '#f0a500' : '#00e676';
+    var days = Math.floor(rul / 24);
+    var hrs  = Math.floor(rul % 24);
+    maintTimer.textContent = (days > 0 ? days + 'd ' : '') + hrs + 'h';
+    var d_maint = new Date(Date.now() + rul * 3600000);
+    maintDate.textContent = d_maint.toLocaleDateString('en-GB') + ' ' + d_maint.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',hour12:false});
+  }
+  // Event log detection (#2)
+  var curMode = s.mode || 'normal';
+  if (_prevIsAnomaly !== null) {
+    if (anomaly.is_anomaly  && !_prevIsAnomaly) _addEvent('crit', 'ANOMALY: ' + (anomaly.failure_mode||'?').replace(/_/g,' '));
+    if (!anomaly.is_anomaly &&  _prevIsAnomaly) _addEvent('info', 'Anomaly cleared — normal');
+    if (health.status === 'warning'  && _prevStatus === 'healthy')  _addEvent('warn', 'Health crossed WARNING');
+    if (health.status === 'critical' && _prevStatus !== 'critical') _addEvent('crit', 'Health CRITICAL — action required');
+    if (health.status === 'healthy'  && _prevStatus !== 'healthy')  _addEvent('info', 'Health restored: HEALTHY');
+    if (curMode !== (currentState ? currentState.mode : curMode))   _addEvent('info', 'Mode → ' + curMode);
+  }
+  _prevIsAnomaly = anomaly.is_anomaly;
+  _prevStatus    = health.status;
+  // Drive Three.js
+  if (typeof window.updatePump3D === 'function') window.updatePump3D(s);
+}
+
+// â”€â”€ WebSocket â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
+
+// ── Sensor History Chart (#1) ────────────────────────────────────────────────
+var _sensorHistory = {
+  vibration_rms:[], discharge_pressure:[], suction_pressure:[],
+  flow_rate:[], motor_current:[], fluid_temp:[]
+};
+var _chartSensor = 'vibration_rms';
+var _sensorChart = null;
+
+function _initSensorChart() {
+  var ctx = document.getElementById('sensorHistChart');
+  if (!ctx) return;
+  _sensorChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: '#00d4ff',
+        backgroundColor: 'rgba(0,212,255,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        borderWidth: 1.5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: false,
+      plugins: { legend: {display:false} },
+      scales: {
+        x: { display:false },
+        y: { display:true, grid:{color:'rgba(30,45,61,0.5)'}, ticks:{color:'#5a7080',font:{size:9}} }
+      }
+    }
+  });
+}
+
+function switchChartSensor(key) {
+  _chartSensor = key;
+  if (_sensorChart) {
+    _sensorChart.data.datasets[0].data = _sensorHistory[key].slice();
+    _sensorChart.data.labels = _sensorHistory[key].map(function(_,i){return i;});
+    _sensorChart.update('none');
+  }
+}
+
+function _updateSensorChart(sensors) {
+  Object.keys(_sensorHistory).forEach(function(k) {
+    if (sensors[k] !== undefined) {
+      _sensorHistory[k].push(sensors[k]);
+      if (_sensorHistory[k].length > 120) _sensorHistory[k].shift();
+    }
+  });
+  if (!_sensorChart) return;
+  var data = _sensorHistory[_chartSensor];
+  _sensorChart.data.datasets[0].data = data.slice();
+  _sensorChart.data.labels = data.map(function(_,i){return i;});
+  _sensorChart.update('none');
+}
+
+// ── Event Log globals (#2) ───────────────────────────────────────────────────
+var _evLog = [], _prevIsAnomaly = null, _prevStatus = null;
+function _addEvent(level, msg) {
+  var ts = new Date().toLocaleTimeString('en-GB', {hour12:false});
+  _evLog.unshift({ts: ts, level: level, msg: msg});
+  if (_evLog.length > 20) _evLog.pop();
+  var el = document.getElementById('eventLog');
+  if (!el) return;
+  el.innerHTML = _evLog.map(function(e) {
+    return '<div class="log-entry ev-' + e.level + '"><span class="log-ts">' +
+           e.ts + '</span><span class="log-msg">' + e.msg + '</span></div>';
+  }).join('');
+}
+
+// exportReport (#8): downloads JSON snapshot
+function exportReport() {
+  var report = {
+    generated: new Date().toISOString(),
+    current_state: currentState,
+    health_history_last_60: healthHistory.slice(-60),
+    total_steps: currentState ? currentState.step : 0
+  };
+  var blob = new Blob([JSON.stringify(report, null, 2)], {type:'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  var ts   = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  a.href = url; a.download = 'pump_report_' + ts + '.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function connect() {
+  const dot   = document.getElementById('wsDot');
+  const label = document.getElementById('wsLabel');
+  dot.className = 'ws-dot';
+  label.textContent = 'CONNECTINGâ€¦';
+
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    dot.className  = 'ws-dot live';
+    label.textContent = 'LIVE';
+  };
+  ws.onmessage = e => {
+    const latMs = _wsSentAt ? Date.now() - _wsSentAt : 0;
+    _wsSentAt = Date.now();
+    // Update latency badge
+    const lb = document.getElementById('latencyBadge');
+    if (lb) {
+      lb.textContent = latMs + ' ms';
+      lb.className = 'latency-badge' + (latMs > 200 ? ' crit' : latMs > 50 ? ' warn' : '');
+    }
+    try { applyState(JSON.parse(e.data)); } catch(ex) { console.error(ex); }
+  };
+  ws.onerror  = () => { dot.className = 'ws-dot error'; label.textContent = 'ERROR'; };
+  ws.onclose  = () => {
+    dot.className = 'ws-dot error';
+    label.textContent = 'RECONNECTINGâ€¦';
+    setTimeout(connect, 2500);
+  };
+}
+
+connect();
+
+// Init Chart.js sensor chart (#1)
+if (typeof Chart !== 'undefined') { _initSensorChart(); }
+else { window.addEventListener('load', _initSensorChart); }
+
+
+// Fallback long-poll if WS fails
+setInterval(async () => {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+  try {
+    const r = await fetch(`${API_URL}/poll`);
+    if (r.ok) applyState(await r.json());
+  } catch(_) {}
+}, 1000);
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// THREE.JS â€” Detailed Centrifugal Pump Digital Twin
+// Anatomy: volute â€¢ impeller â€¢ stuffing-box â€¢ inboard/outboard
+//          bearings â€¢ coupling â€¢ motor â€¢ base-plate â€¢ instrumentation
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+(function initThree() {
+  const container = document.getElementById('threejs-container');
+
+  // â”€â”€ Scene + Renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x080b10);
+  scene.fog = new THREE.FogExp2(0x080b10, 0.045);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.physicallyCorrectLights = true;
+  container.appendChild(renderer.domElement);
+  window._THREE_SCENE = scene; // expose for particle system (#7)
+
+  // â”€â”€ Camera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
+  camera.position.set(7, 4.5, 9);
+  camera.lookAt(0, 0.5, 0);
+
+  // â”€â”€ Lights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  scene.add(new THREE.AmbientLight(0x0d1e2e, 5));
+
+  const sun = new THREE.DirectionalLight(0xc8e8ff, 3.5);
+  sun.position.set(6, 10, 6);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.near = 0.5;
+  sun.shadow.camera.far  = 40;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -8;
+  sun.shadow.camera.right = sun.shadow.camera.top   =  8;
+  scene.add(sun);
+
+  const fill = new THREE.DirectionalLight(0xffa040, 1.2);
+  fill.position.set(-6, 2, -4);
+  scene.add(fill);
+
+  const underLight = new THREE.PointLight(0x00d4ff, 2, 12);
+  underLight.position.set(0, -1.5, 0);
+  scene.add(underLight);
+
+  const motorLight = new THREE.PointLight(0xff6030, 0.8, 5);
+  motorLight.position.set(-3.5, 0.5, 0);
+  scene.add(motorLight);
+
+  // â”€â”€ Material palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const M = {
+    steel:    new THREE.MeshStandardMaterial({ color:0x1e2e3e, roughness:0.35, metalness:0.90 }),
+    steelHi:  new THREE.MeshStandardMaterial({ color:0x263545, roughness:0.25, metalness:0.95 }),
+    castIron: new THREE.MeshStandardMaterial({ color:0x141e28, roughness:0.60, metalness:0.70 }),
+    flange:   new THREE.MeshStandardMaterial({ color:0x1a2b3a, roughness:0.45, metalness:0.82 }),
+    bolt:     new THREE.MeshStandardMaterial({ color:0x3a4a58, roughness:0.30, metalness:0.95 }),
+    impeller: new THREE.MeshStandardMaterial({ color:0x006688, roughness:0.15, metalness:0.98, emissive:0x002233, emissiveIntensity:0.4 }),
+    shaft:    new THREE.MeshStandardMaterial({ color:0x5a7080, roughness:0.10, metalness:1.00 }),
+    seal:     new THREE.MeshStandardMaterial({ color:0x00b8d9, roughness:0.50, metalness:0.20, emissive:0x001a22, emissiveIntensity:0.6 }),
+    motor:    new THREE.MeshStandardMaterial({ color:0x2a3040, roughness:0.40, metalness:0.80 }),
+    motorEnd: new THREE.MeshStandardMaterial({ color:0x1e2838, roughness:0.35, metalness:0.85 }),
+    fin:      new THREE.MeshStandardMaterial({ color:0x1a2535, roughness:0.55, metalness:0.70 }),
+    tbox:     new THREE.MeshStandardMaterial({ color:0x222f3e, roughness:0.45, metalness:0.75 }),
+    fanCover: new THREE.MeshStandardMaterial({ color:0x1c2630, roughness:0.50, metalness:0.68, wireframe:false }),
+    base:     new THREE.MeshStandardMaterial({ color:0x0f181f, roughness:0.80, metalness:0.50 }),
+    pipe:     new THREE.MeshStandardMaterial({ color:0x1f2d3c, roughness:0.40, metalness:0.85 }),
+    gauge:    new THREE.MeshStandardMaterial({ color:0x3a5060, roughness:0.25, metalness:0.90 }),
+    glow:     new THREE.MeshStandardMaterial({ color:0x00d4ff, roughness:0.05, metalness:0.05,
+                                               emissive:0x00d4ff, emissiveIntensity:2.0,
+                                               transparent:true, opacity:0.80 }),
+    bearing:  new THREE.MeshStandardMaterial({ color:0x2a3d50, roughness:0.25, metalness:0.95 }),
+    coupling: new THREE.MeshStandardMaterial({ color:0x303e50, roughness:0.30, metalness:0.88 }),
+    rubber:   new THREE.MeshStandardMaterial({ color:0x1a1a22, roughness:0.90, metalness:0.05 }),
+    paint:    new THREE.MeshStandardMaterial({ color:0x1a5585, roughness:0.55, metalness:0.40 }),
+  };
+
+  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const pumpGroup = new THREE.Group();    // entire pump on baseplate
+  scene.add(pumpGroup);
+
+  function mesh(geo, mat, x=0,y=0,z=0, rx=0,ry=0,rz=0, grp=pumpGroup) {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x,y,z);
+    m.rotation.set(rx,ry,rz);
+    m.castShadow = m.receiveShadow = true;
+    grp.add(m);
+    return m;
+  }
+
+  // bolt circle helper
+  function boltCircle(n, r, boltR, boltH, mat, cx,cy,cz, axisY, grp=pumpGroup) {
+    for (let i=0;i<n;i++) {
+      const a = (i/n)*Math.PI*2;
+      const bx = cx + Math.cos(a)*r*(axisY?1:1);
+      const bz = cz + Math.sin(a)*r;
+      const m2 = new THREE.Mesh(
+        new THREE.CylinderGeometry(boltR,boltR,boltH,8),
+        mat
+      );
+      if (axisY) {
+        m2.position.set(bx, cy, bz);
+      } else {
+        m2.position.set(cx + Math.cos(a)*r, cy+Math.sin(a)*r, cz);
+        m2.rotation.z = a;
+      }
+      m2.castShadow = true;
+      grp.add(m2);
+    }
+  }
+
+  // fin ring helper
+  function finRing(n, r, w, h, d, cx, cy, cz, mat, grp=pumpGroup) {
+    for (let i=0;i<n;i++) {
+      const a=(i/n)*Math.PI*2;
+      const f = new THREE.Mesh(new THREE.BoxGeometry(d,h,w), mat);
+      f.position.set(cx+Math.cos(a)*r, cy+Math.sin(a)*r, cz);
+      f.rotation.z = a;
+      f.castShadow=true;
+      grp.add(f);
+    }
+  }
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 1. BASE PLATE / SKID
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  mesh(new THREE.BoxGeometry(8.5,0.10,2.4), M.base, 0.0,-1.05,0);
+  mesh(new THREE.BoxGeometry(8.5,0.08,0.08),M.base, 0.0,-0.95,1.16);
+  mesh(new THREE.BoxGeometry(8.5,0.08,0.08),M.base, 0.0,-0.95,-1.16);
+  // Channel ribs
+  for(let rx2=-2.5;rx2<=2.5;rx2+=1.25){
+    mesh(new THREE.BoxGeometry(0.06,0.22,2.4),M.steelHi,rx2,-0.88,0);
+  }
+  // Anchor bolts (4 corners)
+  [[3.8,1.0],[3.8,-1.0],[-3.8,1.0],[-3.8,-1.0]].forEach(([bx,bz])=>{
+    mesh(new THREE.CylinderGeometry(0.06,0.06,0.35,8),M.bolt, bx,-0.82,bz);
+    mesh(new THREE.CylinderGeometry(0.10,0.10,0.05,8),M.bolt, bx,-0.65,bz);
+  });
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 2. SUCTION ELBOW + STRAINER (Front of pump, Z+)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // Horizontal suction pipe
+  mesh(new THREE.CylinderGeometry(0.30,0.30,1.8,24),M.pipe, 0,0,2.5, Math.PI/2,0,0);
+  // Elbow body (torus approximation)
+  mesh(new THREE.TorusGeometry(0.40,0.30,14,20,Math.PI/2),M.castIron, 0,0.42,3.38, 0,0,0);
+  // Vertical suction drop pipe
+  mesh(new THREE.CylinderGeometry(0.28,0.28,0.90,24),M.pipe, 0,0.85,3.8, 0,0,0);
+  // Suction inlet flange (top of elbow)
+  mesh(new THREE.CylinderGeometry(0.42,0.42,0.10,24),M.flange, 0,1.25,3.8);
+  boltCircle(8,0.35,0.04,0.14,M.bolt, 0,1.25,3.8, true);
+  // Suction nozzle flange (at pump face)
+  mesh(new THREE.CylinderGeometry(0.42,0.42,0.10,24),M.flange, 0,0,1.68, Math.PI/2,0,0);
+  boltCircle(8,0.34,0.04,0.14,M.bolt, 0,0,1.68, false);
+  // Strainer cap
+  mesh(new THREE.SphereGeometry(0.30,12,8,0,Math.PI*2,0,Math.PI/2),M.steelHi, 0,1.30,3.8);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 3. VOLUTE CASING (main pump body)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // Volute body â€” scaled sphere gives the snail-shell silhouette
+  const voluteGeo = new THREE.SphereGeometry(0.98,48,36);
+  voluteGeo.scale(1.05, 0.75, 1.25);
+  const volute = mesh(voluteGeo, M.castIron, 0,0,0);
+
+  // Front cover plate (inspection cover)
+  mesh(new THREE.CylinderGeometry(0.70,0.70,0.08,32),M.flange, 0,0,1.22, Math.PI/2,0,0);
+  boltCircle(10,0.62,0.035,0.12,M.bolt, 0,0,1.22, false);
+
+  // Back cover
+  mesh(new THREE.CylinderGeometry(0.65,0.65,0.06,32),M.flange, 0,0,-1.02, Math.PI/2,0,0);
+  boltCircle(8,0.57,0.035,0.10,M.bolt, 0,0,-1.02, false);
+
+  // Wear/casing ring (visible at front cover edge)
+  mesh(new THREE.TorusGeometry(0.55,0.04,10,40),M.steelHi, 0,0,1.15, Math.PI/2,0,0);
+
+  // Drain boss (bottom)
+  mesh(new THREE.CylinderGeometry(0.10,0.10,0.20,10),M.flange, 0,-0.85,0);
+  mesh(new THREE.CylinderGeometry(0.14,0.14,0.06,10),M.bolt, 0,-0.99,0);
+
+  // Vent boss (top of volute)
+  mesh(new THREE.CylinderGeometry(0.07,0.07,0.18,8),M.flange, 0,0.88,0.3);
+  mesh(new THREE.CylinderGeometry(0.10,0.10,0.04,8),M.bolt, 0,0.99,0.3);
+
+  // â”€â”€ Discharge nozzle (top, vertical) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  mesh(new THREE.CylinderGeometry(0.26,0.26,0.90,24),M.pipe, 0,1.62,0);
+  // Discharge elbow
+  mesh(new THREE.TorusGeometry(0.32,0.26,14,20,Math.PI/2),M.castIron, 0.35,2.18,0, 0,0,-Math.PI/2);
+  // Horizontal discharge pipe
+  mesh(new THREE.CylinderGeometry(0.24,0.24,1.20,24),M.pipe, 1.30,2.18,0, 0,0,Math.PI/2);
+  // Discharge flanges
+  mesh(new THREE.CylinderGeometry(0.38,0.38,0.10,24),M.flange, 0,0.72,0); // at volute exit
+  boltCircle(8,0.32,0.035,0.12,M.bolt, 0,0.72,0, true);
+  mesh(new THREE.CylinderGeometry(0.36,0.36,0.10,24),M.flange, 1.92,2.18,0, 0,0,Math.PI/2); // end
+  boltCircle(8,0.30,0.035,0.12,M.bolt, 1.92,2.18,0, false);
+
+  // Pressure gauge on discharge (small dial instrument)
+  const gaugeArm = new THREE.Group();
+  gaugeArm.position.set(0.85, 2.18, 0);
+  pumpGroup.add(gaugeArm);
+  const gaugePipe = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.25,8),M.gauge);
+  gaugePipe.position.set(0,0,0.38); gaugePipe.rotation.x=Math.PI/2;
+  gaugeArm.add(gaugePipe);
+  const gaugeDial = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.06,16),M.gauge);
+  gaugeDial.position.set(0,0,0.52); gaugeDial.rotation.x=Math.PI/2;
+  gaugeArm.add(gaugeDial);
+  const gaugeFace = new THREE.Mesh(new THREE.CircleGeometry(0.10,16),
+    new THREE.MeshStandardMaterial({color:0xddeeff,roughness:0.1,metalness:0,emissive:0x334455,emissiveIntensity:0.4}));
+  gaugeFace.position.set(0,0,0.56); gaugeFace.rotation.x=Math.PI/2;
+  gaugeArm.add(gaugeFace);
+
+  // Suction vacuum gauge (on suction pipe)
+  const sgGrp = new THREE.Group();
+  sgGrp.position.set(0.12,0,2.1);
+  pumpGroup.add(sgGrp);
+  const sgPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,0.22,8),M.gauge);
+  sgPipe.position.y=0.13; sgGrp.add(sgPipe);
+  const sgDial = new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.10,0.05,16),M.gauge);
+  sgDial.position.y=0.27; sgGrp.add(sgDial);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 4. IMPELLER ASSEMBLY (spins inside volute)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  const impellerGroup = new THREE.Group();
+  impellerGroup.position.set(0, 0, 0);
+  pumpGroup.add(impellerGroup);
+
+  // Back shroud (solid disc)
+  const backShroud = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.58,0.58,0.06,32), M.impeller);
+  backShroud.rotation.x=Math.PI/2; impellerGroup.add(backShroud);
+
+  // Front shroud (disc with central eye opening)
+  const fsShroud = new THREE.Mesh(
+    new THREE.TorusGeometry(0.35,0.23,10,32), M.impeller);
+  fsShroud.position.z=0.14; fsShroud.rotation.x=Math.PI/2; impellerGroup.add(fsShroud);
+
+  // 6 backward-curved vanes
+  for(let b=0;b<6;b++){
+    const a=(b/6)*Math.PI*2;
+    const vane = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.50, 0.14),
+      M.impeller
+    );
+    vane.position.set(Math.cos(a)*0.30, Math.sin(a)*0.30, 0.05);
+    vane.rotation.z = a + Math.PI*0.35;
+    vane.rotation.x = Math.PI/2;
+    impellerGroup.add(vane);
+    // Vane tip (outer curved part)
+    const tip = new THREE.Mesh(
+      new THREE.BoxGeometry(0.04, 0.18, 0.12), M.impeller
+    );
+    tip.position.set(Math.cos(a)*0.50, Math.sin(a)*0.50, 0.05);
+    tip.rotation.z = a + Math.PI*0.15;
+    tip.rotation.x = Math.PI/2;
+    impellerGroup.add(tip);
+  }
+
+  // Hub / eye
+  const eyeHub = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.14,0.10,0.22,20), M.shaft);
+  eyeHub.rotation.x=Math.PI/2; impellerGroup.add(eyeHub);
+
+  // Impeller oriented axially (Z axis = shaft axis)
+  impellerGroup.rotation.set(0, 0, 0);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 5. STUFFING BOX / SEAL CHAMBER
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  mesh(new THREE.CylinderGeometry(0.28,0.28,0.50,20),M.castIron, 0,0,-1.30, Math.PI/2,0,0);
+  // Packing gland / stuffing box nose
+  mesh(new THREE.CylinderGeometry(0.22,0.22,0.18,18),M.flange, 0,0,-1.60, Math.PI/2,0,0);
+  // Tightening bolts (gland studs, 4x)
+  for(let i=0;i<4;i++){
+    const a=(i/4)*Math.PI*2;
+    mesh(new THREE.CylinderGeometry(0.025,0.025,0.28,8),M.bolt,
+      Math.cos(a)*0.20, Math.sin(a)*0.20,-1.60, Math.PI/2,0,0);
+  }
+  // Seal/lantern-ring glow
+  const sealGlow = mesh(new THREE.TorusGeometry(0.20,0.05,10,32),M.seal,
+    0,0,-1.44, Math.PI/2,0,0);
+  // Flush connection boss
+  mesh(new THREE.CylinderGeometry(0.04,0.04,0.16,8),M.pipe, 0.22,0.20,-1.32, 0,0,Math.PI/8);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 6. BEARING BRACKET + HOUSINGS
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // Bracket body
+  mesh(new THREE.CylinderGeometry(0.32,0.32,1.10,32),M.castIron, 0,0,-2.08, Math.PI/2,0,0);
+  // Bracket feet
+  [[-0.28,0.28],[-0.28,-0.28]].forEach(([bx,bz])=>{
+    mesh(new THREE.BoxGeometry(0.18,0.10,0.30),M.castIron, bx,-0.27+bx*0, bz+ (-2.1));
+  });
+
+  // Inboard (drive-end) bearing housing
+  const ibHousing = mesh(new THREE.CylinderGeometry(0.26,0.26,0.40,32),M.bearing, 0,0,-1.75, Math.PI/2,0,0);
+  mesh(new THREE.TorusGeometry(0.26,0.035,10,32),M.steelHi, 0,0,-1.56, Math.PI/2,0,0); // lip seal ring
+  mesh(new THREE.TorusGeometry(0.26,0.035,10,32),M.steelHi, 0,0,-1.94, Math.PI/2,0,0);
+  // Grease nipple
+  mesh(new THREE.CylinderGeometry(0.025,0.025,0.10,8),M.bolt, 0,0.28,-1.75);
+
+  // Outboard (non-drive) bearing housing
+  mesh(new THREE.CylinderGeometry(0.24,0.24,0.38,32),M.bearing, 0,0,-2.42, Math.PI/2,0,0);
+  mesh(new THREE.TorusGeometry(0.24,0.030,10,32),M.steelHi, 0,0,-2.23, Math.PI/2,0,0);
+  mesh(new THREE.TorusGeometry(0.24,0.030,10,32),M.steelHi, 0,0,-2.60, Math.PI/2,0,0);
+  mesh(new THREE.CylinderGeometry(0.025,0.025,0.10,8),M.bolt, 0,0.26,-2.42);
+
+  // Bearing end cap (outboard face)
+  mesh(new THREE.CylinderGeometry(0.26,0.26,0.07,32),M.flange, 0,0,-2.64, Math.PI/2,0,0);
+  boltCircle(6,0.20,0.025,0.10,M.bolt, 0,0,-2.64, false);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 7. SHAFT (continuous through pump + motor)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  const shaft = mesh(new THREE.CylinderGeometry(0.065,0.065,6.2,14),M.shaft, 0,0,-1.6, Math.PI/2,0,0);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 8. FLEXIBLE COUPLING
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // Pump-side half
+  mesh(new THREE.CylinderGeometry(0.20,0.20,0.30,18),M.coupling, 0,0,-2.85, Math.PI/2,0,0);
+  // Rubber spider / element
+  mesh(new THREE.CylinderGeometry(0.18,0.18,0.12,18),M.rubber, 0,0,-3.04, Math.PI/2,0,0);
+  for(let i=0;i<6;i++){
+    const a=(i/6)*Math.PI*2;
+    mesh(new THREE.CylinderGeometry(0.04,0.04,0.12,8),M.rubber,
+      Math.cos(a)*0.14, Math.sin(a)*0.14, -3.04, Math.PI/2,0,0);
+  }
+  // Motor-side half
+  mesh(new THREE.CylinderGeometry(0.20,0.20,0.30,18),M.coupling, 0,0,-3.22, Math.PI/2,0,0);
+
+  // Coupling guard (half-shell)
+  const guardGeo = new THREE.CylinderGeometry(0.36,0.36,0.80,20,1,true,0,Math.PI);
+  const guard = new THREE.Mesh(guardGeo, M.fin);
+  guard.position.set(0,0,-3.04); guard.rotation.x=Math.PI/2; guard.rotation.z=Math.PI/4;
+  guard.castShadow=true; pumpGroup.add(guard);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 9. MOTOR (NEMA-frame, D-end mount)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  const motorX = -3.5;  // motor centred here along Z=-3.5.. wait we build along Z axis
+  // Motor frame body
+  const motorFrame = mesh(new THREE.CylinderGeometry(0.68,0.68,2.40,32),M.motor, 0,0,-4.60, Math.PI/2,0,0);
+
+  // 12 axial cooling fins (press-formed ribs)
+  for(let i=0;i<12;i++){
+    const a=(i/12)*Math.PI*2;
+    const fr=mesh(new THREE.BoxGeometry(2.40,0.06,0.10),M.fin,
+      0, Math.cos(a)*0.70, -4.60, 0,0,a);
+  }
+
+  // Drive-end bell
+  mesh(new THREE.CylinderGeometry(0.72,0.72,0.14,32),M.motorEnd, 0,0,-3.45, Math.PI/2,0,0);
+  mesh(new THREE.CylinderGeometry(0.60,0.60,0.10,32),M.motorEnd, 0,0,-3.33, Math.PI/2,0,0);
+  boltCircle(8,0.64,0.03,0.16,M.bolt, 0,0,-3.45, false);
+
+  // Non-drive end bell
+  mesh(new THREE.CylinderGeometry(0.72,0.72,0.14,32),M.motorEnd, 0,0,-5.75, Math.PI/2,0,0);
+  mesh(new THREE.CylinderGeometry(0.60,0.60,0.10,32),M.motorEnd, 0,0,-5.62, Math.PI/2,0,0);
+  boltCircle(8,0.64,0.03,0.16,M.bolt, 0,0,-5.75, false);
+
+  // Fan shroud / cover (circular perforated guard)
+  mesh(new THREE.CylinderGeometry(0.76,0.76,0.45,32,1,true),M.fin, 0,0,-5.90, Math.PI/2,0,0);
+  mesh(new THREE.CylinderGeometry(0.76,0.76,0.06,32),M.motorEnd, 0,0,-6.12, Math.PI/2,0,0);
+  mesh(new THREE.CircleGeometry(0.76,32),M.fin, 0,0,-6.18, Math.PI/2,0,0);
+  // Fan blades (stylized)
+  const fanGroup = new THREE.Group();
+  fanGroup.position.set(0,0,-5.95);
+  fanGroup.rotation.x=Math.PI/2;
+  pumpGroup.add(fanGroup);
+  for(let i=0;i<8;i++){
+    const a=(i/8)*Math.PI*2;
+    const fb=new THREE.Mesh(
+      new THREE.BoxGeometry(0.05,0.48,0.08), M.steelHi);
+    fb.position.set(Math.cos(a)*0.32, Math.sin(a)*0.32, 0);
+    fb.rotation.z=a+0.4;
+    fanGroup.add(fb);
+  }
+  const fanHub=new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.10,0.12,16),M.shaft);
+  fanGroup.add(fanHub);
+
+  // Terminal / conduit box (mounted on motor side)
+  mesh(new THREE.BoxGeometry(0.40,0.32,0.45),M.tbox, 0.72,0,-4.60);
+  mesh(new THREE.BoxGeometry(0.42,0.04,0.47),M.tbox, 0.72,0.18,-4.60);
+  mesh(new THREE.BoxGeometry(0.42,0.04,0.47),M.tbox, 0.72,-0.18,-4.60);
+  // Conduit entry
+  mesh(new THREE.CylinderGeometry(0.06,0.06,0.20,8),M.tbox, 0.72,0.16,-4.38, Math.PI/2,0,0);
+  // Nameplate
+  mesh(new THREE.BoxGeometry(0.50,0.0,0.20),
+    new THREE.MeshStandardMaterial({color:0x4a6080,roughness:0.3,metalness:0.6,
+      emissive:0x1a3040,emissiveIntensity:0.5}),
+    0,-0.69,-4.60);
+
+  // Motor shaft stub (NDE side, visible through fan area)
+  mesh(new THREE.CylinderGeometry(0.05,0.05,0.25,10),M.shaft, 0,0,-6.05, Math.PI/2,0,0);
+
+  // â”€ Motor feet (D-frame footing to baseplate) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  [[-0.62,-0.62],[0.62,-0.62],[-0.62,0.62],[0.62,0.62]].forEach(([ofx,ofz])=>{
+    // Relative to motor centre Z=-4.60
+    const footGrp = new THREE.Group();
+    footGrp.position.set(ofx,-0.72,ofz);
+    pumpGroup.add(footGrp);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.14,0.22),M.castIron);
+    footGrp.add(foot);
+    const bolt2=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.22,8),M.bolt);
+    bolt2.position.y=-0.10; footGrp.add(bolt2);
+  });
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 10. GLOWING STATUS TORUS (anomaly health indicator)
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  const statusRing = mesh(
+    new THREE.TorusGeometry(1.10,0.032,10,72), M.glow, 0,0,0, Math.PI/2,0,0);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 11. CAVITATION PARTICLE FOUNTAIN
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  const PC = 200;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(PC*3);
+  for(let i=0;i<PC;i++){
+    pPos[i*3]   = (Math.random()-0.5)*1.8;
+    pPos[i*3+1] = (Math.random()-0.5)*1.8;
+    pPos[i*3+2] = (Math.random()-0.5)*1.8;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+  const pMat = new THREE.PointsMaterial({
+    color:0x40d0ff, size:0.05, transparent:true, opacity:0,
+    blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  pumpGroup.add(particles);
+
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 12. ENVIRONMENT
+  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // Floor
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(40,40),
+    new THREE.MeshStandardMaterial({color:0x050810,roughness:1,metalness:0})
+  );
+  floor.rotation.x=-Math.PI/2;
+  floor.position.y=-1.16;
+  floor.receiveShadow=true;
+  scene.add(floor);
+
+  const grid = new THREE.GridHelper(30,60,0x0a1520,0x0a1520);
+  grid.position.y=-1.15;
+  scene.add(grid);
+
+  // Centre pump group so the main pump casing is at world-origin
+  pumpGroup.position.set(2.8, 0.85, 0);  // offset to centre volute at 0,0
+
+  // â”€â”€ Animation state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  let impSpeed  = 0.04;
+  let fanSpeed  = 0.08;
+  let shakeAmt  = 0;
+  let tgtColor  = new THREE.Color(0x00e676);
+  let curMode   = 'normal';
+
+  // â”€â”€ Sensor-driven 3D updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  window.updatePump3D = function(state) {
+    const mode    = state.mode || 'normal';
+    const health  = (state.health  || {}).overall_health || 100;
+    const sensors = state.sensors || {};
+    const sp      = sensors.suction_pressure  || 1.8;
+    const flow    = sensors.flow_rate         || 120;
+    const vib     = sensors.vibration_rms     || 2.1;
+    const temp    = sensors.fluid_temp        || 42;
+    const cur     = sensors.motor_current     || 18.5;
+    curMode = mode;
+
+    // Impeller speed â† flow rate
+    impSpeed = 0.008 + (Math.max(0,flow)/120)*0.075;
+    fanSpeed = impSpeed * 1.4;
+
+    // Status ring color â† health
+    if (health>70)      tgtColor.setHex(0x00e676);
+    else if (health>40) tgtColor.setHex(0xf0a500);
+    else                tgtColor.setHex(0xff3b5c);
+    M.glow.emissive.lerp(tgtColor, 0.10);
+    M.glow.color.lerp(tgtColor,    0.10);
+
+    // Vibration shake â† vib_rms
+    shakeAmt = Math.max(0,(vib-2.1)/2.1)*0.07;
+
+    // Cavitation particles â† suction pressure drop
+    const cavLevel = Math.max(0,(1.8-sp)/1.8);
+    pMat.opacity = cavLevel>0.3 ? Math.min(0.9, cavLevel*1.2) : 0;
+
+    // Bearing heat â† fluid temp / motor current
+    const heat = Math.min(1, Math.max(0,(temp-42)/35));
+    const brTarget = new THREE.Color().lerpColors(
+      new THREE.Color(0x2a3d50), new THREE.Color(0xff2a00), heat);
+    M.bearing.color.lerp(brTarget, 0.06);
+    M.bearing.emissive = M.bearing.emissive || new THREE.Color(0);
+    M.bearing.emissive.lerp(
+      new THREE.Color().lerpColors(new THREE.Color(0),new THREE.Color(0x4a0000),heat), 0.06);
+
+    // Seal glow â† cavitation stress
+    M.seal.emissiveIntensity = 0.4 + cavLevel*2.5;
+    M.seal.emissive.setHex(cavLevel>0.4 ? 0xf08000 : 0x003344);
+
+    // Motor heat glow â† current overload
+    const overload = Math.max(0,(cur-18.5)/18.5);
+    motorLight.intensity = 0.5 + overload*2.5;
+    motorLight.color.setHex(overload>0.2 ? 0xff3000 : 0xff6030);
+  };
+
+  // â”€â”€ Mouse orbit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  let isDrag=false, px=0, py=0;
+  let camTheta=0.55, camPhi=0.42, camR=13;
+
+  container.addEventListener('mousedown',e=>{isDrag=true;px=e.clientX;py=e.clientY;});
+  window.addEventListener('mouseup',()=>isDrag=false);
+  container.addEventListener('mousemove',e=>{
+    if(!isDrag)return;
+    camTheta-=(e.clientX-px)*0.004;
+    camPhi=Math.max(0.08,Math.min(1.35,camPhi+(e.clientY-py)*0.004));
+    px=e.clientX;py=e.clientY;
+  });
+  container.addEventListener('wheel',e=>{
+    camR=Math.max(6,Math.min(22,camR+e.deltaY*0.012));
+    e.preventDefault();
+  },{passive:false});
+
+  // â”€â”€ Resize â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  function resize(){
+    const w=container.clientWidth,h=container.clientHeight;
+    renderer.setSize(w,h);
+    camera.aspect=w/h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  new ResizeObserver(resize).observe(container);
+
+  // â”€â”€ Render loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const clock = new THREE.Clock();
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    // Impeller spin (around local Z axis which maps to shaft axis)
+    impellerGroup.rotation.z += impSpeed;
+
+    // Fan spin
+    fanGroup.rotation.z -= fanSpeed;
+
+    // Vibration shake on volute
+    if(shakeAmt>0.001){
+      volute.position.x += ((Math.random()-0.5)*shakeAmt - volute.position.x)*0.4;
+      volute.position.y += ((Math.random()-0.5)*shakeAmt*0.5 - volute.position.y)*0.4;
+    } else {
+      volute.position.x*=0.82; volute.position.y*=0.82;
+    }
+
+    // Status ring pulse (more intense when faulted)
+    const pf = curMode==='normal' ? 0 : 0.25;
+    statusRing.scale.setScalar(1 + pf*Math.sin(t*4)*0.04);
+    M.glow.emissiveIntensity = 1.6 + pf*Math.sin(t*6)*0.7;
+
+    // Cavitation drift
+    if(pMat.opacity>0.05){
+      const pos=pGeo.attributes.position.array;
+      for(let i=0;i<PC;i++){
+        pos[i*3+1]+=0.025; pos[i*3]+=Math.sin(t*3+i)*0.005;
+        if(pos[i*3+1]>1.0) pos[i*3+1]=-0.9;
+      }
+      pGeo.attributes.position.needsUpdate=true;
+    }
+
+    // Auto-slow rotate when not interacting
+    if(!isDrag) camTheta += 0.0008;
+
+    // Camera orbit
+    camera.position.x = Math.sin(camTheta)*Math.cos(camPhi)*camR;
+    camera.position.y = Math.sin(camPhi)*camR * 0.85 + 0.5;
+    camera.position.z = Math.cos(camTheta)*Math.cos(camPhi)*camR;
+    camera.lookAt(0, 0.4, 0);
+
+    renderer.render(scene,camera);
+  }
+  animate();
+})();
+</script>
+
+<!-- Settings Drawer (#5) -->
+<div class="settings-backdrop" id="settingsBackdrop" onclick="closeSettings()"></div>
+<div class="settings-drawer" id="settingsDrawer">
+  <div class="settings-drawer-header">
+    <div class="settings-drawer-title">&#9881; SETTINGS</div>
+    <button class="settings-close" onclick="closeSettings()">&times;</button>
+  </div>
+  <div class="settings-body">
+    <div>
+      <div class="stg-group-label">Broadcast Rate</div>
+      <div class="stg-row">
+        <label>Hz</label>
+        <input type="range" id="stgHz" min="0.5" max="10" step="0.5" value="2">
+        <span class="stg-val" id="stgHzVal">2</span>
+      </div>
+    </div>
+    <div>
+      <div class="stg-group-label">Sensor Noise</div>
+      <div class="stg-row">
+        <label>Noise %</label>
+        <input type="range" id="stgNoise" min="0.5" max="20" step="0.5" value="5">
+        <span class="stg-val" id="stgNoiseVal">5</span>
+      </div>
+    </div>
+    <button class="stg-apply" onclick="applySettings()">&#10003; APPLY</button>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,2972 @@
+[
+  {
+    "timestamp": 1774719377.547606,
+    "mode": "normal",
+    "step": 0,
+    "sensors": {
+      "vibration_rms": 2.0540727974433617,
+      "vibration_peak": 4.940133826398873,
+      "discharge_pressure": 4.200313359514306,
+      "suction_pressure": 1.8979562829553522,
+      "flow_rate": 122.64940301984267,
+      "motor_current": 19.355327427866296,
+      "fluid_temp": 41.44353385444312
+    },
+    "anomaly": {
+      "anomaly_score": 0.7895,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.579,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 77.5,
+      "subsystem_health": {
+        "bearing_front": 77.7,
+        "bearing_rear": 75.4,
+        "seal": 78.5,
+        "impeller": 77.3,
+        "casing": 78.4
+      },
+      "status": "healthy",
+      "rul_hours": 93.8
+    }
+  },
+  {
+    "timestamp": 1774719377.552849,
+    "mode": "normal",
+    "step": 1,
+    "sensors": {
+      "vibration_rms": 2.096057315071667,
+      "vibration_peak": 4.707221076098498,
+      "discharge_pressure": 4.0462005740160505,
+      "suction_pressure": 1.7789285343031485,
+      "flow_rate": 117.37634438829427,
+      "motor_current": 18.35561345763317,
+      "fluid_temp": 41.53746420824614
+    },
+    "anomaly": {
+      "anomaly_score": 0.867,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7339,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 85.5,
+      "subsystem_health": {
+        "bearing_front": 86.3,
+        "bearing_rear": 83.7,
+        "seal": 85.5,
+        "impeller": 86.1,
+        "casing": 86.3
+      },
+      "status": "healthy",
+      "rul_hours": 113.8
+    }
+  },
+  {
+    "timestamp": 1774719377.5598013,
+    "mode": "normal",
+    "step": 2,
+    "sensors": {
+      "vibration_rms": 2.122356994134869,
+      "vibration_peak": 5.032954929256109,
+      "discharge_pressure": 4.19623655436139,
+      "suction_pressure": 1.7273185661034187,
+      "flow_rate": 126.26454140994592,
+      "motor_current": 18.36078663321759,
+      "fluid_temp": 40.414375076608316
+    },
+    "anomaly": {
+      "anomaly_score": 0.7699,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5397,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 75.3,
+      "subsystem_health": {
+        "bearing_front": 76.1,
+        "bearing_rear": 73.8,
+        "seal": 75.9,
+        "impeller": 75.2,
+        "casing": 75.5
+      },
+      "status": "healthy",
+      "rul_hours": 88.2
+    }
+  },
+  {
+    "timestamp": 1774719377.5668974,
+    "mode": "normal",
+    "step": 3,
+    "sensors": {
+      "vibration_rms": 2.0741803881453764,
+      "vibration_peak": 5.0431512601058595,
+      "discharge_pressure": 4.268250208756265,
+      "suction_pressure": 1.9039116923911807,
+      "flow_rate": 124.16067746907812,
+      "motor_current": 17.797754989945428,
+      "fluid_temp": 41.01262637350883
+    },
+    "anomaly": {
+      "anomaly_score": 0.7755,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.551,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 75.8,
+      "subsystem_health": {
+        "bearing_front": 76.3,
+        "bearing_rear": 74.0,
+        "seal": 76.5,
+        "impeller": 75.6,
+        "casing": 76.6
+      },
+      "status": "healthy",
+      "rul_hours": 89.5
+    }
+  },
+  {
+    "timestamp": 1774719377.571412,
+    "mode": "normal",
+    "step": 4,
+    "sensors": {
+      "vibration_rms": 2.110044346752378,
+      "vibration_peak": 5.051554635320833,
+      "discharge_pressure": 4.20148281291086,
+      "suction_pressure": 1.8314949410445833,
+      "flow_rate": 121.33806263076758,
+      "motor_current": 17.996212963363984,
+      "fluid_temp": 44.3476244012717
+    },
+    "anomaly": {
+      "anomaly_score": 0.7526,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5052,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 74.0,
+      "subsystem_health": {
+        "bearing_front": 74.2,
+        "bearing_rear": 72.0,
+        "seal": 75.0,
+        "impeller": 74.7,
+        "casing": 73.0
+      },
+      "status": "healthy",
+      "rul_hours": 85.0
+    }
+  },
+  {
+    "timestamp": 1774719377.575841,
+    "mode": "normal",
+    "step": 5,
+    "sensors": {
+      "vibration_rms": 2.091995119338735,
+      "vibration_peak": 4.8924390128683495,
+      "discharge_pressure": 4.109498712195025,
+      "suction_pressure": 1.7875364134482805,
+      "flow_rate": 123.99499697188227,
+      "motor_current": 18.49173453957274,
+      "fluid_temp": 40.614719836394805
+    },
+    "anomaly": {
+      "anomaly_score": 0.8342,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6684,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 82.2,
+      "subsystem_health": {
+        "bearing_front": 83.1,
+        "bearing_rear": 80.6,
+        "seal": 82.3,
+        "impeller": 82.7,
+        "casing": 82.1
+      },
+      "status": "healthy",
+      "rul_hours": 105.5
+    }
+  },
+  {
+    "timestamp": 1774719377.5800633,
+    "mode": "normal",
+    "step": 6,
+    "sensors": {
+      "vibration_rms": 2.1165170782553218,
+      "vibration_peak": 5.027551631885218,
+      "discharge_pressure": 4.255490435461576,
+      "suction_pressure": 1.7116677992606706,
+      "flow_rate": 116.2025266124316,
+      "motor_current": 18.146228820320758,
+      "fluid_temp": 42.27894532592564
+    },
+    "anomaly": {
+      "anomaly_score": 0.8916,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7833,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 87.6,
+      "subsystem_health": {
+        "bearing_front": 88.2,
+        "bearing_rear": 85.5,
+        "seal": 88.3,
+        "impeller": 87.5,
+        "casing": 88.9
+      },
+      "status": "healthy",
+      "rul_hours": 119.0
+    }
+  },
+  {
+    "timestamp": 1774719377.5846612,
+    "mode": "normal",
+    "step": 7,
+    "sensors": {
+      "vibration_rms": 2.0909303251681046,
+      "vibration_peak": 4.873692131089319,
+      "discharge_pressure": 4.299268830358778,
+      "suction_pressure": 1.891754975129178,
+      "flow_rate": 116.35220252661964,
+      "motor_current": 18.9082494962754,
+      "fluid_temp": 42.788927390592185
+    },
+    "anomaly": {
+      "anomaly_score": 0.8248,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6496,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 81.0,
+      "subsystem_health": {
+        "bearing_front": 82.0,
+        "bearing_rear": 79.5,
+        "seal": 81.4,
+        "impeller": 80.8,
+        "casing": 81.7
+      },
+      "status": "healthy",
+      "rul_hours": 102.5
+    }
+  },
+  {
+    "timestamp": 1774719377.5894597,
+    "mode": "normal",
+    "step": 8,
+    "sensors": {
+      "vibration_rms": 2.0803663183993732,
+      "vibration_peak": 4.733088293853646,
+      "discharge_pressure": 4.332557566840105,
+      "suction_pressure": 1.7907353586256043,
+      "flow_rate": 122.27817491763113,
+      "motor_current": 18.755069848911017,
+      "fluid_temp": 43.187674516901076
+    },
+    "anomaly": {
+      "anomaly_score": 0.802,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6041,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 79.0,
+      "subsystem_health": {
+        "bearing_front": 79.7,
+        "bearing_rear": 77.3,
+        "seal": 79.2,
+        "impeller": 79.8,
+        "casing": 79.1
+      },
+      "status": "healthy",
+      "rul_hours": 97.5
+    }
+  },
+  {
+    "timestamp": 1774719377.5935771,
+    "mode": "normal",
+    "step": 9,
+    "sensors": {
+      "vibration_rms": 2.1118323486582415,
+      "vibration_peak": 4.785048305779059,
+      "discharge_pressure": 4.108630474438531,
+      "suction_pressure": 1.776731809222588,
+      "flow_rate": 119.03468379360254,
+      "motor_current": 19.231901096548356,
+      "fluid_temp": 44.90773501104923
+    },
+    "anomaly": {
+      "anomaly_score": 0.6469,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.2937,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 63.6,
+      "subsystem_health": {
+        "bearing_front": 64.2,
+        "bearing_rear": 62.2,
+        "seal": 64.1,
+        "impeller": 64.3,
+        "casing": 61.9
+      },
+      "status": "warning",
+      "rul_hours": 59.0
+    }
+  },
+  {
+    "timestamp": 1774719377.5977123,
+    "mode": "normal",
+    "step": 10,
+    "sensors": {
+      "vibration_rms": 2.114069132284415,
+      "vibration_peak": 5.095781214311208,
+      "discharge_pressure": 4.088587905185155,
+      "suction_pressure": 1.7796522170959999,
+      "flow_rate": 124.58847752621314,
+      "motor_current": 18.025982797325767,
+      "fluid_temp": 44.22118002458708
+    },
+    "anomaly": {
+      "anomaly_score": 0.711,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.422,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 69.4,
+      "subsystem_health": {
+        "bearing_front": 69.9,
+        "bearing_rear": 67.8,
+        "seal": 69.8,
+        "impeller": 70.2,
+        "casing": 69.0
+      },
+      "status": "warning",
+      "rul_hours": 73.5
+    }
+  },
+  {
+    "timestamp": 1774719377.6024094,
+    "mode": "normal",
+    "step": 11,
+    "sensors": {
+      "vibration_rms": 2.1519779341634404,
+      "vibration_peak": 4.821448908956531,
+      "discharge_pressure": 4.481955446139673,
+      "suction_pressure": 1.7727264016962698,
+      "flow_rate": 118.34099357101059,
+      "motor_current": 18.951841136827497,
+      "fluid_temp": 42.86885388892591
+    },
+    "anomaly": {
+      "anomaly_score": 0.6685,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3369,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 65.5,
+      "subsystem_health": {
+        "bearing_front": 66.1,
+        "bearing_rear": 64.2,
+        "seal": 65.2,
+        "impeller": 66.3,
+        "casing": 66.0
+      },
+      "status": "warning",
+      "rul_hours": 63.8
+    }
+  },
+  {
+    "timestamp": 1774719377.6068342,
+    "mode": "normal",
+    "step": 12,
+    "sensors": {
+      "vibration_rms": 2.1342601534950676,
+      "vibration_peak": 4.980850151820006,
+      "discharge_pressure": 4.264985342895698,
+      "suction_pressure": 1.7931646794819625,
+      "flow_rate": 114.27010705430376,
+      "motor_current": 19.064403212627386,
+      "fluid_temp": 41.00460606883977
+    },
+    "anomaly": {
+      "anomaly_score": 0.782,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5641,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 76.7,
+      "subsystem_health": {
+        "bearing_front": 77.1,
+        "bearing_rear": 74.8,
+        "seal": 76.9,
+        "impeller": 77.3,
+        "casing": 77.3
+      },
+      "status": "healthy",
+      "rul_hours": 91.8
+    }
+  },
+  {
+    "timestamp": 1774719377.6114821,
+    "mode": "normal",
+    "step": 13,
+    "sensors": {
+      "vibration_rms": 2.1234140505811645,
+      "vibration_peak": 4.809632392830025,
+      "discharge_pressure": 4.174858133416438,
+      "suction_pressure": 1.7644033686628227,
+      "flow_rate": 123.24561220512979,
+      "motor_current": 19.163255537280264,
+      "fluid_temp": 40.98851663662153
+    },
+    "anomaly": {
+      "anomaly_score": 0.8117,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6234,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 80.0,
+      "subsystem_health": {
+        "bearing_front": 80.6,
+        "bearing_rear": 78.2,
+        "seal": 80.5,
+        "impeller": 80.3,
+        "casing": 80.2
+      },
+      "status": "healthy",
+      "rul_hours": 100.0
+    }
+  },
+  {
+    "timestamp": 1774719377.615894,
+    "mode": "normal",
+    "step": 14,
+    "sensors": {
+      "vibration_rms": 2.0947700999181094,
+      "vibration_peak": 4.7301559696377415,
+      "discharge_pressure": 3.9907962519920326,
+      "suction_pressure": 1.8417261937613647,
+      "flow_rate": 120.08237223854739,
+      "motor_current": 18.3080447336982,
+      "fluid_temp": 41.811178603589646
+    },
+    "anomaly": {
+      "anomaly_score": 0.8607,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7214,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 85.0,
+      "subsystem_health": {
+        "bearing_front": 85.7,
+        "bearing_rear": 83.2,
+        "seal": 85.1,
+        "impeller": 85.5,
+        "casing": 85.9
+      },
+      "status": "healthy",
+      "rul_hours": 112.5
+    }
+  },
+  {
+    "timestamp": 1774719377.620266,
+    "mode": "normal",
+    "step": 15,
+    "sensors": {
+      "vibration_rms": 2.1548113628800016,
+      "vibration_peak": 4.690066928896232,
+      "discharge_pressure": 4.027666511328578,
+      "suction_pressure": 1.6560692188846975,
+      "flow_rate": 125.29681301214663,
+      "motor_current": 18.610161770273894,
+      "fluid_temp": 41.26902877320991
+    },
+    "anomaly": {
+      "anomaly_score": 0.7545,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.509,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 73.6,
+      "subsystem_health": {
+        "bearing_front": 74.7,
+        "bearing_rear": 72.4,
+        "seal": 73.7,
+        "impeller": 72.8,
+        "casing": 74.8
+      },
+      "status": "healthy",
+      "rul_hours": 84.0
+    }
+  },
+  {
+    "timestamp": 1774719377.6250587,
+    "mode": "normal",
+    "step": 16,
+    "sensors": {
+      "vibration_rms": 2.160857061250344,
+      "vibration_peak": 4.7194253477024475,
+      "discharge_pressure": 4.124970422255922,
+      "suction_pressure": 1.8185842552796265,
+      "flow_rate": 121.51481656537895,
+      "motor_current": 17.68995098735922,
+      "fluid_temp": 44.14014786779379
+    },
+    "anomaly": {
+      "anomaly_score": 0.6721,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3442,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 65.9,
+      "subsystem_health": {
+        "bearing_front": 66.1,
+        "bearing_rear": 64.1,
+        "seal": 66.6,
+        "impeller": 66.8,
+        "casing": 65.2
+      },
+      "status": "warning",
+      "rul_hours": 64.8
+    }
+  },
+  {
+    "timestamp": 1774719377.6295953,
+    "mode": "normal",
+    "step": 17,
+    "sensors": {
+      "vibration_rms": 2.093201602411507,
+      "vibration_peak": 4.631181370257753,
+      "discharge_pressure": 4.289661457908741,
+      "suction_pressure": 1.8446151573377658,
+      "flow_rate": 120.72737799734517,
+      "motor_current": 18.97214731873648,
+      "fluid_temp": 41.39486250029265
+    },
+    "anomaly": {
+      "anomaly_score": 0.8671,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7341,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 85.5,
+      "subsystem_health": {
+        "bearing_front": 85.9,
+        "bearing_rear": 83.3,
+        "seal": 86.2,
+        "impeller": 86.0,
+        "casing": 86.1
+      },
+      "status": "healthy",
+      "rul_hours": 113.8
+    }
+  },
+  {
+    "timestamp": 1774719377.6344683,
+    "mode": "normal",
+    "step": 18,
+    "sensors": {
+      "vibration_rms": 2.0352571202120413,
+      "vibration_peak": 4.8628873665965,
+      "discharge_pressure": 4.367065789387694,
+      "suction_pressure": 1.8254745401241381,
+      "flow_rate": 117.7343991072279,
+      "motor_current": 18.988935554577033,
+      "fluid_temp": 43.98822894301497
+    },
+    "anomaly": {
+      "anomaly_score": 0.6458,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.2915,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 63.1,
+      "subsystem_health": {
+        "bearing_front": 63.6,
+        "bearing_rear": 61.7,
+        "seal": 63.4,
+        "impeller": 63.9,
+        "casing": 62.7
+      },
+      "status": "warning",
+      "rul_hours": 57.8
+    }
+  },
+  {
+    "timestamp": 1774719377.6388311,
+    "mode": "normal",
+    "step": 19,
+    "sensors": {
+      "vibration_rms": 1.9715679922834728,
+      "vibration_peak": 4.897753039509979,
+      "discharge_pressure": 4.0199773939000885,
+      "suction_pressure": 1.7744645695181371,
+      "flow_rate": 116.21271900517911,
+      "motor_current": 18.893444449534176,
+      "fluid_temp": 39.99426393495889
+    },
+    "anomaly": {
+      "anomaly_score": 0.5488,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.0977,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 53.2,
+      "subsystem_health": {
+        "bearing_front": 53.4,
+        "bearing_rear": 51.8,
+        "seal": 53.4,
+        "impeller": 54.0,
+        "casing": 53.0
+      },
+      "status": "warning",
+      "rul_hours": 33.0
+    }
+  },
+  {
+    "timestamp": 1774719377.6447375,
+    "mode": "normal",
+    "step": 20,
+    "sensors": {
+      "vibration_rms": 2.176973795660284,
+      "vibration_peak": 5.042842828095401,
+      "discharge_pressure": 4.325852756111324,
+      "suction_pressure": 1.82321883654793,
+      "flow_rate": 121.25028160101078,
+      "motor_current": 18.395739623541,
+      "fluid_temp": 44.16936346132558
+    },
+    "anomaly": {
+      "anomaly_score": 0.7499,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4998,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 73.4,
+      "subsystem_health": {
+        "bearing_front": 73.6,
+        "bearing_rear": 71.4,
+        "seal": 74.2,
+        "impeller": 74.5,
+        "casing": 72.9
+      },
+      "status": "healthy",
+      "rul_hours": 83.5
+    }
+  },
+  {
+    "timestamp": 1774719377.6578157,
+    "mode": "normal",
+    "step": 21,
+    "sensors": {
+      "vibration_rms": 2.0715139614566347,
+      "vibration_peak": 5.01404739621105,
+      "discharge_pressure": 4.388429942728708,
+      "suction_pressure": 1.8559291219134542,
+      "flow_rate": 121.6927542815558,
+      "motor_current": 19.34565177227276,
+      "fluid_temp": 42.87679240232321
+    },
+    "anomaly": {
+      "anomaly_score": 0.7016,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4032,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 68.6,
+      "subsystem_health": {
+        "bearing_front": 68.9,
+        "bearing_rear": 66.8,
+        "seal": 69.0,
+        "impeller": 69.2,
+        "casing": 69.3
+      },
+      "status": "warning",
+      "rul_hours": 71.5
+    }
+  },
+  {
+    "timestamp": 1774719377.6633708,
+    "mode": "normal",
+    "step": 22,
+    "sensors": {
+      "vibration_rms": 2.066282833370687,
+      "vibration_peak": 4.9164654171718984,
+      "discharge_pressure": 4.385392123896173,
+      "suction_pressure": 1.846593591760186,
+      "flow_rate": 114.34498459976378,
+      "motor_current": 19.60374656220102,
+      "fluid_temp": 41.240816632517394
+    },
+    "anomaly": {
+      "anomaly_score": 0.5842,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.1684,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 56.7,
+      "subsystem_health": {
+        "bearing_front": 57.2,
+        "bearing_rear": 55.5,
+        "seal": 56.6,
+        "impeller": 57.0,
+        "casing": 57.7
+      },
+      "status": "warning",
+      "rul_hours": 41.8
+    }
+  },
+  {
+    "timestamp": 1774719377.669525,
+    "mode": "normal",
+    "step": 23,
+    "sensors": {
+      "vibration_rms": 2.1479937256237114,
+      "vibration_peak": 4.760181432018287,
+      "discharge_pressure": 4.204744633838886,
+      "suction_pressure": 1.840633189480502,
+      "flow_rate": 124.6664514356292,
+      "motor_current": 19.27231887519746,
+      "fluid_temp": 40.48737409146069
+    },
+    "anomaly": {
+      "anomaly_score": 0.7119,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4238,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 69.8,
+      "subsystem_health": {
+        "bearing_front": 70.3,
+        "bearing_rear": 68.2,
+        "seal": 70.4,
+        "impeller": 70.0,
+        "casing": 69.7
+      },
+      "status": "warning",
+      "rul_hours": 74.5
+    }
+  },
+  {
+    "timestamp": 1774719377.6758938,
+    "mode": "normal",
+    "step": 24,
+    "sensors": {
+      "vibration_rms": 2.0950735793691075,
+      "vibration_peak": 4.830530682370222,
+      "discharge_pressure": 4.022626309510312,
+      "suction_pressure": 1.8100799641628817,
+      "flow_rate": 115.88308796772527,
+      "motor_current": 19.308590616624787,
+      "fluid_temp": 42.99020170619013
+    },
+    "anomaly": {
+      "anomaly_score": 0.6815,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.363,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 66.8,
+      "subsystem_health": {
+        "bearing_front": 67.6,
+        "bearing_rear": 65.6,
+        "seal": 66.6,
+        "impeller": 67.5,
+        "casing": 67.2
+      },
+      "status": "warning",
+      "rul_hours": 67.0
+    }
+  },
+  {
+    "timestamp": 1774719377.6822288,
+    "mode": "normal",
+    "step": 25,
+    "sensors": {
+      "vibration_rms": 2.1613136209586843,
+      "vibration_peak": 4.797001958746435,
+      "discharge_pressure": 4.290814253598179,
+      "suction_pressure": 1.7742791284832784,
+      "flow_rate": 118.78337483967437,
+      "motor_current": 17.52605003873445,
+      "fluid_temp": 42.34056081184741
+    },
+    "anomaly": {
+      "anomaly_score": 0.7588,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5176,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 74.7,
+      "subsystem_health": {
+        "bearing_front": 74.9,
+        "bearing_rear": 72.6,
+        "seal": 75.2,
+        "impeller": 75.4,
+        "casing": 75.6
+      },
+      "status": "healthy",
+      "rul_hours": 86.8
+    }
+  },
+  {
+    "timestamp": 1774719377.6878493,
+    "mode": "normal",
+    "step": 26,
+    "sensors": {
+      "vibration_rms": 2.087387125815044,
+      "vibration_peak": 4.83450496912848,
+      "discharge_pressure": 4.195850582096818,
+      "suction_pressure": 1.7391167841461945,
+      "flow_rate": 118.97006196306626,
+      "motor_current": 17.87427614941059,
+      "fluid_temp": 44.382077097211244
+    },
+    "anomaly": {
+      "anomaly_score": 0.7319,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4639,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 72.1,
+      "subsystem_health": {
+        "bearing_front": 72.7,
+        "bearing_rear": 70.5,
+        "seal": 73.0,
+        "impeller": 72.2,
+        "casing": 70.9
+      },
+      "status": "healthy",
+      "rul_hours": 80.2
+    }
+  },
+  {
+    "timestamp": 1774719377.6943653,
+    "mode": "normal",
+    "step": 27,
+    "sensors": {
+      "vibration_rms": 2.0145451720556493,
+      "vibration_peak": 4.3656311112236486,
+      "discharge_pressure": 4.245924723152839,
+      "suction_pressure": 1.7583876323505023,
+      "flow_rate": 119.8726594791161,
+      "motor_current": 19.466880885121196,
+      "fluid_temp": 42.44928397094195
+    },
+    "anomaly": {
+      "anomaly_score": 0.7106,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4213,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 69.4,
+      "subsystem_health": {
+        "bearing_front": 68.6,
+        "bearing_rear": 66.6,
+        "seal": 70.8,
+        "impeller": 70.5,
+        "casing": 70.6
+      },
+      "status": "warning",
+      "rul_hours": 73.5
+    }
+  },
+  {
+    "timestamp": 1774719377.701172,
+    "mode": "normal",
+    "step": 28,
+    "sensors": {
+      "vibration_rms": 2.12429980039024,
+      "vibration_peak": 4.8618011995515715,
+      "discharge_pressure": 4.215188311319316,
+      "suction_pressure": 1.7663345462785947,
+      "flow_rate": 117.57322585767504,
+      "motor_current": 17.79278848630517,
+      "fluid_temp": 41.350949984351246
+    },
+    "anomaly": {
+      "anomaly_score": 0.8194,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6387,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 80.8,
+      "subsystem_health": {
+        "bearing_front": 81.2,
+        "bearing_rear": 78.8,
+        "seal": 81.5,
+        "impeller": 81.2,
+        "casing": 81.3
+      },
+      "status": "healthy",
+      "rul_hours": 102.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7062447,
+    "mode": "normal",
+    "step": 29,
+    "sensors": {
+      "vibration_rms": 2.0640504752826456,
+      "vibration_peak": 4.850396082141407,
+      "discharge_pressure": 4.451665234221393,
+      "suction_pressure": 1.7829321897641794,
+      "flow_rate": 113.54820664309615,
+      "motor_current": 19.06003663790176,
+      "fluid_temp": 40.66908383961662
+    },
+    "anomaly": {
+      "anomaly_score": 0.526,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.052,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 51.0,
+      "subsystem_health": {
+        "bearing_front": 51.9,
+        "bearing_rear": 50.3,
+        "seal": 50.3,
+        "impeller": 51.5,
+        "casing": 51.3
+      },
+      "status": "warning",
+      "rul_hours": 27.5
+    }
+  },
+  {
+    "timestamp": 1774719377.711121,
+    "mode": "bearing_wear",
+    "step": 30,
+    "sensors": {
+      "vibration_rms": 2.0404411225345807,
+      "vibration_peak": 4.888662160107936,
+      "discharge_pressure": 4.428196982622487,
+      "suction_pressure": 1.8398151205021385,
+      "flow_rate": 119.40944039465272,
+      "motor_current": 18.046559348810206,
+      "fluid_temp": 40.993692334603786
+    },
+    "anomaly": {
+      "anomaly_score": 0.7114,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4229,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 69.8,
+      "subsystem_health": {
+        "bearing_front": 70.2,
+        "bearing_rear": 68.1,
+        "seal": 70.0,
+        "impeller": 70.5,
+        "casing": 70.2
+      },
+      "status": "warning",
+      "rul_hours": 74.5
+    }
+  },
+  {
+    "timestamp": 1774719377.716414,
+    "mode": "bearing_wear",
+    "step": 31,
+    "sensors": {
+      "vibration_rms": 2.1837343053422704,
+      "vibration_peak": 5.134492836455693,
+      "discharge_pressure": 4.0844225676113295,
+      "suction_pressure": 1.797716764389646,
+      "flow_rate": 114.74869725247855,
+      "motor_current": 18.869760585670512,
+      "fluid_temp": 40.13342758569929
+    },
+    "anomaly": {
+      "anomaly_score": 0.6574,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3148,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 63.9,
+      "subsystem_health": {
+        "bearing_front": 63.9,
+        "bearing_rear": 62.0,
+        "seal": 64.3,
+        "impeller": 65.0,
+        "casing": 64.0
+      },
+      "status": "warning",
+      "rul_hours": 59.8
+    }
+  },
+  {
+    "timestamp": 1774719377.7227852,
+    "mode": "bearing_wear",
+    "step": 32,
+    "sensors": {
+      "vibration_rms": 2.369431441180219,
+      "vibration_peak": 5.568074774105102,
+      "discharge_pressure": 4.270784852935981,
+      "suction_pressure": 1.765723050258177,
+      "flow_rate": 120.58355417136372,
+      "motor_current": 17.772019998481593,
+      "fluid_temp": 44.47609181966389
+    },
+    "anomaly": {
+      "anomaly_score": 0.475,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.05,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 44.9,
+      "subsystem_health": {
+        "bearing_front": 42.8,
+        "bearing_rear": 41.5,
+        "seal": 47.1,
+        "impeller": 47.0,
+        "casing": 45.1
+      },
+      "status": "warning",
+      "rul_hours": 12.2
+    }
+  },
+  {
+    "timestamp": 1774719377.7287638,
+    "mode": "bearing_wear",
+    "step": 33,
+    "sensors": {
+      "vibration_rms": 2.4572614284217553,
+      "vibration_peak": 5.906544236453837,
+      "discharge_pressure": 4.289977565183568,
+      "suction_pressure": 1.8067713313343965,
+      "flow_rate": 119.83597571154425,
+      "motor_current": 19.74046658668713,
+      "fluid_temp": 43.35017063643525
+    },
+    "anomaly": {
+      "anomaly_score": 0.4979,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.0042,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 46.6,
+      "subsystem_health": {
+        "bearing_front": 43.2,
+        "bearing_rear": 41.9,
+        "seal": 49.3,
+        "impeller": 49.7,
+        "casing": 48.5
+      },
+      "status": "warning",
+      "rul_hours": 16.5
+    }
+  },
+  {
+    "timestamp": 1774719377.7336442,
+    "mode": "bearing_wear",
+    "step": 34,
+    "sensors": {
+      "vibration_rms": 2.6610805842408216,
+      "vibration_peak": 5.985671010981576,
+      "discharge_pressure": 4.260346273922854,
+      "suction_pressure": 1.758847190439789,
+      "flow_rate": 121.386368984924,
+      "motor_current": 19.0858270980962,
+      "fluid_temp": 41.34539216311576
+    },
+    "anomaly": {
+      "anomaly_score": 0.6335,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.267,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 59.4,
+      "subsystem_health": {
+        "bearing_front": 55.3,
+        "bearing_rear": 53.6,
+        "seal": 62.8,
+        "impeller": 62.6,
+        "casing": 62.7
+      },
+      "status": "warning",
+      "rul_hours": 48.5
+    }
+  },
+  {
+    "timestamp": 1774719377.7382894,
+    "mode": "bearing_wear",
+    "step": 35,
+    "sensors": {
+      "vibration_rms": 2.5871708706825443,
+      "vibration_peak": 6.134148750744589,
+      "discharge_pressure": 4.128979471479218,
+      "suction_pressure": 1.8596239415115041,
+      "flow_rate": 124.96208142701765,
+      "motor_current": 18.608596357334534,
+      "fluid_temp": 42.93960629951933
+    },
+    "anomaly": {
+      "anomaly_score": 0.6001,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.2002,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 55.9,
+      "subsystem_health": {
+        "bearing_front": 52.3,
+        "bearing_rear": 50.8,
+        "seal": 58.8,
+        "impeller": 58.6,
+        "casing": 59.1
+      },
+      "status": "warning",
+      "rul_hours": 39.8
+    }
+  },
+  {
+    "timestamp": 1774719377.7433107,
+    "mode": "bearing_wear",
+    "step": 36,
+    "sensors": {
+      "vibration_rms": 2.9088878842428665,
+      "vibration_peak": 6.772374758554542,
+      "discharge_pressure": 4.200768822158881,
+      "suction_pressure": 1.8152004472109244,
+      "flow_rate": 115.04341661293795,
+      "motor_current": 19.47382847163016,
+      "fluid_temp": 45.48284628403547
+    },
+    "anomaly": {
+      "anomaly_score": 0.3471,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.3057,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 28.9,
+      "subsystem_health": {
+        "bearing_front": 22.3,
+        "bearing_rear": 21.6,
+        "seal": 33.9,
+        "impeller": 33.8,
+        "casing": 31.4
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7485042,
+    "mode": "bearing_wear",
+    "step": 37,
+    "sensors": {
+      "vibration_rms": 3.1316175404523388,
+      "vibration_peak": 6.879892226561878,
+      "discharge_pressure": 4.171028192013671,
+      "suction_pressure": 1.875338656604209,
+      "flow_rate": 115.70915284444116,
+      "motor_current": 19.412854734955577,
+      "fluid_temp": 43.583305484128985
+    },
+    "anomaly": {
+      "anomaly_score": 0.5281,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.0562,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 46.1,
+      "subsystem_health": {
+        "bearing_front": 38.4,
+        "bearing_rear": 37.2,
+        "seal": 52.0,
+        "impeller": 51.2,
+        "casing": 51.3
+      },
+      "status": "warning",
+      "rul_hours": 15.3
+    }
+  },
+  {
+    "timestamp": 1774719377.7539062,
+    "mode": "bearing_wear",
+    "step": 38,
+    "sensors": {
+      "vibration_rms": 3.011488516684498,
+      "vibration_peak": 7.338425986170691,
+      "discharge_pressure": 4.285429535497054,
+      "suction_pressure": 1.8102771077387139,
+      "flow_rate": 119.7563815751682,
+      "motor_current": 18.289514056347983,
+      "fluid_temp": 44.018384363717395
+    },
+    "anomaly": {
+      "anomaly_score": 0.5733,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.1467,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 50.9,
+      "subsystem_health": {
+        "bearing_front": 42.9,
+        "bearing_rear": 41.6,
+        "seal": 56.9,
+        "impeller": 57.2,
+        "casing": 55.4
+      },
+      "status": "warning",
+      "rul_hours": 27.2
+    }
+  },
+  {
+    "timestamp": 1774719377.7600276,
+    "mode": "bearing_wear",
+    "step": 39,
+    "sensors": {
+      "vibration_rms": 3.2037434734136747,
+      "vibration_peak": 7.910855977426926,
+      "discharge_pressure": 4.362780206774877,
+      "suction_pressure": 1.8018137582859566,
+      "flow_rate": 114.94788934860726,
+      "motor_current": 19.800129140224186,
+      "fluid_temp": 42.109691941261964
+    },
+    "anomaly": {
+      "anomaly_score": 0.4399,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.1202,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 35.9,
+      "subsystem_health": {
+        "bearing_front": 25.8,
+        "bearing_rear": 25.0,
+        "seal": 42.4,
+        "impeller": 43.3,
+        "casing": 43.9
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7663813,
+    "mode": "bearing_wear",
+    "step": 40,
+    "sensors": {
+      "vibration_rms": 3.4560753910422637,
+      "vibration_peak": 8.670113211323725,
+      "discharge_pressure": 4.3711533180800295,
+      "suction_pressure": 1.7630005811827145,
+      "flow_rate": 118.60783083048544,
+      "motor_current": 18.96434610732601,
+      "fluid_temp": 45.996935967260804
+    },
+    "anomaly": {
+      "anomaly_score": 0.3631,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.2738,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 26.6,
+      "subsystem_health": {
+        "bearing_front": 14.4,
+        "bearing_rear": 14.0,
+        "seal": 35.3,
+        "impeller": 35.6,
+        "casing": 32.5
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7730424,
+    "mode": "bearing_wear",
+    "step": 41,
+    "sensors": {
+      "vibration_rms": 3.3505650919461685,
+      "vibration_peak": 8.682071615099582,
+      "discharge_pressure": 4.187531100008063,
+      "suction_pressure": 1.8369904079955581,
+      "flow_rate": 119.08226921632865,
+      "motor_current": 19.59115348680094,
+      "fluid_temp": 47.966774727661054
+    },
+    "anomaly": {
+      "anomaly_score": 0.3781,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.2439,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 28.4,
+      "subsystem_health": {
+        "bearing_front": 16.4,
+        "bearing_rear": 15.9,
+        "seal": 37.6,
+        "impeller": 37.2,
+        "casing": 32.1
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7799852,
+    "mode": "bearing_wear",
+    "step": 42,
+    "sensors": {
+      "vibration_rms": 3.5099379856148616,
+      "vibration_peak": 8.996396167642736,
+      "discharge_pressure": 4.409543384440807,
+      "suction_pressure": 1.8014300689476992,
+      "flow_rate": 118.77086500149402,
+      "motor_current": 20.599106184296577,
+      "fluid_temp": 43.13372372478135
+    },
+    "anomaly": {
+      "anomaly_score": 0.3491,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.3018,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 24.7,
+      "subsystem_health": {
+        "bearing_front": 10.8,
+        "bearing_rear": 10.5,
+        "seal": 33.7,
+        "impeller": 34.7,
+        "casing": 33.8
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7849486,
+    "mode": "bearing_wear",
+    "step": 43,
+    "sensors": {
+      "vibration_rms": 3.636935395790062,
+      "vibration_peak": 9.018427746028099,
+      "discharge_pressure": 4.3772786766859975,
+      "suction_pressure": 1.800746564060696,
+      "flow_rate": 123.42249109454207,
+      "motor_current": 20.488880179133364,
+      "fluid_temp": 45.60145792405359
+    },
+    "anomaly": {
+      "anomaly_score": 0.2513,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4973,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 14.2,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 23.7,
+        "impeller": 24.7,
+        "casing": 21.7
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.789949,
+    "mode": "bearing_wear",
+    "step": 44,
+    "sensors": {
+      "vibration_rms": 3.823858098853776,
+      "vibration_peak": 10.11045863745304,
+      "discharge_pressure": 4.147660058905264,
+      "suction_pressure": 1.7161989163113298,
+      "flow_rate": 117.99500294135099,
+      "motor_current": 20.41216356567939,
+      "fluid_temp": 45.96142453940212
+    },
+    "anomaly": {
+      "anomaly_score": 0.254,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.492,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 14.4,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 24.8,
+        "impeller": 24.0,
+        "casing": 21.6
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.7947052,
+    "mode": "bearing_wear",
+    "step": 45,
+    "sensors": {
+      "vibration_rms": 3.806265715176732,
+      "vibration_peak": 9.457730644458406,
+      "discharge_pressure": 4.355794153306245,
+      "suction_pressure": 1.714456849320318,
+      "flow_rate": 116.87162572037107,
+      "motor_current": 20.842205888614426,
+      "fluid_temp": 46.36883634072097
+    },
+    "anomaly": {
+      "anomaly_score": 0.2056,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.5889,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 11.2,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 19.3,
+        "impeller": 19.0,
+        "casing": 16.4
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.799085,
+    "mode": "bearing_wear",
+    "step": 46,
+    "sensors": {
+      "vibration_rms": 3.9939136175092558,
+      "vibration_peak": 10.012513577075401,
+      "discharge_pressure": 4.249065951472104,
+      "suction_pressure": 1.8382705149546397,
+      "flow_rate": 123.35975644109597,
+      "motor_current": 20.354750074121288,
+      "fluid_temp": 47.307177762812586
+    },
+    "anomaly": {
+      "anomaly_score": 0.2956,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4087,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 16.8,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 28.8,
+        "impeller": 28.6,
+        "casing": 24.5
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8033538,
+    "mode": "bearing_wear",
+    "step": 47,
+    "sensors": {
+      "vibration_rms": 4.179430568018835,
+      "vibration_peak": 10.523059652736217,
+      "discharge_pressure": 4.467592506804202,
+      "suction_pressure": 1.7588844507490478,
+      "flow_rate": 120.87576141572677,
+      "motor_current": 18.511095426374002,
+      "fluid_temp": 48.260078643762945
+    },
+    "anomaly": {
+      "anomaly_score": 0.3664,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.2672,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 22.4,
+      "subsystem_health": {
+        "bearing_front": 4.1,
+        "bearing_rear": 4.0,
+        "seal": 35.2,
+        "impeller": 36.0,
+        "casing": 30.7
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.807633,
+    "mode": "bearing_wear",
+    "step": 48,
+    "sensors": {
+      "vibration_rms": 4.333767874534545,
+      "vibration_peak": 10.540100740978717,
+      "discharge_pressure": 4.250836211389556,
+      "suction_pressure": 1.8074483563571624,
+      "flow_rate": 120.17820983822398,
+      "motor_current": 20.07305141046811,
+      "fluid_temp": 45.71504754998118
+    },
+    "anomaly": {
+      "anomaly_score": 0.3161,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.3679,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 18.5,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 31.3,
+        "impeller": 31.5,
+        "casing": 28.1
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.815376,
+    "mode": "bearing_wear",
+    "step": 49,
+    "sensors": {
+      "vibration_rms": 4.468483810034675,
+      "vibration_peak": 11.006581796215828,
+      "discharge_pressure": 4.08363720730301,
+      "suction_pressure": 1.8138280048906648,
+      "flow_rate": 117.45003101063719,
+      "motor_current": 19.761620325125644,
+      "fluid_temp": 47.16000121686391
+    },
+    "anomaly": {
+      "anomaly_score": 0.2991,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4019,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 17.1,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 28.9,
+        "impeller": 29.4,
+        "casing": 25.0
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8197198,
+    "mode": "bearing_wear",
+    "step": 50,
+    "sensors": {
+      "vibration_rms": 4.418183327926283,
+      "vibration_peak": 11.409139147312995,
+      "discharge_pressure": 4.087046525320004,
+      "suction_pressure": 1.713225753135464,
+      "flow_rate": 116.07213684193574,
+      "motor_current": 20.99899962848885,
+      "fluid_temp": 47.268648721790406
+    },
+    "anomaly": {
+      "anomaly_score": 0.2233,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.5533,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 12.2,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 21.1,
+        "impeller": 20.6,
+        "casing": 17.3
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8239553,
+    "mode": "bearing_wear",
+    "step": 51,
+    "sensors": {
+      "vibration_rms": 4.611945287015134,
+      "vibration_peak": 11.936006368189833,
+      "discharge_pressure": 4.1291909575420185,
+      "suction_pressure": 1.8495068557061993,
+      "flow_rate": 120.28694861437444,
+      "motor_current": 21.930224736894512,
+      "fluid_temp": 46.58075676481978
+    },
+    "anomaly": {
+      "anomaly_score": 0.2514,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4972,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 14.4,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 24.8,
+        "impeller": 24.4,
+        "casing": 20.8
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.828165,
+    "mode": "bearing_wear",
+    "step": 52,
+    "sensors": {
+      "vibration_rms": 5.0732694728736805,
+      "vibration_peak": 11.920118272965807,
+      "discharge_pressure": 4.0841888203237495,
+      "suction_pressure": 1.7980512193715978,
+      "flow_rate": 117.19580780703967,
+      "motor_current": 20.072727183754104,
+      "fluid_temp": 46.85502251943467
+    },
+    "anomaly": {
+      "anomaly_score": 0.2629,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4741,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 14.9,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 25.3,
+        "impeller": 25.9,
+        "casing": 21.7
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8323832,
+    "mode": "bearing_wear",
+    "step": 53,
+    "sensors": {
+      "vibration_rms": 5.067238539702286,
+      "vibration_peak": 12.455650716632356,
+      "discharge_pressure": 4.286764928310813,
+      "suction_pressure": 1.7414028156775345,
+      "flow_rate": 115.83845676118312,
+      "motor_current": 20.870420925406645,
+      "fluid_temp": 49.5816951367943
+    },
+    "anomaly": {
+      "anomaly_score": 0.2374,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.5252,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 12.9,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 22.6,
+        "impeller": 22.4,
+        "casing": 16.5
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8363984,
+    "mode": "bearing_wear",
+    "step": 54,
+    "sensors": {
+      "vibration_rms": 4.7184472556786385,
+      "vibration_peak": 12.14861381147868,
+      "discharge_pressure": 4.010593726333933,
+      "suction_pressure": 1.8086479917814904,
+      "flow_rate": 117.30297728191081,
+      "motor_current": 19.11087617419197,
+      "fluid_temp": 47.57123126822419
+    },
+    "anomaly": {
+      "anomaly_score": 0.3398,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.3203,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 19.4,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 32.6,
+        "impeller": 33.5,
+        "casing": 28.7
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8405817,
+    "mode": "bearing_wear",
+    "step": 55,
+    "sensors": {
+      "vibration_rms": 5.129086100281345,
+      "vibration_peak": 13.520579912320583,
+      "discharge_pressure": 4.169390135671006,
+      "suction_pressure": 1.8142660148224,
+      "flow_rate": 123.21827593891423,
+      "motor_current": 20.06655212437988,
+      "fluid_temp": 47.89976910695426
+    },
+    "anomaly": {
+      "anomaly_score": 0.3108,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.3783,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 17.8,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 30.4,
+        "impeller": 30.5,
+        "casing": 25.5
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8447275,
+    "mode": "bearing_wear",
+    "step": 56,
+    "sensors": {
+      "vibration_rms": 5.238545611760617,
+      "vibration_peak": 13.578290874255082,
+      "discharge_pressure": 4.362139146986068,
+      "suction_pressure": 1.8657378844545547,
+      "flow_rate": 118.23918593529149,
+      "motor_current": 20.56581668628526,
+      "fluid_temp": 51.099531454356935
+    },
+    "anomaly": {
+      "anomaly_score": 0.2168,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.5664,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 11.6,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 20.6,
+        "impeller": 20.6,
+        "casing": 13.0
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8489122,
+    "mode": "bearing_wear",
+    "step": 57,
+    "sensors": {
+      "vibration_rms": 5.167720325289293,
+      "vibration_peak": 13.252762439967494,
+      "discharge_pressure": 4.211174516390809,
+      "suction_pressure": 1.872743254876213,
+      "flow_rate": 120.91274567826893,
+      "motor_current": 21.030262572229475,
+      "fluid_temp": 50.21480954544586
+    },
+    "anomaly": {
+      "anomaly_score": 0.2728,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4544,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 15.3,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 27.1,
+        "impeller": 26.2,
+        "casing": 19.5
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8530002,
+    "mode": "bearing_wear",
+    "step": 58,
+    "sensors": {
+      "vibration_rms": 5.312465341930789,
+      "vibration_peak": 14.116725291640844,
+      "discharge_pressure": 4.34721146887341,
+      "suction_pressure": 1.817895834477044,
+      "flow_rate": 119.85438770102984,
+      "motor_current": 20.800012412240545,
+      "fluid_temp": 48.89342673156012
+    },
+    "anomaly": {
+      "anomaly_score": 0.2405,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.519,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 13.5,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 23.3,
+        "impeller": 23.8,
+        "casing": 17.5
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8570664,
+    "mode": "bearing_wear",
+    "step": 59,
+    "sensors": {
+      "vibration_rms": 5.3653265702133925,
+      "vibration_peak": 14.86092896060315,
+      "discharge_pressure": 4.227486925412375,
+      "suction_pressure": 1.879040405953758,
+      "flow_rate": 125.64216799213652,
+      "motor_current": 21.86001339877464,
+      "fluid_temp": 47.37203584826049
+    },
+    "anomaly": {
+      "anomaly_score": 0.2546,
+      "is_anomaly": true,
+      "failure_mode": "bearing_wear",
+      "confidence": 0.4909,
+      "recommended_action": "Schedule bearing inspection within 48 hours"
+    },
+    "health": {
+      "overall_health": 14.1,
+      "subsystem_health": {
+        "bearing_front": 0.0,
+        "bearing_rear": 0.0,
+        "seal": 24.4,
+        "impeller": 23.7,
+        "casing": 20.3
+      },
+      "status": "critical",
+      "rul_hours": 0.0
+    }
+  },
+  {
+    "timestamp": 1774719377.861164,
+    "mode": "normal",
+    "step": 60,
+    "sensors": {
+      "vibration_rms": 2.137096461227578,
+      "vibration_peak": 4.770094138207687,
+      "discharge_pressure": 4.1519142498406305,
+      "suction_pressure": 1.7590130126444257,
+      "flow_rate": 112.2346980019312,
+      "motor_current": 18.283399796926204,
+      "fluid_temp": 43.88020944150584
+    },
+    "anomaly": {
+      "anomaly_score": 0.6732,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3465,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 65.8,
+      "subsystem_health": {
+        "bearing_front": 66.8,
+        "bearing_rear": 64.8,
+        "seal": 65.8,
+        "impeller": 65.7,
+        "casing": 65.5
+      },
+      "status": "warning",
+      "rul_hours": 64.5
+    }
+  },
+  {
+    "timestamp": 1774719377.8663433,
+    "mode": "normal",
+    "step": 61,
+    "sensors": {
+      "vibration_rms": 2.094867768914976,
+      "vibration_peak": 4.98026943207161,
+      "discharge_pressure": 4.233913582120741,
+      "suction_pressure": 1.7243634868553381,
+      "flow_rate": 115.73231849168525,
+      "motor_current": 18.999781881179203,
+      "fluid_temp": 43.84395259109653
+    },
+    "anomaly": {
+      "anomaly_score": 0.7474,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4948,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 73.2,
+      "subsystem_health": {
+        "bearing_front": 73.9,
+        "bearing_rear": 71.7,
+        "seal": 73.9,
+        "impeller": 73.2,
+        "casing": 73.0
+      },
+      "status": "healthy",
+      "rul_hours": 83.0
+    }
+  },
+  {
+    "timestamp": 1774719377.873415,
+    "mode": "normal",
+    "step": 62,
+    "sensors": {
+      "vibration_rms": 2.172932433283336,
+      "vibration_peak": 4.773507652393644,
+      "discharge_pressure": 4.052012228223582,
+      "suction_pressure": 1.8393922645425749,
+      "flow_rate": 118.83026828663623,
+      "motor_current": 18.300287919556087,
+      "fluid_temp": 44.56603513996215
+    },
+    "anomaly": {
+      "anomaly_score": 0.6773,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3546,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 66.4,
+      "subsystem_health": {
+        "bearing_front": 67.0,
+        "bearing_rear": 65.0,
+        "seal": 66.8,
+        "impeller": 67.0,
+        "casing": 65.3
+      },
+      "status": "warning",
+      "rul_hours": 66.0
+    }
+  },
+  {
+    "timestamp": 1774719377.8787203,
+    "mode": "normal",
+    "step": 63,
+    "sensors": {
+      "vibration_rms": 2.0413033566964964,
+      "vibration_peak": 4.807236542520255,
+      "discharge_pressure": 4.422745426456227,
+      "suction_pressure": 1.8652445449861128,
+      "flow_rate": 123.55165007186646,
+      "motor_current": 18.614072109087623,
+      "fluid_temp": 40.47463047816115
+    },
+    "anomaly": {
+      "anomaly_score": 0.6601,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3201,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 64.5,
+      "subsystem_health": {
+        "bearing_front": 65.5,
+        "bearing_rear": 63.5,
+        "seal": 64.4,
+        "impeller": 64.7,
+        "casing": 64.6
+      },
+      "status": "warning",
+      "rul_hours": 61.2
+    }
+  },
+  {
+    "timestamp": 1774719377.8848362,
+    "mode": "normal",
+    "step": 64,
+    "sensors": {
+      "vibration_rms": 2.0369719101133783,
+      "vibration_peak": 4.696358326844789,
+      "discharge_pressure": 3.98940703117996,
+      "suction_pressure": 1.8331127543038308,
+      "flow_rate": 123.41992416595228,
+      "motor_current": 19.07976930668193,
+      "fluid_temp": 43.5702346667265
+    },
+    "anomaly": {
+      "anomaly_score": 0.6625,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.325,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 64.6,
+      "subsystem_health": {
+        "bearing_front": 65.2,
+        "bearing_rear": 63.2,
+        "seal": 64.7,
+        "impeller": 65.4,
+        "casing": 64.8
+      },
+      "status": "warning",
+      "rul_hours": 61.5
+    }
+  },
+  {
+    "timestamp": 1774719377.8898814,
+    "mode": "normal",
+    "step": 65,
+    "sensors": {
+      "vibration_rms": 2.1040025705217675,
+      "vibration_peak": 4.755484091994517,
+      "discharge_pressure": 4.1108444531068375,
+      "suction_pressure": 1.817648490969862,
+      "flow_rate": 124.9096663543396,
+      "motor_current": 19.544839306690086,
+      "fluid_temp": 41.69823774306087
+    },
+    "anomaly": {
+      "anomaly_score": 0.7183,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4365,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 70.5,
+      "subsystem_health": {
+        "bearing_front": 71.1,
+        "bearing_rear": 69.0,
+        "seal": 70.6,
+        "impeller": 70.9,
+        "casing": 71.5
+      },
+      "status": "healthy",
+      "rul_hours": 76.2
+    }
+  },
+  {
+    "timestamp": 1774719377.8943636,
+    "mode": "normal",
+    "step": 66,
+    "sensors": {
+      "vibration_rms": 2.094672871257615,
+      "vibration_peak": 4.91670974904854,
+      "discharge_pressure": 4.293927550854959,
+      "suction_pressure": 1.886867720474004,
+      "flow_rate": 117.11994058036612,
+      "motor_current": 18.159293292812286,
+      "fluid_temp": 41.4306282784399
+    },
+    "anomaly": {
+      "anomaly_score": 0.8667,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7334,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 85.3,
+      "subsystem_health": {
+        "bearing_front": 86.1,
+        "bearing_rear": 83.5,
+        "seal": 85.7,
+        "impeller": 85.1,
+        "casing": 86.1
+      },
+      "status": "healthy",
+      "rul_hours": 113.2
+    }
+  },
+  {
+    "timestamp": 1774719377.898666,
+    "mode": "normal",
+    "step": 67,
+    "sensors": {
+      "vibration_rms": 2.1120689524806187,
+      "vibration_peak": 4.756366896495253,
+      "discharge_pressure": 4.0671311671534625,
+      "suction_pressure": 1.8182467123919532,
+      "flow_rate": 113.24755472675031,
+      "motor_current": 19.105526549414726,
+      "fluid_temp": 42.919443219847416
+    },
+    "anomaly": {
+      "anomaly_score": 0.6862,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3724,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 67.1,
+      "subsystem_health": {
+        "bearing_front": 68.1,
+        "bearing_rear": 66.0,
+        "seal": 66.9,
+        "impeller": 67.5,
+        "casing": 67.7
+      },
+      "status": "warning",
+      "rul_hours": 67.7
+    }
+  },
+  {
+    "timestamp": 1774719377.9036133,
+    "mode": "normal",
+    "step": 68,
+    "sensors": {
+      "vibration_rms": 2.220566422882511,
+      "vibration_peak": 4.829626090365072,
+      "discharge_pressure": 4.113041007878777,
+      "suction_pressure": 1.799657394283393,
+      "flow_rate": 119.39665767237858,
+      "motor_current": 18.963857279598038,
+      "fluid_temp": 42.745745656832
+    },
+    "anomaly": {
+      "anomaly_score": 0.7455,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4909,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 73.4,
+      "subsystem_health": {
+        "bearing_front": 73.3,
+        "bearing_rear": 71.1,
+        "seal": 74.0,
+        "impeller": 74.5,
+        "casing": 73.8
+      },
+      "status": "healthy",
+      "rul_hours": 83.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9085255,
+    "mode": "normal",
+    "step": 69,
+    "sensors": {
+      "vibration_rms": 2.1676412260790734,
+      "vibration_peak": 4.794808189415097,
+      "discharge_pressure": 4.319818196542982,
+      "suction_pressure": 1.8449534924301398,
+      "flow_rate": 120.06630196495178,
+      "motor_current": 17.662996082593203,
+      "fluid_temp": 43.67810133781647
+    },
+    "anomaly": {
+      "anomaly_score": 0.6934,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3868,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 68.1,
+      "subsystem_health": {
+        "bearing_front": 68.4,
+        "bearing_rear": 66.3,
+        "seal": 68.8,
+        "impeller": 68.7,
+        "casing": 67.7
+      },
+      "status": "warning",
+      "rul_hours": 70.2
+    }
+  },
+  {
+    "timestamp": 1774719377.912968,
+    "mode": "normal",
+    "step": 70,
+    "sensors": {
+      "vibration_rms": 1.9338439868407153,
+      "vibration_peak": 4.758229172648617,
+      "discharge_pressure": 4.143183716638715,
+      "suction_pressure": 1.9109866908364093,
+      "flow_rate": 113.19561203572887,
+      "motor_current": 18.786543819894536,
+      "fluid_temp": 41.67544388113747
+    },
+    "anomaly": {
+      "anomaly_score": 0.5316,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.0631,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 51.3,
+      "subsystem_health": {
+        "bearing_front": 51.6,
+        "bearing_rear": 50.1,
+        "seal": 51.8,
+        "impeller": 50.8,
+        "casing": 52.9
+      },
+      "status": "warning",
+      "rul_hours": 28.2
+    }
+  },
+  {
+    "timestamp": 1774719377.9173865,
+    "mode": "normal",
+    "step": 71,
+    "sensors": {
+      "vibration_rms": 2.1826295979537473,
+      "vibration_peak": 4.86309127256927,
+      "discharge_pressure": 4.127904176419077,
+      "suction_pressure": 1.7669916597949495,
+      "flow_rate": 123.85948387260369,
+      "motor_current": 18.98870297694399,
+      "fluid_temp": 43.80127672735926
+    },
+    "anomaly": {
+      "anomaly_score": 0.7256,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4511,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 71.0,
+      "subsystem_health": {
+        "bearing_front": 71.5,
+        "bearing_rear": 69.3,
+        "seal": 71.6,
+        "impeller": 71.6,
+        "casing": 70.8
+      },
+      "status": "healthy",
+      "rul_hours": 77.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9217393,
+    "mode": "normal",
+    "step": 72,
+    "sensors": {
+      "vibration_rms": 2.0935191064156577,
+      "vibration_peak": 4.837981935437587,
+      "discharge_pressure": 4.301946864865565,
+      "suction_pressure": 1.6964913030529076,
+      "flow_rate": 114.42446384007854,
+      "motor_current": 18.918522189869023,
+      "fluid_temp": 40.90609601756674
+    },
+    "anomaly": {
+      "anomaly_score": 0.7665,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5329,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 75.1,
+      "subsystem_health": {
+        "bearing_front": 76.3,
+        "bearing_rear": 74.0,
+        "seal": 75.2,
+        "impeller": 74.5,
+        "casing": 75.6
+      },
+      "status": "healthy",
+      "rul_hours": 87.7
+    }
+  },
+  {
+    "timestamp": 1774719377.9260259,
+    "mode": "normal",
+    "step": 73,
+    "sensors": {
+      "vibration_rms": 2.1304445332809814,
+      "vibration_peak": 4.552531305505832,
+      "discharge_pressure": 4.573419473171967,
+      "suction_pressure": 1.7690717595219376,
+      "flow_rate": 122.67850642156101,
+      "motor_current": 19.583533496253775,
+      "fluid_temp": 43.1948619814775
+    },
+    "anomaly": {
+      "anomaly_score": 0.5649,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.1299,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 54.6,
+      "subsystem_health": {
+        "bearing_front": 55.0,
+        "bearing_rear": 53.3,
+        "seal": 54.3,
+        "impeller": 55.7,
+        "casing": 55.4
+      },
+      "status": "warning",
+      "rul_hours": 36.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9303334,
+    "mode": "normal",
+    "step": 74,
+    "sensors": {
+      "vibration_rms": 2.1848675239308353,
+      "vibration_peak": 4.6972409676574385,
+      "discharge_pressure": 4.150558716034593,
+      "suction_pressure": 1.7978734743913234,
+      "flow_rate": 123.52367858290103,
+      "motor_current": 18.89910287973128,
+      "fluid_temp": 41.11652820317027
+    },
+    "anomaly": {
+      "anomaly_score": 0.7953,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5906,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 78.2,
+      "subsystem_health": {
+        "bearing_front": 78.4,
+        "bearing_rear": 76.0,
+        "seal": 78.7,
+        "impeller": 79.0,
+        "casing": 78.7
+      },
+      "status": "healthy",
+      "rul_hours": 95.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9349027,
+    "mode": "normal",
+    "step": 75,
+    "sensors": {
+      "vibration_rms": 2.0806477434776736,
+      "vibration_peak": 4.99838184746975,
+      "discharge_pressure": 4.408914548632467,
+      "suction_pressure": 1.821374452358195,
+      "flow_rate": 123.57918966357795,
+      "motor_current": 18.231755940048636,
+      "fluid_temp": 40.1237475203835
+    },
+    "anomaly": {
+      "anomaly_score": 0.7126,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4252,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 69.7,
+      "subsystem_health": {
+        "bearing_front": 70.4,
+        "bearing_rear": 68.3,
+        "seal": 69.7,
+        "impeller": 70.5,
+        "casing": 69.5
+      },
+      "status": "warning",
+      "rul_hours": 74.2
+    }
+  },
+  {
+    "timestamp": 1774719377.9393322,
+    "mode": "normal",
+    "step": 76,
+    "sensors": {
+      "vibration_rms": 2.0698764774753897,
+      "vibration_peak": 4.93654861559069,
+      "discharge_pressure": 3.991104003161897,
+      "suction_pressure": 1.7264104721312215,
+      "flow_rate": 116.74263538169158,
+      "motor_current": 17.897958060859146,
+      "fluid_temp": 43.813902442651354
+    },
+    "anomaly": {
+      "anomaly_score": 0.6503,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3007,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 63.4,
+      "subsystem_health": {
+        "bearing_front": 64.1,
+        "bearing_rear": 62.2,
+        "seal": 63.5,
+        "impeller": 63.6,
+        "casing": 63.3
+      },
+      "status": "warning",
+      "rul_hours": 58.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9436982,
+    "mode": "normal",
+    "step": 77,
+    "sensors": {
+      "vibration_rms": 2.066978901402142,
+      "vibration_peak": 4.859895828433661,
+      "discharge_pressure": 4.253497285173023,
+      "suction_pressure": 1.7996938867067334,
+      "flow_rate": 117.23410643973617,
+      "motor_current": 17.37480863873175,
+      "fluid_temp": 43.369223449309146
+    },
+    "anomaly": {
+      "anomaly_score": 0.7134,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4268,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 70.1,
+      "subsystem_health": {
+        "bearing_front": 70.3,
+        "bearing_rear": 68.2,
+        "seal": 70.6,
+        "impeller": 71.0,
+        "casing": 70.0
+      },
+      "status": "healthy",
+      "rul_hours": 75.2
+    }
+  },
+  {
+    "timestamp": 1774719377.9497879,
+    "mode": "normal",
+    "step": 78,
+    "sensors": {
+      "vibration_rms": 2.1158355018565858,
+      "vibration_peak": 5.083720694673745,
+      "discharge_pressure": 4.476143388903761,
+      "suction_pressure": 1.6840215730718355,
+      "flow_rate": 120.43556577347756,
+      "motor_current": 18.607061551024117,
+      "fluid_temp": 41.50726817322042
+    },
+    "anomaly": {
+      "anomaly_score": 0.7427,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.4853,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 72.7,
+      "subsystem_health": {
+        "bearing_front": 73.3,
+        "bearing_rear": 71.1,
+        "seal": 72.9,
+        "impeller": 72.7,
+        "casing": 73.8
+      },
+      "status": "healthy",
+      "rul_hours": 81.8
+    }
+  },
+  {
+    "timestamp": 1774719377.953919,
+    "mode": "normal",
+    "step": 79,
+    "sensors": {
+      "vibration_rms": 2.072910919584123,
+      "vibration_peak": 4.809124782757881,
+      "discharge_pressure": 4.040814359162306,
+      "suction_pressure": 1.800134719170181,
+      "flow_rate": 123.23388884486309,
+      "motor_current": 18.22543867584986,
+      "fluid_temp": 41.89327021823384
+    },
+    "anomaly": {
+      "anomaly_score": 0.8567,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7135,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 84.5,
+      "subsystem_health": {
+        "bearing_front": 85.3,
+        "bearing_rear": 82.7,
+        "seal": 84.4,
+        "impeller": 85.2,
+        "casing": 85.6
+      },
+      "status": "healthy",
+      "rul_hours": 111.2
+    }
+  },
+  {
+    "timestamp": 1774719377.9585273,
+    "mode": "normal",
+    "step": 80,
+    "sensors": {
+      "vibration_rms": 2.015214019957875,
+      "vibration_peak": 4.845875627324166,
+      "discharge_pressure": 4.08825553031485,
+      "suction_pressure": 1.7516020142599111,
+      "flow_rate": 121.20013087978553,
+      "motor_current": 18.417322738341365,
+      "fluid_temp": 42.88236482571154
+    },
+    "anomaly": {
+      "anomaly_score": 0.8154,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6309,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 80.3,
+      "subsystem_health": {
+        "bearing_front": 80.7,
+        "bearing_rear": 78.3,
+        "seal": 80.8,
+        "impeller": 80.7,
+        "casing": 80.7
+      },
+      "status": "healthy",
+      "rul_hours": 100.8
+    }
+  },
+  {
+    "timestamp": 1774719377.9629655,
+    "mode": "normal",
+    "step": 81,
+    "sensors": {
+      "vibration_rms": 2.095845274389761,
+      "vibration_peak": 4.724339129243999,
+      "discharge_pressure": 4.0705876923077655,
+      "suction_pressure": 1.8304970288875106,
+      "flow_rate": 121.10009752792159,
+      "motor_current": 18.00939233441003,
+      "fluid_temp": 41.335035267935694
+    },
+    "anomaly": {
+      "anomaly_score": 0.8712,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7424,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 86.0,
+      "subsystem_health": {
+        "bearing_front": 86.6,
+        "bearing_rear": 84.0,
+        "seal": 86.3,
+        "impeller": 86.6,
+        "casing": 86.5
+      },
+      "status": "healthy",
+      "rul_hours": 115.0
+    }
+  },
+  {
+    "timestamp": 1774719377.9673057,
+    "mode": "normal",
+    "step": 82,
+    "sensors": {
+      "vibration_rms": 2.0330620551911944,
+      "vibration_peak": 4.727037621231776,
+      "discharge_pressure": 4.32770839286164,
+      "suction_pressure": 1.7428368567144128,
+      "flow_rate": 121.74585057365593,
+      "motor_current": 19.923109706017335,
+      "fluid_temp": 45.83538149741434
+    },
+    "anomaly": {
+      "anomaly_score": 0.4264,
+      "is_anomaly": true,
+      "failure_mode": "degraded",
+      "confidence": 0.1472,
+      "recommended_action": "Monitor closely \u2014 schedule preventive maintenance"
+    },
+    "health": {
+      "overall_health": 41.0,
+      "subsystem_health": {
+        "bearing_front": 41.1,
+        "bearing_rear": 39.9,
+        "seal": 41.7,
+        "impeller": 41.6,
+        "casing": 39.0
+      },
+      "status": "warning",
+      "rul_hours": 2.5
+    }
+  },
+  {
+    "timestamp": 1774719377.971489,
+    "mode": "normal",
+    "step": 83,
+    "sensors": {
+      "vibration_rms": 2.089114612939479,
+      "vibration_peak": 4.710842399088594,
+      "discharge_pressure": 4.245985231082263,
+      "suction_pressure": 1.8186156021648479,
+      "flow_rate": 119.34704687841311,
+      "motor_current": 18.628037105479198,
+      "fluid_temp": 43.201902766079
+    },
+    "anomaly": {
+      "anomaly_score": 0.8761,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.7522,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 86.6,
+      "subsystem_health": {
+        "bearing_front": 87.2,
+        "bearing_rear": 84.6,
+        "seal": 87.3,
+        "impeller": 87.3,
+        "casing": 86.5
+      },
+      "status": "healthy",
+      "rul_hours": 116.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9761076,
+    "mode": "normal",
+    "step": 84,
+    "sensors": {
+      "vibration_rms": 2.0097053322722913,
+      "vibration_peak": 4.792806148910321,
+      "discharge_pressure": 4.263067422267976,
+      "suction_pressure": 1.7625689660402661,
+      "flow_rate": 123.65000035094785,
+      "motor_current": 17.620181044939436,
+      "fluid_temp": 42.44698052456321
+    },
+    "anomaly": {
+      "anomaly_score": 0.6755,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3509,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 66.2,
+      "subsystem_health": {
+        "bearing_front": 66.4,
+        "bearing_rear": 64.4,
+        "seal": 66.6,
+        "impeller": 66.6,
+        "casing": 67.1
+      },
+      "status": "warning",
+      "rul_hours": 65.5
+    }
+  },
+  {
+    "timestamp": 1774719377.9805229,
+    "mode": "normal",
+    "step": 85,
+    "sensors": {
+      "vibration_rms": 2.1472763816360776,
+      "vibration_peak": 4.8135525324353665,
+      "discharge_pressure": 4.301744123354634,
+      "suction_pressure": 1.8394882091620686,
+      "flow_rate": 116.0546670278935,
+      "motor_current": 18.057931031756404,
+      "fluid_temp": 41.66389697282905
+    },
+    "anomaly": {
+      "anomaly_score": 0.8282,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6564,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 81.5,
+      "subsystem_health": {
+        "bearing_front": 82.2,
+        "bearing_rear": 79.7,
+        "seal": 81.7,
+        "impeller": 81.8,
+        "casing": 82.5
+      },
+      "status": "healthy",
+      "rul_hours": 103.8
+    }
+  },
+  {
+    "timestamp": 1774719377.984955,
+    "mode": "normal",
+    "step": 86,
+    "sensors": {
+      "vibration_rms": 2.1104513896871544,
+      "vibration_peak": 4.928863096839584,
+      "discharge_pressure": 4.084714624715267,
+      "suction_pressure": 1.8845006238589312,
+      "flow_rate": 124.21028779618811,
+      "motor_current": 17.43087543529051,
+      "fluid_temp": 43.15794894630447
+    },
+    "anomaly": {
+      "anomaly_score": 0.6922,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.3844,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 67.6,
+      "subsystem_health": {
+        "bearing_front": 68.2,
+        "bearing_rear": 66.1,
+        "seal": 68.0,
+        "impeller": 67.5,
+        "casing": 68.1
+      },
+      "status": "warning",
+      "rul_hours": 69.0
+    }
+  },
+  {
+    "timestamp": 1774719377.9903643,
+    "mode": "normal",
+    "step": 87,
+    "sensors": {
+      "vibration_rms": 2.1141330386571564,
+      "vibration_peak": 4.763152043907922,
+      "discharge_pressure": 3.975123176454536,
+      "suction_pressure": 1.7269002247589356,
+      "flow_rate": 114.83109570802071,
+      "motor_current": 18.403707337410218,
+      "fluid_temp": 42.77429348821047
+    },
+    "anomaly": {
+      "anomaly_score": 0.7632,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5263,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 74.8,
+      "subsystem_health": {
+        "bearing_front": 76.1,
+        "bearing_rear": 73.8,
+        "seal": 74.4,
+        "impeller": 74.7,
+        "casing": 75.6
+      },
+      "status": "healthy",
+      "rul_hours": 87.0
+    }
+  },
+  {
+    "timestamp": 1774719377.9949524,
+    "mode": "normal",
+    "step": 88,
+    "sensors": {
+      "vibration_rms": 2.180113579049948,
+      "vibration_peak": 4.8397041307272595,
+      "discharge_pressure": 4.318129689937476,
+      "suction_pressure": 1.8125744483846247,
+      "flow_rate": 125.7721359683247,
+      "motor_current": 18.445015336692396,
+      "fluid_temp": 43.382189995488424
+    },
+    "anomaly": {
+      "anomaly_score": 0.7551,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.5101,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 74.0,
+      "subsystem_health": {
+        "bearing_front": 74.8,
+        "bearing_rear": 72.5,
+        "seal": 74.0,
+        "impeller": 74.6,
+        "casing": 74.2
+      },
+      "status": "healthy",
+      "rul_hours": 85.0
+    }
+  },
+  {
+    "timestamp": 1774719377.999261,
+    "mode": "normal",
+    "step": 89,
+    "sensors": {
+      "vibration_rms": 2.0479846374456097,
+      "vibration_peak": 5.10416081864421,
+      "discharge_pressure": 4.064372794915732,
+      "suction_pressure": 1.881610603861441,
+      "flow_rate": 118.5242264265141,
+      "motor_current": 19.066958245210778,
+      "fluid_temp": 41.77257720545379
+    },
+    "anomaly": {
+      "anomaly_score": 0.8155,
+      "is_anomaly": false,
+      "failure_mode": "none",
+      "confidence": 0.6311,
+      "recommended_action": "Normal operation \u2014 no action required"
+    },
+    "health": {
+      "overall_health": 79.9,
+      "subsystem_health": {
+        "bearing_front": 80.0,
+        "bearing_rear": 77.6,
+        "seal": 80.7,
+        "impeller": 80.3,
+        "casing": 81.3
+      },
+      "status": "healthy",
+      "rul_hours": 99.8
+    }
+  }
+]
