@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smart Pump Digital Twin — Trimiti Innovations P-09</title>
+  <title>Smart Pump Digital Twin  Trimiti Innovations P-09</title>
   <meta name="description" content="Real-time pump health monitoring dashboard with ML anomaly detection" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
 
   <style>
-    /* ── Design System ──────────────────────────────────────── */
+    /*  Design System  */
     :root {
       --bg:           #090c10;
       --surface:      #0e1318;
@@ -52,7 +52,7 @@
       min-height: 100vh;
     }
 
-    /* Scanline overlay — the memorable anchor */
+    /* Scanline overlay  the memorable anchor */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -67,7 +67,7 @@
       z-index: 9999;
     }
 
-    /* ── Layout ─────────────────────────────────────────────── */
+    /*  Layout  */
     .layout {
       display: grid;
       grid-template-rows: 56px 1fr;
@@ -80,7 +80,7 @@
       background: var(--border);
     }
 
-    /* ── Header ─────────────────────────────────────────────── */
+    /*  Header  */
     header {
       grid-area: header;
       background: var(--surface);
@@ -142,7 +142,7 @@
       margin-left: 16px;
     }
 
-    /* ── Sidebar ─────────────────────────────────────────────── */
+    /*  Sidebar  */
     .sidebar {
       grid-area: sidebar;
       background: var(--surface);
@@ -266,7 +266,7 @@
     .sensor-row.alert .sensor-bar { background: var(--amber); }
     .sensor-row.critical .sensor-bar { background: var(--red); }
 
-    /* ── Main ────────────────────────────────────────────────── */
+    /*  Main  */
     .main {
       grid-area: main;
       background: var(--surface);
@@ -354,7 +354,7 @@
       backdrop-filter: blur(8px);
     }
 
-    /* ── Right Panel ─────────────────────────────────────────── */
+    /*  Right Panel  */
     .panel {
       grid-area: panel;
       background: var(--surface);
@@ -549,7 +549,7 @@
       backdrop-filter: blur(8px);
     }
 
-    /* ── Right Panel ────────────────────────────────────────────────── */
+    /*  Right Panel  */
     .panel {
       grid-area: panel;
       background: var(--surface);
@@ -702,7 +702,7 @@
     .sparkline-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); margin-bottom: 6px; letter-spacing: .06em; }
     #sparkline { width: 100%; height: 50px; }
 
-    /* ── Utilities ────────────────────────────────────────────────── */
+    /*  Utilities  */
     .status-healthy { color: var(--green); }
     .status-warning { color: var(--amber); }
     .status-critical { color: var(--red); }
@@ -712,7 +712,7 @@
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
-    /* ── Alert Banner ───────────────────────────────────────────────── */
+    /*  Alert Banner  */
     .alert-banner {
       position: fixed;
       top: 56px; left: 0; right: 0;
@@ -756,7 +756,7 @@
       transition: color var(--transition);
     }
     .banner-close:hover { color: var(--red); }
-    /* ── WS Latency Badge ─────────────────────────────────────────── */
+    /*  WS Latency Badge  */
     .latency-badge {
       font-family: var(--mono);
       font-size: 10px;
@@ -772,7 +772,7 @@
     .latency-badge.crit { color: var(--red);   border-color: var(--red); }
 
 
-    /* ── Event Log (#2) ───────────────────────────────────────────────── */
+    /*  Event Log (#2)  */
     .event-log-header { font-family:var(--display); font-size:10px; font-weight:700;
       letter-spacing:.18em; color:var(--text-muted); text-transform:uppercase;
       padding:14px 12px 6px; }
@@ -790,7 +790,7 @@
     .log-entry.ev-crit { border-left-color:var(--red); }
     .log-entry.ev-crit .log-msg { color:var(--red); }
 
-    /* ── Sensor Chart (#1) ─────────────────────────────────────────────── */
+    /*  Sensor Chart (#1)  */
     .chart-wrap { padding:0 12px 12px; }
     .chart-header { display:flex; align-items:center; gap:8px; padding:10px 0 6px;
       font-family:var(--display); font-size:10px; font-weight:700;
@@ -800,7 +800,7 @@
       padding:2px 6px; border-radius:var(--r); cursor:pointer; flex:1; }
     .chart-canvas-wrap { position:relative; height:100px; }
 
-    /* ── Dual Arc Gauges (#3) ──────────────────────────────────────────── */
+    /*  Dual Arc Gauges (#3)  */
     .dual-arc-row   { display:flex; gap:8px; padding:12px 12px 0; }
     .arc-gauge-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
       background:var(--surface-hi); border:1px solid var(--border); border-radius:var(--r-lg); padding:10px 8px; }
@@ -813,7 +813,7 @@
     .arc-label { font-family:var(--display); font-size:9px; font-weight:700;
       letter-spacing:.15em; color:var(--text-muted); text-transform:uppercase; }
 
-    /* ── Maintenance Countdown (#10) ──────────────────────────────────── */
+    /*  Maintenance Countdown (#10)  */
     .maint-wrap  { padding:12px; display:flex; flex-direction:column; align-items:center; gap:6px; }
     .maint-title { font-family:var(--display); font-size:10px; font-weight:700;
       letter-spacing:.15em; color:var(--text-muted); text-transform:uppercase; }
@@ -826,7 +826,7 @@
       stroke-dasharray:163; stroke-dashoffset:0;
       transition:stroke-dashoffset 1s ease, stroke 1s ease; }
 
-    /* ── Settings Drawer (#5) ─────────────────────────────────────────── */
+    /*  Settings Drawer (#5)  */
     .settings-gear { background:none; border:none; cursor:pointer; font-size:18px;
       color:var(--text-dim); padding:4px 8px; border-radius:var(--r);
       transition:color var(--transition); line-height:1; }
@@ -861,7 +861,7 @@
       transition:background 300ms ease; }
     .stg-apply:hover { background:linear-gradient(135deg,#007090,#004060); }
 
-    /* ── Correlation Heatmap (#9) ──────────────────────────────────────── */
+    /*  Correlation Heatmap (#9)  */
     .tab-bar  { display:flex; gap:0; border-bottom:1px solid var(--border); }
     .tab-btn  { flex:1; padding:8px 0; background:none; border:none; cursor:pointer;
       font-family:var(--display); font-size:11px; font-weight:700; letter-spacing:.12em;
@@ -886,22 +886,22 @@
 </head>
 <body>
 
-<!-- ── Alert Banner (fixed, below header) ── -->
+<!--  Alert Banner (fixed, below header)  -->
 <div class="alert-banner" id="alertBanner">
-  <span class="banner-icon" id="bannerIcon">🚨</span>
+  <span class="banner-icon" id="bannerIcon"></span>
   <span class="banner-mode" id="bannerMode">FAULT DETECTED</span>
   <div class="banner-sep"></div>
   <span class="banner-action" id="bannerAction">--</span>
-  <button class="banner-close" onclick="document.getElementById('alertBanner').classList.remove('visible')">×</button>
+  <button class="banner-close" onclick="document.getElementById('alertBanner').classList.remove('visible')"></button>
 </div>
 
 <div class="layout">
 
-  <!-- ── Header ── -->
+  <!--  Header  -->
   <header>
     <div class="logo-mark">Hydro<span>X</span></div>
     <div class="header-divider"></div>
-    <div class="header-meta">TRIMITI INNOVATIONS · P-09 · DIGITAL TWIN</div>
+    <div class="header-meta">TRIMITI INNOVATIONS  P-09  DIGITAL TWIN</div>
     <div class="ws-status">
       <div class="ws-dot" id="wsDot"></div>
       <span id="wsLabel">CONNECTING</span>
@@ -911,21 +911,21 @@
     <div class="header-timestamp" id="headerTs">--:--:--</div>
   </header>
 
-  <!-- ── Sidebar ── -->
+  <!--  Sidebar  -->
   <aside class="sidebar">
     <div class="panel-label">Scenario Control</div>
     <div class="scenario-grid">
       <button class="scenario-btn active" data-mode="normal" id="btn-normal">
-        <span class="scenario-icon">🟢</span>Normal
+        <span class="scenario-icon"></span>Normal
       </button>
       <button class="scenario-btn" data-mode="cavitation" id="btn-cavitation">
-        <span class="scenario-icon">💥</span>Cavitation
+        <span class="scenario-icon"></span>Cavitation
       </button>
       <button class="scenario-btn" data-mode="bearing_wear" id="btn-bearing_wear">
-        <span class="scenario-icon">⚙️</span>Bearing Wear
+        <span class="scenario-icon"></span>Bearing Wear
       </button>
       <button class="scenario-btn" data-mode="dry_run" id="btn-dry_run">
-        <span class="scenario-icon">🏜️</span>Dry Run
+        <span class="scenario-icon"></span>Dry Run
       </button>
     </div>
 
@@ -940,7 +940,7 @@
     <div class="event-log" id="eventLog"></div>
   </aside>
 
-  <!-- ── Main (Three.js) ── -->
+  <!--  Main (Three.js)  -->
   <main class="main">
         <!-- Tab bar (#9) -->
     <div class="tab-bar">
@@ -958,23 +958,23 @@
     <div class="sensor-strip">
       <div class="strip-cell" id="strip-vib">
         <div class="strip-cell-label">Vibration RMS</div>
-        <div class="strip-cell-val">—</div>
+        <div class="strip-cell-val"></div>
       </div>
       <div class="strip-cell" id="strip-flow">
         <div class="strip-cell-label">Flow Rate</div>
-        <div class="strip-cell-val">—</div>
+        <div class="strip-cell-val"></div>
       </div>
       <div class="strip-cell" id="strip-suct">
         <div class="strip-cell-label">Suction Press.</div>
-        <div class="strip-cell-val">—</div>
+        <div class="strip-cell-val"></div>
       </div>
       <div class="strip-cell" id="strip-disc">
         <div class="strip-cell-label">Discharge Press.</div>
-        <div class="strip-cell-val">—</div>
+        <div class="strip-cell-val"></div>
       </div>
       <div class="strip-cell" id="strip-temp">
         <div class="strip-cell-label">Fluid Temp</div>
-        <div class="strip-cell-val">—</div>
+        <div class="strip-cell-val"></div>
       </div>
     </div>
     </div><!-- close tab pane 3d -->
@@ -987,7 +987,7 @@
     </div>
   </main>
 
-  <!-- ── Right Panel ── -->
+  <!--  Right Panel  -->
   <aside class="panel">
     <div class="health-gauge-wrap">
       <svg class="gauge-svg" viewBox="0 0 180 110" id="gaugeSvg">
@@ -1012,11 +1012,11 @@
               style="transform-origin:90px 95px; transform:rotate(-90deg); transition:transform 0.8s cubic-bezier(0.16,1,0.3,1)"/>
         <circle cx="90" cy="95" r="5" fill="#e8edf2"/>
       </svg>
-      <div class="health-number" id="healthNum">—</div>
+      <div class="health-number" id="healthNum"></div>
       <div class="health-label" id="healthStatus">INITIALISING</div>
       <div class="rul-row">
         <span>RUL</span>
-        <span class="rul-val" id="rulVal">—</span>
+        <span class="rul-val" id="rulVal"></span>
         <span>hrs remaining</span>
       </div>
     </div>
@@ -1030,7 +1030,7 @@
     <div class="score-bar-wrap">
       <div class="score-bar-header">
         <span class="score-bar-label">ANOMALY SCORE</span>
-        <span class="score-bar-val" id="anomalyScoreVal">—</span>
+        <span class="score-bar-val" id="anomalyScoreVal"></span>
       </div>
       <div class="score-track">
         <div class="score-fill" id="anomalyScoreFill" style="width:0%;background:var(--green)"></div>
@@ -1039,11 +1039,11 @@
 
     <div class="alert-card" id="alertCard">
       <div class="alert-header">
-        <span class="alert-icon" id="alertIcon">ℹ️</span>
+        <span class="alert-icon" id="alertIcon"></span>
         <span class="alert-mode" id="alertMode">Initialising</span>
-        <span class="alert-confidence" id="alertConf">—</span>
+        <span class="alert-confidence" id="alertConf"></span>
       </div>
-      <div class="alert-action" id="alertAction">Connecting to backendâ€¦</div>
+      <div class="alert-action" id="alertAction">Connecting to backend</div>
     </div>
 
         <div class="chart-wrap">
@@ -1064,7 +1064,7 @@
     </div>
     <div class="divider"></div>
 <div class="sparkline-wrap">
-      <div class="sparkline-label">HEALTH TREND · LAST 60 POINTS</div>
+      <div class="sparkline-label">HEALTH TREND  LAST 60 POINTS</div>
       <svg id="sparkline" viewBox="0 0 276 50" preserveAspectRatio="none">
         <polyline id="sparkPoly" fill="none" stroke="var(--cyan)" stroke-width="1.5" points=""/>
         <polyline id="sparkArea" fill="rgba(0,212,255,.08)" stroke="none" points=""/>
@@ -1087,7 +1087,7 @@
 <script>
 'use strict';
 
-// ── Config ────────────────────────────────────────────────────
+//  Config 
 const WS_URL  = 'ws://localhost:8000/ws';
 const API_URL = 'http://localhost:8000';
 const BASELINES = {
@@ -1109,15 +1109,15 @@ const SUBSYSTEM_LABEL = { bearing_front:'BEARING FWD', bearing_rear:'BEARING AFT
   seal:'SEAL', impeller:'IMPELLER', casing:'CASING' };
 
 const MODE_COLOR  = { normal:'#00e676', cavitation:'#f0a500', bearing_wear:'#ff6b3d', dry_run:'#ff3b5c' };
-const MODE_ICON   = { normal:'ðŸŸ¢', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥' };
-const ALERT_ICON  = { none:'✅', degraded:'âš ï¸', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥', none2:'✅' };
+const MODE_ICON   = { normal:'', cavitation:'', bearing_wear:'', dry_run:'' };
+const ALERT_ICON  = { none:'', degraded:'', cavitation:'', bearing_wear:'', dry_run:'', none2:'' };
 
 let healthHistory = [];
 let currentState  = null;
 let ws = null;
 let _wsSentAt = 0;  // timestamp of last frame request (for latency)
 
-// ── Build initial sensor rows ─────────────────────────────────
+//  Build initial sensor rows 
 const sensorList = document.getElementById('sensorList');
 SENSOR_META.forEach(m => {
   const row = document.createElement('div');
@@ -1126,7 +1126,7 @@ SENSOR_META.forEach(m => {
   row.innerHTML = `
     <div class="sensor-name">${m.label}</div>
     <div class="sensor-bar-wrap"><div class="sensor-bar" id="sb-${m.key}"></div></div>
-    <div class="sensor-val" id="sv-${m.key}">—</div>
+    <div class="sensor-val" id="sv-${m.key}"></div>
     <div class="sensor-unit">${m.unit}</div>`;
   sensorList.appendChild(row);
 });
@@ -1140,13 +1140,13 @@ SUBSYSTEM_ORDER.forEach(k => {
   row.innerHTML = `
     <div class="sub-header">
       <span class="sub-name">${SUBSYSTEM_LABEL[k]}</span>
-      <span class="sub-val" id="subv-${k}">—</span>
+      <span class="sub-val" id="subv-${k}"></span>
     </div>
     <div class="sub-track"><div class="sub-fill" id="subf-${k}" style="width:0%;background:var(--cyan)"></div></div>`;
   subList.appendChild(row);
 });
 
-// ── Scenario buttons ──────────────────────────────────────────
+//  Scenario buttons 
 document.querySelectorAll('.scenario-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const mode = btn.dataset.mode;
@@ -1162,12 +1162,12 @@ document.querySelectorAll('.scenario-btn').forEach(btn => {
   });
 });
 
-// ── Gauge helper ──────────────────────────────────────────────
-function updateGauge(pct) { // 0â€“100
+//  Gauge helper 
+function updateGauge(pct) { // 0100
   const total = 220;
   const fill  = (pct / 100) * total;
   document.getElementById('gaugeFill').style.strokeDashoffset = total - fill;
-  // Needle: âˆ’90deg (0%) to +90deg (100%)
+  // Needle: 90deg (0%) to +90deg (100%)
   const deg = -90 + (pct / 100) * 180;
   document.getElementById('gaugeNeedle').style.transform = `rotate(${deg}deg)`;
 }
@@ -1188,7 +1188,7 @@ function subColor(v) {
   return '#ff3b5c';
 }
 
-// ── Sparkline ─────────────────────────────────────────────────
+//  Sparkline 
 function updateSparkline() {
   if (healthHistory.length < 2) return;
   const W = 276, H = 50, N = 60;
@@ -1201,14 +1201,14 @@ function updateSparkline() {
   document.getElementById('sparkArea').setAttribute('points', area);
 }
 
-// ── Strip cells ───────────────────────────────────────────────
+//  Strip cells 
 function setStrip(id, val, unit, crit) {
   const el = document.getElementById(id);
   el.querySelector('.strip-cell-val').textContent = val + unit;
   el.className = 'strip-cell' + (crit === 2 ? ' crit' : crit === 1 ? ' warn' : '');
 }
 
-// ── Main state update ─────────────────────────────────────────
+//  Main state update 
 function applyState(s) {
   currentState = s;
   const sensors = s.sensors || {};
@@ -1265,7 +1265,7 @@ function applyState(s) {
   hn.textContent = oh.toFixed(1);
   hn.style.color = healthColor(oh);
   const hs = document.getElementById('healthStatus');
-  hs.textContent = (health.status || '—').toUpperCase();
+  hs.textContent = (health.status || '').toUpperCase();
   hs.className = 'health-label ' + healthClass(health.status);
   document.getElementById('rulVal').textContent = (health.rul_hours || 0).toFixed(1);
 
@@ -1304,7 +1304,7 @@ function applyState(s) {
   const banner = document.getElementById('alertBanner');
   const fm2 = anomaly.failure_mode || 'none';
   if (anomaly.is_anomaly && fm2 !== 'none' && fm2 !== 'degraded') {
-    document.getElementById('bannerIcon').textContent   = ALERT_ICON[fm2] || '🚨';
+    document.getElementById('bannerIcon').textContent   = ALERT_ICON[fm2] || '';
     document.getElementById('bannerMode').textContent   = fm2.replace(/_/g,' ').toUpperCase();
     document.getElementById('bannerAction').textContent = anomaly.recommended_action || '--';
     banner.classList.add('visible');
@@ -1317,10 +1317,10 @@ function applyState(s) {
   const fm  = anomaly.failure_mode || 'none';
   ac.className = 'alert-card' + (anomaly.is_anomaly && fm!=='degraded' ? ' active' :
                                   fm==='degraded' ? ' degraded' : '');
-  document.getElementById('alertIcon').textContent   = ALERT_ICON[fm] || '✅';
+  document.getElementById('alertIcon').textContent   = ALERT_ICON[fm] || '';
   document.getElementById('alertMode').textContent   = fm.replace('_',' ').toUpperCase();
   document.getElementById('alertConf').textContent   = ((anomaly.confidence||0)*100).toFixed(0)+'%';
-  document.getElementById('alertAction').textContent = anomaly.recommended_action || '—';
+  document.getElementById('alertAction').textContent = anomaly.recommended_action || '';
 
   _updateSensorChart(sensors);
 
@@ -1352,11 +1352,11 @@ function applyState(s) {
   var curMode = s.mode || 'normal';
   if (_prevIsAnomaly !== null) {
     if (anomaly.is_anomaly  && !_prevIsAnomaly) _addEvent('crit', 'ANOMALY: ' + (anomaly.failure_mode||'?').replace(/_/g,' '));
-    if (!anomaly.is_anomaly &&  _prevIsAnomaly) _addEvent('info', 'Anomaly cleared — normal');
+    if (!anomaly.is_anomaly &&  _prevIsAnomaly) _addEvent('info', 'Anomaly cleared  normal');
     if (health.status === 'warning'  && _prevStatus === 'healthy')  _addEvent('warn', 'Health crossed WARNING');
-    if (health.status === 'critical' && _prevStatus !== 'critical') _addEvent('crit', 'Health CRITICAL — action required');
+    if (health.status === 'critical' && _prevStatus !== 'critical') _addEvent('crit', 'Health CRITICAL  action required');
     if (health.status === 'healthy'  && _prevStatus !== 'healthy')  _addEvent('info', 'Health restored: HEALTHY');
-    if (curMode !== (currentState ? currentState.mode : curMode))   _addEvent('info', 'Mode → ' + curMode);
+    if (curMode !== (currentState ? currentState.mode : curMode))   _addEvent('info', 'Mode  ' + curMode);
   }
   _prevIsAnomaly = anomaly.is_anomaly;
   _prevStatus    = health.status;
@@ -1364,11 +1364,11 @@ function applyState(s) {
   if (typeof window.updatePump3D === 'function') window.updatePump3D(s);
 }
 
-// ── WebSocket ─────────────────────────────────────────────────
+//  WebSocket 
 
 
 
-// ── Sensor History Chart (#1) ────────────────────────────────────────────────
+//  Sensor History Chart (#1) 
 var _sensorHistory = {
   vibration_rms:[], discharge_pressure:[], suction_pressure:[],
   flow_rate:[], motor_current:[], fluid_temp:[]
@@ -1428,7 +1428,7 @@ function _updateSensorChart(sensors) {
   _sensorChart.update('none');
 }
 
-// ── Event Log globals (#2) ───────────────────────────────────────────────────
+//  Event Log globals (#2) 
 var _evLog = [], _prevIsAnomaly = null, _prevStatus = null;
 function _addEvent(level, msg) {
   var ts = new Date().toLocaleTimeString('en-GB', {hour12:false});
@@ -1463,7 +1463,7 @@ function connect() {
   const dot   = document.getElementById('wsDot');
   const label = document.getElementById('wsLabel');
   dot.className = 'ws-dot';
-  label.textContent = 'CONNECTINGâ€¦';
+  label.textContent = 'CONNECTING';
 
   ws = new WebSocket(WS_URL);
 
@@ -1485,7 +1485,7 @@ function connect() {
   ws.onerror  = () => { dot.className = 'ws-dot error'; label.textContent = 'ERROR'; };
   ws.onclose  = () => {
     dot.className = 'ws-dot error';
-    label.textContent = 'RECONNECTINGâ€¦';
+    label.textContent = 'RECONNECTING';
     setTimeout(connect, 2500);
   };
 }
@@ -1506,15 +1506,15 @@ setInterval(async () => {
   } catch(_) {}
 }, 1000);
 
-// ────────────────────────────────────────────────────────────────
-// THREE.JS — Detailed Centrifugal Pump Digital Twin
-// Anatomy: volute â€¢ impeller â€¢ stuffing-box â€¢ inboard/outboard
-//          bearings â€¢ coupling â€¢ motor â€¢ base-plate â€¢ instrumentation
-// ────────────────────────────────────────────────────────────────
+// 
+// THREE.JS  Detailed Centrifugal Pump Digital Twin
+// Anatomy: volute  impeller  stuffing-box  inboard/outboard
+//          bearings  coupling  motor  base-plate  instrumentation
+// 
 (function initThree() {
   const container = document.getElementById('threejs-container');
 
-  // ── Scene + Renderer ──────────────────────────────────────────
+  //  Scene + Renderer 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x080b10);
   scene.fog = new THREE.FogExp2(0x080b10, 0.045);
@@ -1527,12 +1527,12 @@ setInterval(async () => {
   container.appendChild(renderer.domElement);
   window._THREE_SCENE = scene; // expose for particle system (#7)
 
-  // ── Camera ───────────────────────────────────────────────────
+  //  Camera 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
   camera.position.set(7, 4.5, 9);
   camera.lookAt(0, 0.5, 0);
 
-  // ── Lights ───────────────────────────────────────────────────
+  //  Lights 
   scene.add(new THREE.AmbientLight(0x0d1e2e, 5));
 
   const sun = new THREE.DirectionalLight(0xc8e8ff, 3.5);
@@ -1557,7 +1557,7 @@ setInterval(async () => {
   motorLight.position.set(-3.5, 0.5, 0);
   scene.add(motorLight);
 
-  // ── Material palette ─────────────────────────────────────────
+  //  Material palette 
   const M = {
     steel:    new THREE.MeshStandardMaterial({ color:0x1e2e3e, roughness:0.35, metalness:0.90 }),
     steelHi:  new THREE.MeshStandardMaterial({ color:0x263545, roughness:0.25, metalness:0.95 }),
@@ -1584,7 +1584,7 @@ setInterval(async () => {
     paint:    new THREE.MeshStandardMaterial({ color:0x1a5585, roughness:0.55, metalness:0.40 }),
   };
 
-  // ── Helpers ───────────────────────────────────────────────────
+  //  Helpers 
   const pumpGroup = new THREE.Group();    // entire pump on baseplate
   scene.add(pumpGroup);
 
@@ -1630,9 +1630,9 @@ setInterval(async () => {
     }
   }
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 1. BASE PLATE / SKID
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   mesh(new THREE.BoxGeometry(8.5,0.10,2.4), M.base, 0.0,-1.05,0);
   mesh(new THREE.BoxGeometry(8.5,0.08,0.08),M.base, 0.0,-0.95,1.16);
   mesh(new THREE.BoxGeometry(8.5,0.08,0.08),M.base, 0.0,-0.95,-1.16);
@@ -1646,9 +1646,9 @@ setInterval(async () => {
     mesh(new THREE.CylinderGeometry(0.10,0.10,0.05,8),M.bolt, bx,-0.65,bz);
   });
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 2. SUCTION ELBOW + STRAINER (Front of pump, Z+)
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // Horizontal suction pipe
   mesh(new THREE.CylinderGeometry(0.30,0.30,1.8,24),M.pipe, 0,0,2.5, Math.PI/2,0,0);
   // Elbow body (torus approximation)
@@ -1664,10 +1664,10 @@ setInterval(async () => {
   // Strainer cap
   mesh(new THREE.SphereGeometry(0.30,12,8,0,Math.PI*2,0,Math.PI/2),M.steelHi, 0,1.30,3.8);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 3. VOLUTE CASING (main pump body)
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // Volute body — scaled sphere gives the snail-shell silhouette
+  // 
+  // Volute body  scaled sphere gives the snail-shell silhouette
   const voluteGeo = new THREE.SphereGeometry(0.98,48,36);
   voluteGeo.scale(1.05, 0.75, 1.25);
   const volute = mesh(voluteGeo, M.castIron, 0,0,0);
@@ -1691,7 +1691,7 @@ setInterval(async () => {
   mesh(new THREE.CylinderGeometry(0.07,0.07,0.18,8),M.flange, 0,0.88,0.3);
   mesh(new THREE.CylinderGeometry(0.10,0.10,0.04,8),M.bolt, 0,0.99,0.3);
 
-  // ── Discharge nozzle (top, vertical) ──────────────────────────
+  //  Discharge nozzle (top, vertical) 
   mesh(new THREE.CylinderGeometry(0.26,0.26,0.90,24),M.pipe, 0,1.62,0);
   // Discharge elbow
   mesh(new THREE.TorusGeometry(0.32,0.26,14,20,Math.PI/2),M.castIron, 0.35,2.18,0, 0,0,-Math.PI/2);
@@ -1727,9 +1727,9 @@ setInterval(async () => {
   const sgDial = new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.10,0.05,16),M.gauge);
   sgDial.position.y=0.27; sgGrp.add(sgDial);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 4. IMPELLER ASSEMBLY (spins inside volute)
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   const impellerGroup = new THREE.Group();
   impellerGroup.position.set(0, 0, 0);
   pumpGroup.add(impellerGroup);
@@ -1773,9 +1773,9 @@ setInterval(async () => {
   // Impeller oriented axially (Z axis = shaft axis)
   impellerGroup.rotation.set(0, 0, 0);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 5. STUFFING BOX / SEAL CHAMBER
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   mesh(new THREE.CylinderGeometry(0.28,0.28,0.50,20),M.castIron, 0,0,-1.30, Math.PI/2,0,0);
   // Packing gland / stuffing box nose
   mesh(new THREE.CylinderGeometry(0.22,0.22,0.18,18),M.flange, 0,0,-1.60, Math.PI/2,0,0);
@@ -1791,9 +1791,9 @@ setInterval(async () => {
   // Flush connection boss
   mesh(new THREE.CylinderGeometry(0.04,0.04,0.16,8),M.pipe, 0.22,0.20,-1.32, 0,0,Math.PI/8);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 6. BEARING BRACKET + HOUSINGS
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // Bracket body
   mesh(new THREE.CylinderGeometry(0.32,0.32,1.10,32),M.castIron, 0,0,-2.08, Math.PI/2,0,0);
   // Bracket feet
@@ -1818,14 +1818,14 @@ setInterval(async () => {
   mesh(new THREE.CylinderGeometry(0.26,0.26,0.07,32),M.flange, 0,0,-2.64, Math.PI/2,0,0);
   boltCircle(6,0.20,0.025,0.10,M.bolt, 0,0,-2.64, false);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 7. SHAFT (continuous through pump + motor)
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   const shaft = mesh(new THREE.CylinderGeometry(0.065,0.065,6.2,14),M.shaft, 0,0,-1.6, Math.PI/2,0,0);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 8. FLEXIBLE COUPLING
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // Pump-side half
   mesh(new THREE.CylinderGeometry(0.20,0.20,0.30,18),M.coupling, 0,0,-2.85, Math.PI/2,0,0);
   // Rubber spider / element
@@ -1844,9 +1844,9 @@ setInterval(async () => {
   guard.position.set(0,0,-3.04); guard.rotation.x=Math.PI/2; guard.rotation.z=Math.PI/4;
   guard.castShadow=true; pumpGroup.add(guard);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 9. MOTOR (NEMA-frame, D-end mount)
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   const motorX = -3.5;  // motor centred here along Z=-3.5.. wait we build along Z axis
   // Motor frame body
   const motorFrame = mesh(new THREE.CylinderGeometry(0.68,0.68,2.40,32),M.motor, 0,0,-4.60, Math.PI/2,0,0);
@@ -1903,7 +1903,7 @@ setInterval(async () => {
   // Motor shaft stub (NDE side, visible through fan area)
   mesh(new THREE.CylinderGeometry(0.05,0.05,0.25,10),M.shaft, 0,0,-6.05, Math.PI/2,0,0);
 
-  // ─ Motor feet (D-frame footing to baseplate) ──────────────────
+  //  Motor feet (D-frame footing to baseplate) 
   [[-0.62,-0.62],[0.62,-0.62],[-0.62,0.62],[0.62,0.62]].forEach(([ofx,ofz])=>{
     // Relative to motor centre Z=-4.60
     const footGrp = new THREE.Group();
@@ -1915,15 +1915,15 @@ setInterval(async () => {
     bolt2.position.y=-0.10; footGrp.add(bolt2);
   });
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 10. GLOWING STATUS TORUS (anomaly health indicator)
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   const statusRing = mesh(
     new THREE.TorusGeometry(1.10,0.032,10,72), M.glow, 0,0,0, Math.PI/2,0,0);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 11. CAVITATION PARTICLE FOUNTAIN
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   const PC = 200;
   const pGeo = new THREE.BufferGeometry();
   const pPos = new Float32Array(PC*3);
@@ -1940,9 +1940,9 @@ setInterval(async () => {
   const particles = new THREE.Points(pGeo, pMat);
   pumpGroup.add(particles);
 
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // 12. ENVIRONMENT
-  // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+  // 
   // Floor
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(40,40),
@@ -1960,14 +1960,14 @@ setInterval(async () => {
   // Centre pump group so the main pump casing is at world-origin
   pumpGroup.position.set(2.8, 0.85, 0);  // offset to centre volute at 0,0
 
-  // ── Animation state ───────────────────────────────────────────
+  //  Animation state 
   let impSpeed  = 0.04;
   let fanSpeed  = 0.08;
   let shakeAmt  = 0;
   let tgtColor  = new THREE.Color(0x00e676);
   let curMode   = 'normal';
 
-  // ── Sensor-driven 3D updates ──────────────────────────────────
+  //  Sensor-driven 3D updates 
   window.updatePump3D = function(state) {
     const mode    = state.mode || 'normal';
     const health  = (state.health  || {}).overall_health || 100;
@@ -1979,25 +1979,25 @@ setInterval(async () => {
     const cur     = sensors.motor_current     || 18.5;
     curMode = mode;
 
-    // Impeller speed â† flow rate
+    // Impeller speed  flow rate
     impSpeed = 0.008 + (Math.max(0,flow)/120)*0.075;
     fanSpeed = impSpeed * 1.4;
 
-    // Status ring color â† health
+    // Status ring color  health
     if (health>70)      tgtColor.setHex(0x00e676);
     else if (health>40) tgtColor.setHex(0xf0a500);
     else                tgtColor.setHex(0xff3b5c);
     M.glow.emissive.lerp(tgtColor, 0.10);
     M.glow.color.lerp(tgtColor,    0.10);
 
-    // Vibration shake â† vib_rms
+    // Vibration shake  vib_rms
     shakeAmt = Math.max(0,(vib-2.1)/2.1)*0.07;
 
-    // Cavitation particles â† suction pressure drop
+    // Cavitation particles  suction pressure drop
     const cavLevel = Math.max(0,(1.8-sp)/1.8);
     pMat.opacity = cavLevel>0.3 ? Math.min(0.9, cavLevel*1.2) : 0;
 
-    // Bearing heat â† fluid temp / motor current
+    // Bearing heat  fluid temp / motor current
     const heat = Math.min(1, Math.max(0,(temp-42)/35));
     const brTarget = new THREE.Color().lerpColors(
       new THREE.Color(0x2a3d50), new THREE.Color(0xff2a00), heat);
@@ -2006,17 +2006,17 @@ setInterval(async () => {
     M.bearing.emissive.lerp(
       new THREE.Color().lerpColors(new THREE.Color(0),new THREE.Color(0x4a0000),heat), 0.06);
 
-    // Seal glow â† cavitation stress
+    // Seal glow  cavitation stress
     M.seal.emissiveIntensity = 0.4 + cavLevel*2.5;
     M.seal.emissive.setHex(cavLevel>0.4 ? 0xf08000 : 0x003344);
 
-    // Motor heat glow â† current overload
+    // Motor heat glow  current overload
     const overload = Math.max(0,(cur-18.5)/18.5);
     motorLight.intensity = 0.5 + overload*2.5;
     motorLight.color.setHex(overload>0.2 ? 0xff3000 : 0xff6030);
   };
 
-  // ── Mouse orbit ───────────────────────────────────────────────
+  //  Mouse orbit 
   let isDrag=false, px=0, py=0;
   let camTheta=0.55, camPhi=0.42, camR=13;
 
@@ -2033,7 +2033,7 @@ setInterval(async () => {
     e.preventDefault();
   },{passive:false});
 
-  // ── Resize ────────────────────────────────────────────────────
+  //  Resize 
   function resize(){
     const w=container.clientWidth,h=container.clientHeight;
     renderer.setSize(w,h);
@@ -2043,7 +2043,7 @@ setInterval(async () => {
   resize();
   new ResizeObserver(resize).observe(container);
 
-  // ── Render loop ───────────────────────────────────────────────
+  //  Render loop 
   const clock = new THREE.Clock();
 
   function animate(){
@@ -2257,10 +2257,10 @@ function switchTab(tabId) {
 
 
 <!-- AI Chatbox -->
-<div class="ai-fab" onclick="document.getElementById('aiChatWrap').classList.toggle('open')" title="Ask Claude AI">✨</div>
+<div class="ai-fab" onclick="document.getElementById('aiChatWrap').classList.toggle('open')" title="Ask Claude AI"></div>
 <div class="ai-chat-wrap" id="aiChatWrap">
   <div class="ai-header">
-    <div class="ai-title">✨ Claude Analysis</div>
+    <div class="ai-title"> Claude Analysis</div>
     <button class="ai-close" onclick="document.getElementById('aiChatWrap').classList.remove('open')">&times;</button>
   </div>
   <div class="ai-body" id="aiBody">

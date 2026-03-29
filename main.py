@@ -1,6 +1,6 @@
 """
-main.py — FastAPI + WebSocket server for Smart Pump Health Digital Twin.
-Team Trimiti Innovations — Hackathon P-09.
+main.py  FastAPI + WebSocket server for Smart Pump Health Digital Twin.
+Team Trimiti Innovations  Hackathon P-09.
 
 Run:  python main.py
       uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -156,7 +156,7 @@ async def lifespan(app: FastAPI):
         if _REPLAY_PATH.exists():
             with open(_REPLAY_PATH) as fh:
                 _replay_frames = json.load(fh)
-            print(f"[startup] Replay mode — loaded {len(_replay_frames)} frames.")
+            print(f"[startup] Replay mode  loaded {len(_replay_frames)} frames.")
         else:
             print("[startup] REPLAY_MODE=1 but replay.json not found; run replay_gen.py first.")
 
@@ -178,7 +178,7 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Smart Pump Digital Twin — Trimiti Innovations P-09",
+    title="Smart Pump Digital Twin  Trimiti Innovations P-09",
     description="Real-time pump health monitoring with ML-based anomaly detection.",
     version="1.0.0",
     lifespan=lifespan,
@@ -234,7 +234,7 @@ async def get_state() -> dict:
     return _current_state
 
 
-@app.get("/poll", summary="Unity HTTP fallback — identical to /state")
+@app.get("/poll", summary="Unity HTTP fallback  identical to /state")
 async def poll() -> dict:
     return _current_state
 
@@ -284,7 +284,7 @@ async def websocket_endpoint(ws: WebSocket) -> None:
         # Send current state immediately on connect
         if _current_state:
             await ws.send_json(_current_state)
-        # Keep alive — broadcast loop does the pushing
+        # Keep alive  broadcast loop does the pushing
         while True:
             await asyncio.sleep(30)
     except WebSocketDisconnect:
