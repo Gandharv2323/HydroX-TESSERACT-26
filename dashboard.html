@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet" />
 
   <style>
-    /* â”€â”€ Design System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Design System ──────────────────────────────────────── */
     :root {
       --bg:           #090c10;
       --surface:      #0e1318;
@@ -52,7 +52,7 @@
       min-height: 100vh;
     }
 
-    /* Scanline overlay â€” the memorable anchor */
+    /* Scanline overlay — the memorable anchor */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -67,7 +67,7 @@
       z-index: 9999;
     }
 
-    /* â”€â”€ Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Layout ─────────────────────────────────────────────── */
     .layout {
       display: grid;
       grid-template-rows: 56px 1fr;
@@ -80,7 +80,7 @@
       background: var(--border);
     }
 
-    /* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Header ─────────────────────────────────────────────── */
     header {
       grid-area: header;
       background: var(--surface);
@@ -142,7 +142,7 @@
       margin-left: 16px;
     }
 
-    /* â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Sidebar ─────────────────────────────────────────────── */
     .sidebar {
       grid-area: sidebar;
       background: var(--surface);
@@ -266,7 +266,7 @@
     .sensor-row.alert .sensor-bar { background: var(--amber); }
     .sensor-row.critical .sensor-bar { background: var(--red); }
 
-    /* â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Main ────────────────────────────────────────────────── */
     .main {
       grid-area: main;
       background: var(--surface);
@@ -354,7 +354,7 @@
       backdrop-filter: blur(8px);
     }
 
-    /* â”€â”€ Right Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ── Right Panel ─────────────────────────────────────────── */
     .panel {
       grid-area: panel;
       background: var(--surface);
@@ -899,7 +899,7 @@
 
   <!-- ── Header ── -->
   <header>
-    <div class="logo-mark">PUMP<span>TWIN</span></div>
+    <div class="logo-mark">Hydro<span>X</span></div>
     <div class="header-divider"></div>
     <div class="header-meta">TRIMITI INNOVATIONS · P-09 · DIGITAL TWIN</div>
     <div class="ws-status">
@@ -987,7 +987,7 @@
     </div>
   </main>
 
-  <!-- â”€â”€ Right Panel â”€â”€ -->
+  <!-- ── Right Panel ── -->
   <aside class="panel">
     <div class="health-gauge-wrap">
       <svg class="gauge-svg" viewBox="0 0 180 110" id="gaugeSvg">
@@ -1012,11 +1012,11 @@
               style="transform-origin:90px 95px; transform:rotate(-90deg); transition:transform 0.8s cubic-bezier(0.16,1,0.3,1)"/>
         <circle cx="90" cy="95" r="5" fill="#e8edf2"/>
       </svg>
-      <div class="health-number" id="healthNum">â€”</div>
+      <div class="health-number" id="healthNum">—</div>
       <div class="health-label" id="healthStatus">INITIALISING</div>
       <div class="rul-row">
         <span>RUL</span>
-        <span class="rul-val" id="rulVal">â€”</span>
+        <span class="rul-val" id="rulVal">—</span>
         <span>hrs remaining</span>
       </div>
     </div>
@@ -1030,7 +1030,7 @@
     <div class="score-bar-wrap">
       <div class="score-bar-header">
         <span class="score-bar-label">ANOMALY SCORE</span>
-        <span class="score-bar-val" id="anomalyScoreVal">â€”</span>
+        <span class="score-bar-val" id="anomalyScoreVal">—</span>
       </div>
       <div class="score-track">
         <div class="score-fill" id="anomalyScoreFill" style="width:0%;background:var(--green)"></div>
@@ -1039,9 +1039,9 @@
 
     <div class="alert-card" id="alertCard">
       <div class="alert-header">
-        <span class="alert-icon" id="alertIcon">â„¹ï¸</span>
+        <span class="alert-icon" id="alertIcon">ℹ️</span>
         <span class="alert-mode" id="alertMode">Initialising</span>
-        <span class="alert-confidence" id="alertConf">â€”</span>
+        <span class="alert-confidence" id="alertConf">—</span>
       </div>
       <div class="alert-action" id="alertAction">Connecting to backendâ€¦</div>
     </div>
@@ -1064,7 +1064,7 @@
     </div>
     <div class="divider"></div>
 <div class="sparkline-wrap">
-      <div class="sparkline-label">HEALTH TREND Â· LAST 60 POINTS</div>
+      <div class="sparkline-label">HEALTH TREND · LAST 60 POINTS</div>
       <svg id="sparkline" viewBox="0 0 276 50" preserveAspectRatio="none">
         <polyline id="sparkPoly" fill="none" stroke="var(--cyan)" stroke-width="1.5" points=""/>
         <polyline id="sparkArea" fill="rgba(0,212,255,.08)" stroke="none" points=""/>
@@ -1087,7 +1087,7 @@
 <script>
 'use strict';
 
-// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Config ────────────────────────────────────────────────────
 const WS_URL  = 'ws://localhost:8000/ws';
 const API_URL = 'http://localhost:8000';
 const BASELINES = {
@@ -1102,7 +1102,7 @@ const SENSOR_META = [
   { key:'suction_pressure',   label:'SUCT PRESS',   unit:'bar',  max:4   },
   { key:'flow_rate',          label:'FLOW RATE',    unit:'L/min',max:180 },
   { key:'motor_current',      label:'MOTOR CURR',   unit:'A',    max:35  },
-  { key:'fluid_temp',         label:'FLUID TEMP',   unit:'Â°C',   max:80  },
+  { key:'fluid_temp',         label:'FLUID TEMP',   unit:'°C',   max:80  },
 ];
 const SUBSYSTEM_ORDER = ['bearing_front','bearing_rear','seal','impeller','casing'];
 const SUBSYSTEM_LABEL = { bearing_front:'BEARING FWD', bearing_rear:'BEARING AFT',
@@ -1110,14 +1110,14 @@ const SUBSYSTEM_LABEL = { bearing_front:'BEARING FWD', bearing_rear:'BEARING AFT
 
 const MODE_COLOR  = { normal:'#00e676', cavitation:'#f0a500', bearing_wear:'#ff6b3d', dry_run:'#ff3b5c' };
 const MODE_ICON   = { normal:'ðŸŸ¢', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥' };
-const ALERT_ICON  = { none:'âœ…', degraded:'âš ï¸', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥', none2:'âœ…' };
+const ALERT_ICON  = { none:'✅', degraded:'âš ï¸', cavitation:'ðŸŒŠ', bearing_wear:'âš™ï¸', dry_run:'ðŸ”¥', none2:'✅' };
 
 let healthHistory = [];
 let currentState  = null;
 let ws = null;
 let _wsSentAt = 0;  // timestamp of last frame request (for latency)
 
-// â”€â”€ Build initial sensor rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Build initial sensor rows ─────────────────────────────────
 const sensorList = document.getElementById('sensorList');
 SENSOR_META.forEach(m => {
   const row = document.createElement('div');
@@ -1126,7 +1126,7 @@ SENSOR_META.forEach(m => {
   row.innerHTML = `
     <div class="sensor-name">${m.label}</div>
     <div class="sensor-bar-wrap"><div class="sensor-bar" id="sb-${m.key}"></div></div>
-    <div class="sensor-val" id="sv-${m.key}">â€”</div>
+    <div class="sensor-val" id="sv-${m.key}">—</div>
     <div class="sensor-unit">${m.unit}</div>`;
   sensorList.appendChild(row);
 });
@@ -1140,13 +1140,13 @@ SUBSYSTEM_ORDER.forEach(k => {
   row.innerHTML = `
     <div class="sub-header">
       <span class="sub-name">${SUBSYSTEM_LABEL[k]}</span>
-      <span class="sub-val" id="subv-${k}">â€”</span>
+      <span class="sub-val" id="subv-${k}">—</span>
     </div>
     <div class="sub-track"><div class="sub-fill" id="subf-${k}" style="width:0%;background:var(--cyan)"></div></div>`;
   subList.appendChild(row);
 });
 
-// â”€â”€ Scenario buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Scenario buttons ──────────────────────────────────────────
 document.querySelectorAll('.scenario-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const mode = btn.dataset.mode;
@@ -1162,7 +1162,7 @@ document.querySelectorAll('.scenario-btn').forEach(btn => {
   });
 });
 
-// â”€â”€ Gauge helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Gauge helper ──────────────────────────────────────────────
 function updateGauge(pct) { // 0â€“100
   const total = 220;
   const fill  = (pct / 100) * total;
@@ -1188,7 +1188,7 @@ function subColor(v) {
   return '#ff3b5c';
 }
 
-// â”€â”€ Sparkline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Sparkline ─────────────────────────────────────────────────
 function updateSparkline() {
   if (healthHistory.length < 2) return;
   const W = 276, H = 50, N = 60;
@@ -1201,14 +1201,14 @@ function updateSparkline() {
   document.getElementById('sparkArea').setAttribute('points', area);
 }
 
-// â”€â”€ Strip cells â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Strip cells ───────────────────────────────────────────────
 function setStrip(id, val, unit, crit) {
   const el = document.getElementById(id);
   el.querySelector('.strip-cell-val').textContent = val + unit;
   el.className = 'strip-cell' + (crit === 2 ? ' crit' : crit === 1 ? ' warn' : '');
 }
 
-// â”€â”€ Main state update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main state update ─────────────────────────────────────────
 function applyState(s) {
   currentState = s;
   const sensors = s.sensors || {};
@@ -1255,7 +1255,7 @@ function applyState(s) {
   setStrip('strip-suct', (v.suction_pressure||0).toFixed(2),' bar',
     (v.suction_pressure||1.8)<1.0?2:(v.suction_pressure||1.8)<1.4?1:0);
   setStrip('strip-disc', (v.discharge_pressure||0).toFixed(2),' bar', 0);
-  setStrip('strip-temp', (v.fluid_temp||0).toFixed(1),     'Â°C',
+  setStrip('strip-temp', (v.fluid_temp||0).toFixed(1),     '°C',
     (v.fluid_temp||42)>60?2:(v.fluid_temp||42)>52?1:0);
 
   // Health gauge
@@ -1265,7 +1265,7 @@ function applyState(s) {
   hn.textContent = oh.toFixed(1);
   hn.style.color = healthColor(oh);
   const hs = document.getElementById('healthStatus');
-  hs.textContent = (health.status || 'â€”').toUpperCase();
+  hs.textContent = (health.status || '—').toUpperCase();
   hs.className = 'health-label ' + healthClass(health.status);
   document.getElementById('rulVal').textContent = (health.rul_hours || 0).toFixed(1);
 
@@ -1317,10 +1317,10 @@ function applyState(s) {
   const fm  = anomaly.failure_mode || 'none';
   ac.className = 'alert-card' + (anomaly.is_anomaly && fm!=='degraded' ? ' active' :
                                   fm==='degraded' ? ' degraded' : '');
-  document.getElementById('alertIcon').textContent   = ALERT_ICON[fm] || 'âœ…';
+  document.getElementById('alertIcon').textContent   = ALERT_ICON[fm] || '✅';
   document.getElementById('alertMode').textContent   = fm.replace('_',' ').toUpperCase();
   document.getElementById('alertConf').textContent   = ((anomaly.confidence||0)*100).toFixed(0)+'%';
-  document.getElementById('alertAction').textContent = anomaly.recommended_action || 'â€”';
+  document.getElementById('alertAction').textContent = anomaly.recommended_action || '—';
 
   _updateSensorChart(sensors);
 
@@ -1364,7 +1364,7 @@ function applyState(s) {
   if (typeof window.updatePump3D === 'function') window.updatePump3D(s);
 }
 
-// â”€â”€ WebSocket â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── WebSocket ─────────────────────────────────────────────────
 
 
 
@@ -1506,15 +1506,15 @@ setInterval(async () => {
   } catch(_) {}
 }, 1000);
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// THREE.JS â€” Detailed Centrifugal Pump Digital Twin
+// ────────────────────────────────────────────────────────────────
+// THREE.JS — Detailed Centrifugal Pump Digital Twin
 // Anatomy: volute â€¢ impeller â€¢ stuffing-box â€¢ inboard/outboard
 //          bearings â€¢ coupling â€¢ motor â€¢ base-plate â€¢ instrumentation
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ────────────────────────────────────────────────────────────────
 (function initThree() {
   const container = document.getElementById('threejs-container');
 
-  // â”€â”€ Scene + Renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Scene + Renderer ──────────────────────────────────────────
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x080b10);
   scene.fog = new THREE.FogExp2(0x080b10, 0.045);
@@ -1527,12 +1527,12 @@ setInterval(async () => {
   container.appendChild(renderer.domElement);
   window._THREE_SCENE = scene; // expose for particle system (#7)
 
-  // â”€â”€ Camera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Camera ───────────────────────────────────────────────────
   const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
   camera.position.set(7, 4.5, 9);
   camera.lookAt(0, 0.5, 0);
 
-  // â”€â”€ Lights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Lights ───────────────────────────────────────────────────
   scene.add(new THREE.AmbientLight(0x0d1e2e, 5));
 
   const sun = new THREE.DirectionalLight(0xc8e8ff, 3.5);
@@ -1557,7 +1557,7 @@ setInterval(async () => {
   motorLight.position.set(-3.5, 0.5, 0);
   scene.add(motorLight);
 
-  // â”€â”€ Material palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Material palette ─────────────────────────────────────────
   const M = {
     steel:    new THREE.MeshStandardMaterial({ color:0x1e2e3e, roughness:0.35, metalness:0.90 }),
     steelHi:  new THREE.MeshStandardMaterial({ color:0x263545, roughness:0.25, metalness:0.95 }),
@@ -1584,7 +1584,7 @@ setInterval(async () => {
     paint:    new THREE.MeshStandardMaterial({ color:0x1a5585, roughness:0.55, metalness:0.40 }),
   };
 
-  // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Helpers ───────────────────────────────────────────────────
   const pumpGroup = new THREE.Group();    // entire pump on baseplate
   scene.add(pumpGroup);
 
@@ -1667,7 +1667,7 @@ setInterval(async () => {
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   // 3. VOLUTE CASING (main pump body)
   // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-  // Volute body â€” scaled sphere gives the snail-shell silhouette
+  // Volute body — scaled sphere gives the snail-shell silhouette
   const voluteGeo = new THREE.SphereGeometry(0.98,48,36);
   voluteGeo.scale(1.05, 0.75, 1.25);
   const volute = mesh(voluteGeo, M.castIron, 0,0,0);
@@ -1691,7 +1691,7 @@ setInterval(async () => {
   mesh(new THREE.CylinderGeometry(0.07,0.07,0.18,8),M.flange, 0,0.88,0.3);
   mesh(new THREE.CylinderGeometry(0.10,0.10,0.04,8),M.bolt, 0,0.99,0.3);
 
-  // â”€â”€ Discharge nozzle (top, vertical) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Discharge nozzle (top, vertical) ──────────────────────────
   mesh(new THREE.CylinderGeometry(0.26,0.26,0.90,24),M.pipe, 0,1.62,0);
   // Discharge elbow
   mesh(new THREE.TorusGeometry(0.32,0.26,14,20,Math.PI/2),M.castIron, 0.35,2.18,0, 0,0,-Math.PI/2);
@@ -1903,7 +1903,7 @@ setInterval(async () => {
   // Motor shaft stub (NDE side, visible through fan area)
   mesh(new THREE.CylinderGeometry(0.05,0.05,0.25,10),M.shaft, 0,0,-6.05, Math.PI/2,0,0);
 
-  // â”€ Motor feet (D-frame footing to baseplate) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─ Motor feet (D-frame footing to baseplate) ──────────────────
   [[-0.62,-0.62],[0.62,-0.62],[-0.62,0.62],[0.62,0.62]].forEach(([ofx,ofz])=>{
     // Relative to motor centre Z=-4.60
     const footGrp = new THREE.Group();
@@ -1960,14 +1960,14 @@ setInterval(async () => {
   // Centre pump group so the main pump casing is at world-origin
   pumpGroup.position.set(2.8, 0.85, 0);  // offset to centre volute at 0,0
 
-  // â”€â”€ Animation state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Animation state ───────────────────────────────────────────
   let impSpeed  = 0.04;
   let fanSpeed  = 0.08;
   let shakeAmt  = 0;
   let tgtColor  = new THREE.Color(0x00e676);
   let curMode   = 'normal';
 
-  // â”€â”€ Sensor-driven 3D updates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Sensor-driven 3D updates ──────────────────────────────────
   window.updatePump3D = function(state) {
     const mode    = state.mode || 'normal';
     const health  = (state.health  || {}).overall_health || 100;
@@ -2016,7 +2016,7 @@ setInterval(async () => {
     motorLight.color.setHex(overload>0.2 ? 0xff3000 : 0xff6030);
   };
 
-  // â”€â”€ Mouse orbit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Mouse orbit ───────────────────────────────────────────────
   let isDrag=false, px=0, py=0;
   let camTheta=0.55, camPhi=0.42, camR=13;
 
@@ -2033,7 +2033,7 @@ setInterval(async () => {
     e.preventDefault();
   },{passive:false});
 
-  // â”€â”€ Resize â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Resize ────────────────────────────────────────────────────
   function resize(){
     const w=container.clientWidth,h=container.clientHeight;
     renderer.setSize(w,h);
@@ -2043,7 +2043,7 @@ setInterval(async () => {
   resize();
   new ResizeObserver(resize).observe(container);
 
-  // â”€â”€ Render loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render loop ───────────────────────────────────────────────
   const clock = new THREE.Clock();
 
   function animate(){
@@ -2092,6 +2092,139 @@ setInterval(async () => {
   }
   animate();
 })();
+
+// Settings Drawer Logic
+function openSettings() {
+  document.getElementById('settingsBackdrop').classList.add('open');
+  document.getElementById('settingsDrawer').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settingsBackdrop').classList.remove('open');
+  document.getElementById('settingsDrawer').classList.remove('open');
+}
+if(document.getElementById('stgHz')){
+  document.getElementById('stgHz').addEventListener('input', e => {
+    document.getElementById('stgHzVal').textContent = e.target.value;
+  });
+}
+if(document.getElementById('stgNoise')){
+  document.getElementById('stgNoise').addEventListener('input', e => {
+    document.getElementById('stgNoiseVal').textContent = e.target.value;
+  });
+}
+function applySettings() {
+  var hz = document.getElementById('stgHz');
+  var ns = document.getElementById('stgNoise');
+  if(!hz || !ns) return;
+  fetch('/config', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      broadcast_hz: parseFloat(hz.value),
+      noise_factor: parseFloat(ns.value)
+    })
+  }).then(() => closeSettings()).catch(e => console.error('Config err', e));
+}
+
+// Heatmap Logic
+const hmSensors = ['vibration_rms', 'flow_rate', 'suction_pressure', 'discharge_pressure', 'motor_current', 'fluid_temp'];
+function _updateHeatmap() {
+  const grid = document.getElementById('hmGrid');
+  if(!grid || !_sensorHistory || !_sensorHistory.vibration_rms || _sensorHistory.vibration_rms.length < 5) return;
+  
+  let n = _sensorHistory.vibration_rms.length;
+  grid.innerHTML = '';
+  
+  grid.appendChild(document.createElement('div')); 
+  hmSensors.forEach(s => {
+    let lbl = document.createElement('div');
+    lbl.className = 'hm-axislabel';
+    lbl.textContent = s.split('_')[0].substring(0,4).toUpperCase();
+    grid.appendChild(lbl);
+  });
+  
+  hmSensors.forEach(sy => {
+    let lbl = document.createElement('div');
+    lbl.className = 'hm-axislabel';
+    lbl.textContent = sy.split('_')[0].substring(0,4).toUpperCase();
+    grid.appendChild(lbl);
+    
+    hmSensors.forEach(sx => {
+      let val = pearson_corr(_sensorHistory[sx], _sensorHistory[sy]);
+      let cell = document.createElement('div');
+      cell.className = 'hm-cell';
+      cell.textContent = isNaN(val) ? '0.00' : val.toFixed(2);
+      
+      let r = val < 0 ? 255 : Math.round(255*(1-val));
+      let b = val > 0 ? 255 : Math.round(255*(1+val));
+      cell.style.backgroundColor = `rgba(${r}, 50, ${b}, 0.8)`;
+      grid.appendChild(cell);
+    });
+  });
+}
+function pearson_corr(x, y) {
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+  let len = Math.min(x.length, y.length, 50); 
+  if (len === 0) return 0;
+  for(let i=x.length-len; i<x.length; i++) {
+    let xv = x[i], yv = y[i];
+    sumX += xv; sumY += yv; sumXY += xv*yv; sumX2 += xv*xv; sumY2 += yv*yv;
+  }
+  let num = (len * sumXY) - (sumX * sumY);
+  let den = Math.sqrt((len * sumX2 - sumX*sumX) * (len * sumY2 - sumY*sumY));
+  if (den === 0) return 0;
+  return num / den;
+}
+// Automatically update heatmap every 2s
+setInterval(_updateHeatmap, 2000);
+
+// AI Chatbot Logic
+function sendAiMsg() {
+  const inp = document.getElementById('aiInput');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  inp.value = '';
+  const body = document.getElementById('aiBody');
+  body.innerHTML += `<div class="ai-msg user">${txt}</div>`;
+  body.scrollTop = body.scrollHeight;
+
+  const context = {
+    vibration: _sensorHistory.vibration_rms.length ? _sensorHistory.vibration_rms.slice(-1)[0] : 0,
+    flow: _sensorHistory.flow_rate.length ? _sensorHistory.flow_rate.slice(-1)[0] : 0,
+    mode: window.currentState ? window.currentState.mode : 'unknown'
+  };
+
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: txt, context: context })
+  }).then(r => r.json()).then(data => {
+    body.innerHTML += `<div class="ai-msg bot">${data.reply}</div>`;
+    body.scrollTop = body.scrollHeight;
+  }).catch(e => {
+    body.innerHTML += `<div class="ai-msg bot">Error communicating with server.</div>`;
+    body.scrollTop = body.scrollHeight;
+  });
+}
+
+
+// Tab Switching
+function switchTab(tabId) {
+  document.getElementById('tab3dBtn').classList.remove('active');
+  document.getElementById('tabHmBtn').classList.remove('active');
+  document.getElementById('pane3d').classList.remove('active');
+  document.getElementById('paneHm').classList.remove('active');
+  
+  if(tabId === '3d') {
+    document.getElementById('tab3dBtn').classList.add('active');
+    document.getElementById('pane3d').classList.add('active');
+  } else {
+    document.getElementById('tabHmBtn').classList.add('active');
+    document.getElementById('paneHm').classList.add('active');
+    _updateHeatmap();
+  }
+}
+
 </script>
 
 <!-- Settings Drawer (#5) -->
@@ -2121,6 +2254,40 @@ setInterval(async () => {
     <button class="stg-apply" onclick="applySettings()">&#10003; APPLY</button>
   </div>
 </div>
+
+
+<!-- AI Chatbox -->
+<div class="ai-fab" onclick="document.getElementById('aiChatWrap').classList.toggle('open')" title="Ask Claude AI">✨</div>
+<div class="ai-chat-wrap" id="aiChatWrap">
+  <div class="ai-header">
+    <div class="ai-title">✨ Claude Analysis</div>
+    <button class="ai-close" onclick="document.getElementById('aiChatWrap').classList.remove('open')">&times;</button>
+  </div>
+  <div class="ai-body" id="aiBody">
+    <div class="ai-msg bot">Hi! I am analyzing the HydroX Digital Twin. Ask me anything or request a health diagnostic.</div>
+  </div>
+  <div class="ai-input-wrap">
+    <input type="text" id="aiInput" placeholder="Ask Claude..." onkeypress="if(event.key==='Enter') sendAiMsg()">
+    <button class="ai-send" onclick="sendAiMsg()">&#10148;</button>
+  </div>
+</div>
+<style>
+.ai-fab { position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, #00d4ff, #007090); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; z-index:9000; box-shadow:0 4px 12px rgba(0,0,0,0.4); transition: transform 0.2s; }
+.ai-fab:hover { transform: scale(1.05); }
+.ai-chat-wrap { position:fixed; bottom:90px; right:24px; width:340px; height:450px; background:var(--surface); border:1px solid var(--border-hi); border-radius:12px; z-index:9000; display:flex; flex-direction:column; transform:translateY(20px); opacity:0; pointer-events:none; transition:all 0.3s ease; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+.ai-chat-wrap.open { transform:translateY(0); opacity:1; pointer-events:auto; }
+.ai-header { padding:12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.ai-title { font-family:var(--display); font-weight:700; color:var(--cyan); letter-spacing:1px; }
+.ai-close { background:none; border:none; color:var(--text-dim); font-size:20px; cursor:pointer; }
+.ai-body { flex:1; padding:12px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
+.ai-msg { padding:8px 12px; border-radius:8px; font-size:12px; max-width:85%; word-wrap:break-word; }
+.ai-msg.bot { background:#141c24; align-self:flex-start; border:1px solid var(--border); color:#e8edf2; }
+.ai-msg.user { background:var(--cyan-dim); color:var(--cyan); align-self:flex-end; border:1px solid var(--cyan-glow); }
+.ai-input-wrap { display:flex; padding:8px; border-top:1px solid var(--border); background:var(--surface); border-bottom-left-radius:12px; border-bottom-right-radius:12px; }
+#aiInput { flex:1; background:#000; border:1px solid var(--border); color:#fff; padding:8px 12px; border-radius:20px; outline:none; font-family:var(--body); font-size:12px; }
+.ai-send { background:none; border:none; color:var(--cyan); margin-left:8px; cursor:pointer; font-size:16px; transition:color 0.2s; }
+.ai-send:hover { color:#fff; }
+</style>
 
 </body>
 </html>

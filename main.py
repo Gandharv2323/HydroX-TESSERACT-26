@@ -200,6 +200,11 @@ class ScenarioRequest(BaseModel):
     mode: str
 
 
+
+class ChatRequest(BaseModel):
+    prompt: str
+    context: dict = {}
+
 class ConfigRequest(BaseModel):
     broadcast_hz: Optional[float] = None
     noise_pct:    Optional[float] = None
@@ -297,3 +302,60 @@ async def websocket_endpoint(ws: WebSocket) -> None:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=PORT, reload=False)
+
+
+import httpx
+
+@app.post("/api/chat")
+async def chat_with_ai(request: ChatRequest):
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    
+    # Simple Mock fallback if no key provided
+    if not anthropic_key:
+        prompt_lower = request.prompt.lower()
+        mode = request.context.get("mode", "unknown")
+        vib = request.context.get("vibration", 0.0)
+        
+        reply = f"I am operating in mock mode (no ANTHROPIC_API_KEY). Based on the current mode '{mode}' and vibration of {vib:.2f} mm/s, "
+        if 'cavitation' in prompt_lower or mode == 'cavitation':
+            reply += "cavitation is highly probable due to low suction pressure. I recommend reducing pump speed or inspecting the inlet valve."
+        elif 'wear' in prompt_lower or mode == 'bearing_wear':
+            reply += "bearing wear is detected due to high peak vibration. Schedule maintenance to replace the bearings soon."
+        elif 'dry' in prompt_lower or mode == 'dry_run':
+            reply += "dry run detected! Shut down the pump immediately to prevent seal damage."
+        elif 'hello' in prompt_lower or 'hi' in prompt_lower:
+            reply += "Hello! I'm the HydroX AI assistant. Ask me to analyze the pump health!"
+        elif 'health' in prompt_lower or 'diagnose' in prompt_lower:
+            reply += "The pump looks stable but monitor the vibration trends."
+        else:
+            reply += "please provide more specific queries about faults or performance."
+            
+        return {"reply": reply}
+
+    # Real Claude API integration
+    try:
+        async with httpx.AsyncClient() as client:
+            system_prompt = "You are the AI assistant for HydroX, an industrial pump digital twin. Analyze the provided prompt and context, and give a short, professional, highly actionable recommendation (2-3 sentences max)."
+            user_content = f"Context: {request.context}\n\nUser Prompt: {request.prompt}"
+            
+            resp = await client.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key": anthropic_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json"
+                },
+                json={
+                    "model": "claude-3-haiku-20240307",
+                    "max_tokens": 200,
+                    "system": system_prompt,
+                    "messages": [{"role": "user", "content": user_content}]
+                },
+                timeout=10.0
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            reply = data["content"][0]["text"]
+            return {"reply": reply}
+    except Exception as e:
+        return {"reply": f"API Error: {str(e)}"}
