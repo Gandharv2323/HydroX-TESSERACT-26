@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from dataset_loader import PumpDatasetLoader
 from health_engine import HealthEngine
 from ml_model import PumpAnomalyDetector
+from model_bundle import extract_bundle
 from sensor_sim import SensorSimulator
 from pipeline.inference_engine import InferenceEngine
 
@@ -35,6 +36,7 @@ _CONFIG_PATH   = _BASE_DIR / "config.json"
 _MODEL_PATH    = _BASE_DIR / "pump_model.pkl"
 _CSV_PATH      = _BASE_DIR / "pump-sensor-data.csv"
 _REPLAY_PATH   = _BASE_DIR / "replay.json"
+_MODEL_BUNDLE_PATH = Path(os.getenv("HYDROX_MODEL_BUNDLE", _BASE_DIR / "hydrox_model_bundle.zip"))
 
 with open(_CONFIG_PATH) as _fh:
     _cfg = json.load(_fh)
@@ -148,6 +150,21 @@ async def lifespan(app: FastAPI):
 
     # ------ Advanced ML pipeline load ----------------------------------------
     _models_dir = _BASE_DIR / "models"
+    _required_adv = [
+        _models_dir / "isolation_forest.pkl",
+        _models_dir / "fault_classifier.pkl",
+        _models_dir / "rul_lstm.pt",
+        _models_dir / "shared_latent.pt",
+        _models_dir / "fusion_meta.pkl",
+    ]
+
+    if (not _models_dir.exists() or any(not p.exists() for p in _required_adv)) and _MODEL_BUNDLE_PATH.exists():
+        try:
+            extracted = extract_bundle(_MODEL_BUNDLE_PATH, _BASE_DIR, force=False)
+            print(f"[startup] Extracted {len(extracted)} files from {_MODEL_BUNDLE_PATH.name}.")
+        except Exception as exc:
+            print(f"[startup] Model bundle extract failed: {exc}")
+
     if _models_dir.exists():
         try:
             _adv_engine.load()

@@ -208,6 +208,23 @@ There is no single monolithic model weight file in the current architecture. The
 
 To make deployment easier, package these files into one distributable bundle (for example, `hydrox_model_bundle.zip`) and load from that bundle at startup. This preserves modular training while providing a one-file handoff for external environments.
 
+Create the bundle:
+
+```bash
+python model_bundle.py pack --output hydrox_model_bundle.zip
+```
+
+Extract the bundle on another machine (inside repo root):
+
+```bash
+python model_bundle.py unpack --bundle hydrox_model_bundle.zip
+```
+
+Startup behavior:
+
+- If advanced model files are missing and `hydrox_model_bundle.zip` exists in repo root, `main.py` automatically extracts and loads it.
+- You can override bundle path with env var `HYDROX_MODEL_BUNDLE`.
+
 ---
 
 ## Project Structure
