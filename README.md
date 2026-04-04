@@ -1,133 +1,171 @@
 # Smart Pump Health Digital Twin
-**Trimiti Innovations — Hackathon P-09**
 
-Real-time pump health monitoring system with ML-based anomaly detection, subsystem health scoring, and WebSocket streaming for Unity dashboards.
+Organization: Trimiti Innovations  
+Project: Hackathon P-09  
+Version: 2.x (updated pipeline)
+
+## Overview
+
+HydroX is a real-time digital twin for industrial pump monitoring. It combines:
+
+- Sensor simulation across multiple operating/fault modes
+- Real-time anomaly detection and fault classification
+- Health scoring (subsystem + overall)
+- RUL estimation
+- FastAPI REST + WebSocket streaming for dashboard/Unity clients
+
+The repository now contains both:
+
+- Legacy detector path (`ml_model.py`) used in the main state payload
+- Advanced production-style pipeline (`pipeline/`) with sliding-window features, Isolation Forest, 5-class Random Forest, and LSTM-based RUL
 
 ---
 
-## Quick Start (5 Steps)
+## Current Architecture
 
-**Step 1** — Install dependencies
+### Runtime flow (`main.py`)
+
+1. Generate or replay sensor readings (`sensor_sim.py` / `replay.json`)
+2. Run legacy anomaly detector (`ml_model.py`)
+3. Compute health, NPSH, and pump-curve metrics (`health_engine.py`)
+4. Run advanced inference pipeline (`pipeline/inference_engine.py`)
+5. Broadcast unified state over WebSocket and serve via REST endpoints
+
+### Advanced ML pipeline (`pipeline/inference_engine.py`)
+
+`sensor_dict -> validation -> sliding window (50x7) -> feature extraction (84 dims) -> IF anomaly -> RF fault class -> LSTM RUL -> decision JSON`
+
+Returned advanced fields include:
+
+- `anomaly_score` (1 = worst, 0 = healthy in advanced pipeline output)
+- `fault_class` (`normal`, `bearing_fault`, `cavitation`, `dry_run`, `misalignment`)
+- `RUL` (hours)
+- `confidence`
+- `state` (`normal`, `anomalous`, `buffering`, `sensor_error`)
+
+---
+
+## Key Components
+
+- `main.py`: FastAPI server, broadcast loop, API routes, dashboard serving
+- `main_train.py`: One-command training entrypoint
+- `main_infer.py`: Real-time inference/latency demo across scenarios
+- `training/generate_data.py`: Balanced synthetic labeled data generation
+- `training/train_all.py`: Trains IF, RF (5-class), and LSTM; saves artifacts
+- `pipeline/features.py`: Time + frequency-domain feature extraction (84 features)
+- `pipeline/fault_classifier.py`: 5-class Random Forest classifier
+- `pipeline/rul_lstm.py`: LSTM-based RUL predictor
+- `evaluation/report.py`: Evaluation report generation (IF/RF/LSTM)
+- `models/`: Saved model artifacts
+
+---
+
+## Quick Start
+
+### 1) Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**Step 2** — Start the backend (model trains automatically on first run)
+### 2) Train advanced models (creates `models/` artifacts)
+
+```bash
+python main_train.py
+```
+
+This generates:
+
+- `models/isolation_forest.pkl`
+- `models/fault_classifier.pkl`
+- `models/rul_lstm.pt`
+
+### 3) Start backend server
+
 ```bash
 python main.py
 ```
-> First run trains an IsolationForest on 1200 synthetic samples and saves `pump_model.pkl`.  
-> If `pump-sensor-data.csv` is present, Kaggle data is used instead.
 
-**Step 3** — Verify the API is live
-```
-http://localhost:8000/docs
-```
+API docs: `http://localhost:8000/docs`  
+WebSocket: `ws://localhost:8000/ws`
 
-**Step 4** — Connect your Unity WebSocket client
-```
-ws://localhost:8000/ws
-```
-> Broadcasts full state JSON at 2 Hz. CORS is fully open for Unity WebRequest.
+### 4) Run standalone inference benchmark/demo (optional)
 
-**Step 5** — Switch fault modes during the demo
 ```bash
-# Trigger cavitation fault
-curl -X POST http://localhost:8000/scenario \
-     -H "Content-Type: application/json" \
-     -d '{"mode": "cavitation"}'
-
-# Reset to normal
-curl -X POST http://localhost:8000/reset
+python main_infer.py
 ```
 
-Available modes: `normal` | `cavitation` | `bearing_wear` | `dry_run`
+### 5) Generate evaluation report (optional)
 
----
-
-## Optional
-
-**Generate offline replay file** (90 frames: normal → bearing wear → recovery)
 ```bash
-python replay_gen.py
-```
-Then start server in replay mode:
-```bash
-$env:REPLAY_MODE=1; python main.py      # PowerShell
-REPLAY_MODE=1 python main.py            # bash
-```
-
-**Train on real Kaggle data**  
-Place `pump-sensor-data.csv` in the `pump_twin/` folder and restart the server.  
-Download from: https://www.kaggle.com/datasets/nphantawee/pump-sensor-data
-
----
-
-## REST API Reference
-
-| Method | Endpoint    | Description                          |
-|--------|-------------|--------------------------------------|
-| GET    | `/`         | Liveness probe + connected clients   |
-| GET    | `/state`    | Current full state snapshot          |
-| GET    | `/poll`     | Identical to `/state` (Unity HTTP)   |
-| POST   | `/scenario` | Switch scenario mode                 |
-| POST   | `/reset`    | Reset to normal mode                 |
-| WS     | `/ws`       | WebSocket — 2 Hz broadcast stream    |
-
----
-
-## Full State JSON Schema
-
-```json
-{
-  "timestamp": 1711633200.123,
-  "mode": "normal",
-  "step": 42,
-  "sensors": {
-    "vibration_rms": 2.13,
-    "vibration_peak": 4.81,
-    "discharge_pressure": 4.19,
-    "suction_pressure": 1.82,
-    "flow_rate": 119.7,
-    "motor_current": 18.4,
-    "fluid_temp": 42.1
-  },
-  "anomaly": {
-    "anomaly_score": 0.87,
-    "is_anomaly": false,
-    "failure_mode": "none",
-    "confidence": 0.74,
-    "recommended_action": "Normal operation — no action required"
-  },
-  "health": {
-    "overall_health": 85.3,
-    "subsystem_health": {
-      "bearing_front": 88.1,
-      "bearing_rear": 85.5,
-      "seal": 84.2,
-      "impeller": 86.7,
-      "casing": 87.0
-    },
-    "status": "healthy",
-    "rul_hours": 113.3
-  }
-}
+python evaluation/report.py
 ```
 
 ---
 
-## Tuning for the Demo
+## API Summary
 
-All threshold and weight values are in `config.json` — no code changes needed.
-
-| Key | Effect |
-|-----|--------|
-| `broadcast_hz` | WebSocket update rate (default 2) |
-| `health_thresholds.healthy` | Above this → green (default 70) |
-| `health_thresholds.warning` | Below this → red / critical (default 40) |
-| `subsystem_weights` | Relative importance of each subsystem |
-| `isolation_forest.contamination` | Expected anomaly fraction in training data |
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/` | Dashboard UI (`dashboard.html`) |
+| GET | `/ping` | Liveness + mode + connected client count |
+| GET | `/state` | Full current state snapshot |
+| GET | `/poll` | Same as `/state` |
+| POST | `/scenario` | Set simulator mode (`normal`, `cavitation`, `bearing_wear`, `dry_run`) |
+| POST | `/reset` | Reset simulator to `normal` |
+| PATCH | `/config` | Update `broadcast_hz` and `noise_pct` at runtime |
+| GET | `/unity` | Structured Unity-friendly payload |
+| POST | `/throttle` | Set flow throttle factor (`0.0` to `1.5`) |
+| GET | `/history` | Last 60 state snapshots |
+| WS | `/ws` | Real-time full-state stream |
+| POST | `/api/chat` | AI diagnostic response (Anthropic if key set, otherwise mock) |
 
 ---
 
-*Built for Hackathon P-09 by Trimiti Innovations.*
+## Training and Evaluation Notes
+
+- Isolation Forest is trained unsupervised on normal-class features.
+- Random Forest is a supervised 5-class classifier on extracted window features.
+- LSTM predicts RUL from sequential sensor windows.
+- `evaluation/report.py` reports:
+  - IF: ROC-AUC, average precision
+  - RF: accuracy, macro-F1, confusion matrix
+  - LSTM: MAE/RMSE (hours)
+
+---
+
+## Project Structure
+
+```text
+.
+|- main.py
+|- main_train.py
+|- main_infer.py
+|- sensor_sim.py
+|- health_engine.py
+|- ml_model.py
+|- pipeline/
+|  |- inference_engine.py
+|  |- features.py
+|  |- buffer.py
+|  |- fault_classifier.py
+|  '- rul_lstm.py
+|- training/
+|  |- generate_data.py
+|  '- train_all.py
+|- evaluation/
+|  |- report.py
+|  '- ablation_study.py
+|- models/
+|- dashboard.html
+|- config.json
+'- requirements.txt
+```
+
+---
+
+## Deployment Notes
+
+- Run `main_train.py` at least once before relying on advanced pipeline outputs.
+- If `models/` artifacts are missing, `main.py` continues with fallback behavior where applicable.
+- `REPLAY_MODE=1` can be used with `replay.json` for deterministic demonstrations.
