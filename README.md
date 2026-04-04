@@ -102,6 +102,9 @@ This generates:
 - `models/isolation_forest.pkl`
 - `models/fault_classifier.pkl`
 - `models/rul_lstm.pt`
+- `models/shared_latent.pt`
+- `models/fusion_meta.pkl`
+- `configs/threshold.json`
 
 ### 3) Start backend server
 
@@ -174,6 +177,37 @@ The system decomposes the problem into orthogonal tasks:
 
 This modular design improves interpretability, reduces dependence on fully labeled fault histories, and allows independent tuning and validation of each subsystem.
 
+### Model Identity and Portability
+
+Recommended deployable model identity:
+
+- `HydroX Advanced ML Pipeline`
+
+Legacy compatibility model:
+
+- `Legacy PumpAnomalyDetector` (`ml_model.py` + `pump_model.pkl`)
+
+For production-like deployment, use the advanced pipeline artifacts below.
+
+Required files to run the model on another machine:
+
+- Code entrypoint: `main.py` (API runtime) or `main_infer.py` (direct inference demo)
+- Python dependencies: `requirements.txt`
+- Runtime config: `config.json`
+- Threshold config: `configs/threshold.json`
+- Advanced model artifacts:
+  - `models/isolation_forest.pkl`
+  - `models/fault_classifier.pkl`
+  - `models/rul_lstm.pt`
+  - `models/shared_latent.pt`
+  - `models/fusion_meta.pkl`
+
+### Single-File Distribution Option
+
+There is no single monolithic model weight file in the current architecture. The system is an ensemble by design (IF + RF + LSTM + latent encoder + fusion), so artifacts are stored separately.
+
+To make deployment easier, package these files into one distributable bundle (for example, `hydrox_model_bundle.zip`) and load from that bundle at startup. This preserves modular training while providing a one-file handoff for external environments.
+
 ---
 
 ## Project Structure
@@ -211,3 +245,4 @@ This modular design improves interpretability, reduces dependence on fully label
 - Run `main_train.py` at least once before relying on advanced pipeline outputs.
 - If `models/` artifacts are missing, `main.py` continues with fallback behavior where applicable.
 - `REPLAY_MODE=1` can be used with `replay.json` for deterministic demonstrations.
+- For external sharing, prefer shipping one bundle that includes model artifacts + `configs/threshold.json` + `config.json`.
