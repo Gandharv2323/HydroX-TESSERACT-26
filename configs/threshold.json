@@ -1,7 +1,8 @@
 {
-  "if_threshold": 0.55,
-  "method": "bootstrap_default",
+  "if_threshold": 0.42259986276217343,
+  "method": "quantile_normal",
   "meta": {
-    "note": "Replace by calibration/threshold.py output after first validation run"
+    "quantile": 95.0,
+    "n_normal": 85
   }
 }

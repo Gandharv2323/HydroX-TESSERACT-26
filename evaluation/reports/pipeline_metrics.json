@@ -1,0 +1,89 @@
+{
+  "if": {
+    "roc_auc": 1.0,
+    "pr_auc": 1.0
+  },
+  "rf_holdout": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "confusion_matrix": [
+      [
+        85,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        40,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        37,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        50,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        58
+      ]
+    ]
+  },
+  "rf_cv": {
+    "folds": [
+      {
+        "accuracy": 1.0,
+        "macro_f1": 1.0
+      },
+      {
+        "accuracy": 1.0,
+        "macro_f1": 1.0
+      },
+      {
+        "accuracy": 1.0,
+        "macro_f1": 1.0
+      },
+      {
+        "accuracy": 1.0,
+        "macro_f1": 1.0
+      },
+      {
+        "accuracy": 1.0,
+        "macro_f1": 1.0
+      }
+    ],
+    "accuracy_mean": 1.0,
+    "macro_f1_mean": 1.0
+  },
+  "lstm_holdout": {},
+  "calibration": {
+    "if_threshold": 0.42259986276217343,
+    "method": "quantile_normal"
+  },
+  "shared_latent": {
+    "class_acc": 1.0,
+    "rul_mae_rel": 0.1374,
+    "anomaly_mae": 0.0001
+  },
+  "fusion_meta": {
+    "roc_auc": 1.0,
+    "avg_precision": 1.0,
+    "n_samples": 270,
+    "n_features": 130
+  }
+}

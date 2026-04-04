@@ -42,7 +42,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -401,6 +401,60 @@ class RULPredictor:
 
         real_pred = float(np.expm1(log_pred)) if self._log_targets else log_pred
         return round(max(0.0, real_pred), 1)
+
+    def predict_with_uncertainty(
+        self,
+        window: np.ndarray,
+        n_samples: int = 30,
+    ) -> dict[str, Any]:
+        """
+        MC-dropout uncertainty estimate.
+
+        Returns
+        -------
+        {
+          "mean": float,
+          "low": float,
+          "high": float,
+          "std": float,
+          "samples": int,
+        }
+        """
+        if not _TORCH_AVAILABLE or not self._trained:
+            base = self.predict(window)
+            return {
+                "mean": float(base),
+                "low": float(base),
+                "high": float(base),
+                "std": 0.0,
+                "samples": 1,
+            }
+
+        X = window.astype(np.float32)[np.newaxis]
+        X_n = self._normalise(X)
+        t = torch.tensor(X_n).to(self._device)
+
+        self._model.eval()
+        # Enable dropout only for MC sampling; keep BatchNorm in eval.
+        for m in self._model.modules():
+            if isinstance(m, nn.Dropout):
+                m.train()
+
+        preds: list[float] = []
+        with torch.no_grad():
+            for _ in range(max(1, int(n_samples))):
+                log_pred = self._model(t).item()
+                real_pred = float(np.expm1(log_pred)) if self._log_targets else float(log_pred)
+                preds.append(max(0.0, real_pred))
+
+        arr = np.asarray(preds, dtype=np.float32)
+        return {
+            "mean": round(float(np.mean(arr)), 1),
+            "low": round(float(np.percentile(arr, 10)), 1),
+            "high": round(float(np.percentile(arr, 90)), 1),
+            "std": round(float(np.std(arr)), 3),
+            "samples": int(len(arr)),
+        }
 
     # ------------------------------------------------------------------
     # Persistence (weights_only=True safe)

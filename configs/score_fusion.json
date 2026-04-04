@@ -1,0 +1,12 @@
+{
+  "if": {
+    "method": "identity"
+  },
+  "rf": {
+    "method": "identity"
+  },
+  "fusion": {
+    "w_if": 0.6,
+    "w_rf": 0.4
+  }
+}

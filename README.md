@@ -21,6 +21,23 @@ The repository now contains both:
 
 ---
 
+## Applied Architecture Upgrade (Logged)
+
+This repository now includes an applied implementation of the representation-consistent upgrade plan.
+
+- Shared latent encoder + multi-task heads (`models/shared_latent.py`)
+- Hybrid representation (`[z || phase || h]`) in training and runtime
+- RF probability calibration (isotonic)
+- IF threshold calibration from normal-score quantile (95th percentile)
+- Learned fusion model `y = f(if, rf, h)` with fallback weighted fusion
+- Runtime consistency constraints and contradiction telemetry
+
+Implementation details and gap-by-gap mapping are documented in:
+
+- `IMPLEMENTATION_LOG.md`
+
+---
+
 ## Current Architecture
 
 ### Runtime flow (`main.py`)

@@ -31,7 +31,8 @@ from training.generate_data import generate
 from pipeline.fault_classifier import FaultClassifier
 from pipeline.rul_lstm import RULPredictor
 from pipeline.buffer import WINDOW_SIZE, SENSORS
-from pipeline.features import extract_batch
+from pipeline.features import extract_batch, extract_phase_features
+from models.shared_latent import SharedLatentRuntime
 from data_pipeline.loader import SensorDataLoader
 from data_pipeline.preprocessing import (
     append_missingness_mask_columns,
@@ -39,7 +40,11 @@ from data_pipeline.preprocessing import (
     clip_outliers_percentile,
     smooth_noise_rolling_mean,
 )
-from calibration.threshold import calibrate_threshold, save_threshold_config
+from calibration.threshold import (
+    calibrate_threshold_unsupervised,
+    save_threshold_config,
+)
+from calibration.fusion_meta import train_fusion_model
 from evaluation.pipeline import (
     evaluate_if,
     evaluate_rf_cv,
@@ -184,11 +189,44 @@ def train_random_forest(X_features: np.ndarray, y_class: np.ndarray) -> dict:
     log.info("Training 5-class Random Forest classifier...")
 
     clf = FaultClassifier()
-    result = clf.fit(X_features, y_class, n_estimators=200, max_depth=12)
+    result = clf.fit(
+        X_features,
+        y_class,
+        n_estimators=200,
+        max_depth=12,
+        calibration_method="isotonic",
+    )
     out_path = MODELS_DIR / "fault_classifier.pkl"
     clf.save(out_path)
     log.info(f"  train_accuracy={result['train_accuracy']}")
     return result
+
+
+def train_shared_latent(X_windows: np.ndarray, y_class: np.ndarray, y_rul: np.ndarray) -> tuple[SharedLatentRuntime, dict]:
+    """Train and persist representation-consistent shared encoder."""
+    log.info("─" * 60)
+    log.info("Training shared latent multi-task encoder...")
+
+    enc = SharedLatentRuntime(in_channels=X_windows.shape[2], hidden_dim=128, n_faults=5)
+    metrics = enc.fit(
+        X_windows,
+        y_class,
+        y_rul,
+        epochs=20,
+        batch_size=128,
+        lr=1e-3,
+        lambda_anom=1.0,
+        lambda_cls=1.0,
+        lambda_rul=1.0,
+        lambda_consistency=0.2,
+        k_consistency=1.0,
+    )
+
+    out_path = MODELS_DIR / "shared_latent.pt"
+    enc.save(out_path)
+    log.info(f"  Saved -> {out_path}")
+    log.info(f"  shared_metrics={metrics}")
+    return enc, metrics
 
 
 def train_lstm(X_windows: np.ndarray, y_rul: np.ndarray) -> dict:
@@ -237,55 +275,68 @@ def main(real_csv: str | None = None) -> None:
     real = _load_real_data(real_csv)
 
     # Step 1: Generate synthetic data
-    log.info("Step 1/4 — Generating synthetic training data...")
+    log.info("Step 1/5 — Generating synthetic training data...")
     X_wins, y_cls, y_rul, X_feats = generate(n_per_class=300)
 
+    # Step 2: Shared latent representation
+    log.info("Step 2/5 — Shared latent encoder...")
+    enc, shared_metrics = train_shared_latent(X_wins, y_cls, y_rul)
+    H_syn = enc.encode_batch(X_wins)
+    P_syn = np.vstack([extract_phase_features(w) for w in X_wins]).astype(np.float32)
+    X_hybrid = np.hstack([X_feats, P_syn, H_syn]).astype(np.float32)
+
+    X_real_hybrid = None
+    if real.get("available") and len(real.get("windows", [])) > 0 and len(real.get("features", [])) > 0:
+        P_real = np.vstack([extract_phase_features(w) for w in real["windows"]]).astype(np.float32)
+        H_real = enc.encode_batch(real["windows"])
+        X_real_hybrid = np.hstack([real["features"], P_real, H_real]).astype(np.float32)
+
     # Domain-shift mitigation: IF scaler/fit on real normal when available
-    if real.get("available") and len(real["features"]) > 0:
+    if X_real_hybrid is not None and len(X_real_hybrid) > 0:
         # Train IF on real normal (or full real if labels unavailable)
         y_real = real.get("y_cls")
-        if y_real is not None and len(y_real) == len(real["features"]):
+        if y_real is not None and len(y_real) == len(X_real_hybrid):
             normal_idx = (y_real == 0)
-            X_if_train = real["features"][normal_idx] if normal_idx.any() else real["features"]
+            X_if_train = X_real_hybrid[normal_idx] if normal_idx.any() else X_real_hybrid
             y_if_aux = y_real
         else:
-            X_if_train = real["features"]
-            y_if_aux = np.zeros(len(real["features"]), dtype=int)
+            X_if_train = X_real_hybrid
+            y_if_aux = np.zeros(len(X_real_hybrid), dtype=int)
     else:
-        X_if_train = X_feats[y_cls == 0]
+        X_if_train = X_hybrid[y_cls == 0]
         y_if_aux = y_cls
 
-    # Step 2: Isolation Forest
-    log.info("Step 2/4 — Isolation Forest...")
+    # Step 3: Isolation Forest
+    log.info("Step 3/5 — Isolation Forest...")
     # Reconstruct IF training arrays to preserve function signature
-    if real.get("available") and len(real.get("features", [])) > 0:
+    if X_real_hybrid is not None and len(X_real_hybrid) > 0:
         # Compose pseudo full set for score normalization
-        X_if_full = real["features"]
+        X_if_full = X_real_hybrid
         y_if_full = y_if_aux
     else:
-        X_if_full = X_feats
+        X_if_full = X_hybrid
         y_if_full = y_cls
 
     if_metrics = train_isolation_forest(X_if_full, y_if_full)
 
-    # Step 3: 5-class RF
-    log.info("Step 3/4 — 5-class Random Forest...")
+    # Step 4: 5-class RF
+    log.info("Step 4/5 — 5-class Random Forest...")
     # Mixed RF training when labeled real data exists
     if real.get("available") and real.get("y_cls") is not None:
         y_real = real["y_cls"]
-        X_real = real["features"]
-        if len(y_real) == len(X_real):
-            X_rf = np.vstack([X_feats, X_real])
+        X_real = X_real_hybrid if X_real_hybrid is not None else np.empty((0, X_hybrid.shape[1]), dtype=np.float32)
+        if len(y_real) == len(X_real) and len(X_real) > 0:
+            X_rf = np.vstack([X_hybrid, X_real])
             y_rf = np.concatenate([y_cls, y_real])
         else:
-            X_rf, y_rf = X_feats, y_cls
+            X_rf, y_rf = X_hybrid, y_cls
     else:
-        X_rf, y_rf = X_feats, y_cls
+        X_rf, y_rf = X_hybrid, y_cls
 
     rf_metrics = train_random_forest(X_rf, y_rf)
 
-    # Step 4: LSTM
-    log.info("Step 4/4 — LSTM RUL predictor...")
+    # Step 5: LSTM
+    log.info("Step 5/5 — LSTM RUL predictor...")
     try:
         if real.get("available") and real.get("y_rul") is not None and len(real["windows"]) == len(real["y_rul"]):
             X_lstm = np.concatenate([X_wins, real["windows"]], axis=0)
@@ -312,8 +363,31 @@ def main(real_csv: str | None = None) -> None:
         norm = np.clip((raw - if_bundle["score_min"]) / (if_bundle["score_max"] - if_bundle["score_min"] + 1e-12), 0, 1)
         anomaly_scores = 1.0 - norm
         y_bin = (y_rf[idx_te] != 0).astype(int)
-        cal = calibrate_threshold(y_bin, anomaly_scores, method="f1_optimal")
+        normal_scores = anomaly_scores[y_bin == 0]
+        if len(normal_scores) == 0:
+            normal_scores = anomaly_scores
+        cal = calibrate_threshold_unsupervised(normal_scores, quantile=95.0)
         save_threshold_config(cal, CONFIGS_DIR / "threshold.json")
+
+        # Train learned fusion model on holdout using [if_score, rf_fault_prob, h].
+        rf_loaded = FaultClassifier()
+        rf_loaded.load(MODELS_DIR / "fault_classifier.pkl")
+        rf_fault_probs = []
+        for row in X_rf[idx_te]:
+            pred = rf_loaded.predict(row)
+            rf_fault_probs.append(1.0 - float(pred["probabilities"].get("normal", 0.0)))
+        rf_fault_probs = np.asarray(rf_fault_probs, dtype=np.float32)
+
+        latent_dim = H_syn.shape[1]
+        latent_te = X_rf[idx_te][:, -latent_dim:]
+        y_bin_te = (y_rf[idx_te] != 0).astype(int)
+        fusion_metrics = train_fusion_model(
+            if_scores=anomaly_scores,
+            rf_fault_probs=rf_fault_probs,
+            latent=latent_te,
+            y_binary=y_bin_te,
+            out_path=MODELS_DIR / "fusion_meta.pkl",
+        )
 
         # LSTM holdout metrics (if trained)
         lstm_eval = {}
@@ -333,6 +407,8 @@ def main(real_csv: str | None = None) -> None:
                 "if_threshold": cal["if_threshold"],
                 "method": cal["method"],
             },
+            "shared_latent": shared_metrics,
+            "fusion_meta": fusion_metrics,
         }
         save_metrics_json(metrics, _ROOT / "evaluation" / "reports" / "pipeline_metrics.json")
         log.info(

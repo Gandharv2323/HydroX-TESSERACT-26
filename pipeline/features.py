@@ -70,6 +70,21 @@ def _fft_features(signal: np.ndarray) -> np.ndarray:
     return np.array([fft_mean, fft_max, fft_energy, dom_freq, spec_ent], dtype=np.float32)
 
 
+def _phase_features(signal: np.ndarray) -> np.ndarray:
+    """Phase-aware descriptors from real FFT.
+
+    Returns
+    -------
+    [phase_variance, phase_drift]
+    """
+    ph = np.angle(np.fft.rfft(signal))
+    if len(ph) <= 1:
+        return np.array([0.0, 0.0], dtype=np.float32)
+    phase_var = float(np.var(ph, ddof=0))
+    phase_drift = float(np.mean(np.abs(np.diff(ph))))
+    return np.array([phase_var, phase_drift], dtype=np.float32)
+
+
 # ------------------------------------------------------------------
 # Public API
 # ------------------------------------------------------------------
@@ -118,3 +133,31 @@ def extract_batch(windows: np.ndarray) -> np.ndarray:
     np.ndarray, shape (n_samples, 84)
     """
     return np.vstack([extract_features(windows[i]) for i in range(len(windows))])
+
+
+def extract_phase_features(window: np.ndarray) -> np.ndarray:
+    """Extract phase descriptors per sensor + cross-sensor phase coherence.
+
+    Output layout:
+      - per sensor: [phase_variance, phase_drift]  => 14 values
+      - cross-sensor: mean absolute phase-difference => 1 value
+    Total: 15 values
+    """
+    if window.ndim != 2 or window.shape[1] != N_SENSORS:
+        raise ValueError(f"Expected window shape (*, {N_SENSORS}), got {window.shape}")
+
+    parts: list[np.ndarray] = []
+    phases = []
+    for col_idx in range(window.shape[1]):
+        sig = window[:, col_idx].astype(np.float64)
+        parts.append(_phase_features(sig))
+        phases.append(np.angle(np.fft.rfft(sig)))
+
+    diffs = []
+    for i in range(len(phases)):
+        for j in range(i + 1, len(phases)):
+            m = min(len(phases[i]), len(phases[j]))
+            if m > 0:
+                diffs.append(float(np.mean(np.abs(phases[i][:m] - phases[j][:m]))))
+    cross = np.array([float(np.mean(diffs)) if diffs else 0.0], dtype=np.float32)
+    return np.concatenate(parts + [cross]).astype(np.float32)

@@ -49,6 +49,13 @@ def calibrate_threshold(
             "precision": float(precision[idx]),
             "recall": float(recall[idx]),
         }
+    elif method == "quantile":
+        # Fallback only; prefer calibrate_threshold_unsupervised when normal-only scores are available.
+        threshold = float(np.percentile(anomaly_scores, 95.0))
+        meta = {
+            "quantile": 95.0,
+            "note": "label-agnostic fallback quantile over provided scores",
+        }
     else:
         raise ValueError(f"Unknown method: {method}")
 
@@ -80,6 +87,32 @@ def save_threshold_config(result: dict[str, Any], out_path: Path | str) -> None:
         "meta": result.get("meta", {}),
     }
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def calibrate_threshold_unsupervised(
+    normal_scores: np.ndarray,
+    quantile: float = 95.0,
+) -> dict[str, Any]:
+    """Calibrate IF anomaly threshold from normal-score distribution only.
+
+    Parameters
+    ----------
+    normal_scores : np.ndarray
+        Anomaly scores for known/assumed normal windows.
+    quantile : float
+        Upper quantile for anomaly trigger (e.g., 95 = top 5% as anomalies).
+    """
+    scores = np.asarray(normal_scores, dtype=float)
+    q = float(np.clip(quantile, 50.0, 99.99))
+    threshold = float(np.percentile(scores, q))
+    return {
+        "if_threshold": threshold,
+        "method": "quantile_normal",
+        "meta": {
+            "quantile": q,
+            "n_normal": int(len(scores)),
+        },
+    }
 
 
 def load_threshold_config(path: Path | str, default: float = 0.55) -> float:

@@ -1,0 +1,12 @@
+{
+  "isolation_forest": {
+    "error": "X has 84 features, but StandardScaler is expecting 227 features as input."
+  },
+  "random_forest": {
+    "error": "X has 84 features, but StandardScaler is expecting 227 features as input."
+  },
+  "lstm_rul": {
+    "mae_hours": 58.95,
+    "rmse_hours": 85.48
+  }
+}

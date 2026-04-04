@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 
@@ -48,8 +49,10 @@ class FaultClassifier:
 
     def __init__(self) -> None:
         self._model:   Optional[RandomForestClassifier] = None
+        self._calibrator: Optional[CalibratedClassifierCV] = None
         self._scaler:  Optional[StandardScaler]         = None
         self._trained: bool                              = False
+        self._calibration_method: str                    = "none"
 
     # ------------------------------------------------------------------
     # Training
@@ -62,6 +65,7 @@ class FaultClassifier:
         n_estimators: int = 200,
         max_depth:    int = 12,
         random_state: int = 42,
+        calibration_method: str = "none",
     ) -> dict:
         """
         Fit StandardScaler + RandomForest on feature vectors.
@@ -86,7 +90,19 @@ class FaultClassifier:
         )
         self._model.fit(X_scaled, y)
 
-        train_acc = self._model.score(X_scaled, y)
+        calibration_method = calibration_method.lower().strip()
+        self._calibrator = None
+        self._calibration_method = calibration_method
+        if calibration_method in {"sigmoid", "isotonic"}:
+            self._calibrator = CalibratedClassifierCV(
+                self._model,
+                method=calibration_method,
+                cv=3,
+            )
+            self._calibrator.fit(X_scaled, y)
+
+        infer_model = self._calibrator if self._calibrator is not None else self._model
+        train_acc = infer_model.score(X_scaled, y)
         counts = {FAULT_LABELS[c]: int((y == c).sum()) for c in sorted(FAULT_LABELS)}
         self._trained = True
 
@@ -115,20 +131,29 @@ class FaultClassifier:
         if not self._trained or self._model is None or self._scaler is None:
             raise RuntimeError("FaultClassifier not trained.")
 
-        X = feature_vec.reshape(1, -1)
+        vec = np.asarray(feature_vec, dtype=np.float32).reshape(-1)
+        expected = int(getattr(self._scaler, "n_features_in_", len(vec)))
+        if len(vec) > expected:
+            vec = vec[:expected]
+        elif len(vec) < expected:
+            vec = np.pad(vec, (0, expected - len(vec)), mode="constant", constant_values=0.0)
+
+        X = vec.reshape(1, -1)
         X_s = self._scaler.transform(X)
 
-        cls_id    = int(self._model.predict(X_s)[0])
-        proba     = self._model.predict_proba(X_s)[0]   # shape: (5,)
+        infer_model = self._calibrator if self._calibrator is not None else self._model
+        cls_id    = int(infer_model.predict(X_s)[0])
+        proba     = infer_model.predict_proba(X_s)[0]   # shape: (5,)
         proba_map = {
             FAULT_LABELS[c]: round(float(proba[i]), 4)
-            for i, c in enumerate(self._model.classes_)
+            for i, c in enumerate(infer_model.classes_)
         }
         return {
             "fault_class_id": cls_id,
             "fault_label":    FAULT_LABELS.get(cls_id, "unknown"),
             "probabilities":  proba_map,
             "confidence":     round(float(proba.max()), 4),
+            "calibration":    self._calibration_method,
         }
 
     # ------------------------------------------------------------------
@@ -138,9 +163,11 @@ class FaultClassifier:
     def save(self, path: Path) -> None:
         bundle = {
             "model":   self._model,
+            "calibrator": self._calibrator,
             "scaler":  self._scaler,
             "labels":  FAULT_LABELS,
             "trained": self._trained,
+            "calibration_method": self._calibration_method,
         }
         with open(path, "wb") as fh:
             pickle.dump(bundle, fh)
@@ -150,8 +177,10 @@ class FaultClassifier:
         with open(path, "rb") as fh:
             bundle = pickle.load(fh)
         self._model   = bundle["model"]
+        self._calibrator = bundle.get("calibrator")
         self._scaler  = bundle["scaler"]
         self._trained = bundle["trained"]
+        self._calibration_method = str(bundle.get("calibration_method", "none"))
         logger.info(f"[FaultClassifier] Loaded from {path}")
 
     def is_trained(self) -> bool:
