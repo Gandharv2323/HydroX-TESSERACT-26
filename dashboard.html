@@ -11,25 +11,25 @@
   <style>
     /*  Design System  */
     :root {
-      --bg:           #090c10;
-      --surface:      #0e1318;
-      --surface-hi:   #141c24;
-      --border:       #1e2d3d;
-      --border-hi:    #2a4060;
+      --bg:           #ffffff;
+      --surface:      #f4f6f8;
+      --surface-hi:   #e8edf2;
+      --border:       #cbd2d9;
+      --border-hi:    #9aa5b1;
 
-      --cyan:         #00d4ff;
-      --cyan-dim:     rgba(0,212,255,.15);
-      --cyan-glow:    rgba(0,212,255,.35);
-      --amber:        #f0a500;
-      --amber-dim:    rgba(240,165,0,.15);
-      --red:          #ff3b5c;
-      --red-dim:      rgba(255,59,92,.15);
-      --green:        #00e676;
-      --green-dim:    rgba(0,230,118,.12);
+      --cyan:         #007fc4;
+      --cyan-dim:     rgba(0,127,196,.15);
+      --cyan-glow:    rgba(0,127,196,.35);
+      --amber:        #e07f00;
+      --amber-dim:    rgba(224,127,0,.15);
+      --red:          #d12b48;
+      --red-dim:      rgba(209,43,72,.15);
+      --green:        #00a854;
+      --green-dim:    rgba(0,168,84,.12);
 
-      --text-primary: #e8edf2;
-      --text-dim:     #5a7080;
-      --text-muted:   #2e4050;
+      --text-primary: #1e293b;
+      --text-dim:     #475569;
+      --text-muted:   #64748b;
 
       --mono:   'Share Tech Mono', monospace;
       --body:   'Barlow', sans-serif;
@@ -929,6 +929,18 @@
       </button>
     </div>
 
+    <!-- Throttle Slider (UPGRADE 4) -->
+    <div style="padding:0 12px 12px; margin-top:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px">
+        <span style="font-family:var(--display); font-size:10px; font-weight:700; letter-spacing:.1em; color:var(--text-muted); text-transform:uppercase">FLOW THROTTLE</span>
+        <span id="throttleValue" style="font-family:var(--mono); font-size:11px; color:var(--cyan); font-weight:bold">1.0x</span>
+      </div>
+      <input type="range" id="throttleSlider" min="0.0" max="1.5" step="0.1" value="1.0" 
+             style="width:100%; accent-color:var(--cyan); cursor:pointer;"
+             oninput="document.getElementById('throttleValue').innerText = Number(this.value).toFixed(1) + 'x';"
+             onchange="setThrottle(this.value)" />
+    </div>
+
     <div class="divider"></div>
     <div class="panel-label">Live Sensors</div>
     <div class="sensor-list" id="sensorList">
@@ -1026,6 +1038,39 @@
       <!-- populated by JS -->
     </div>
 
+    <!-- UPGRADE 1 & 2: NPSH & Pump Curve -->
+    <div class="divider"></div>
+    <div class="panel-label">Pump Performance</div>
+    <div class="subsystem-list" style="padding-top:4px;">
+      <!-- Efficiency -->
+      <div class="sub-row">
+        <div class="sub-header">
+          <span class="sub-name">VOLUMETRIC EFF.</span>
+          <span class="sub-val" id="effVal" style="color:var(--cyan);">--%</span>
+        </div>
+        <div class="sub-track"><div class="sub-fill" id="effFill" style="width:0%;background:var(--cyan)"></div></div>
+      </div>
+      <!-- Expected Head Deviation -->
+      <div style="display:flex; justify-content:space-between; margin-top:4px; font-family:var(--mono); font-size:10px;">
+        <span style="color:var(--text-dim); letter-spacing:.06em;">CURVE DEVIATION</span>
+        <span id="devVal" style="font-weight:bold; color:var(--cyan)">--%</span>
+      </div>
+      <!-- Duty Status -->
+      <div style="display:flex; justify-content:space-between; margin-top:4px; font-family:var(--mono); font-size:10px;">
+        <span style="color:var(--text-dim); letter-spacing:.06em;">DUTY BAND</span>
+        <span id="dutyStatusVal" style="font-weight:bold; color:var(--cyan)">--</span>
+      </div>
+      
+      <div style="height:1px; background:rgba(30,45,61,0.5); margin:8px 0;"></div>
+      
+      <!-- NPSH -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <span style="font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:.06em;">NPSH MARGIN</span>
+        <span id="npshMargin" style="font-family:var(--mono); font-size:13px; font-weight:bold; color:var(--cyan)">-- m</span>
+      </div>
+      <div style="font-family:var(--mono); font-size:10px; color:var(--green); text-align:right" id="npshStatus">--</div>
+    </div>
+
     <div class="divider"></div>
     <div class="score-bar-wrap">
       <div class="score-bar-header">
@@ -1056,6 +1101,7 @@
           <option value="flow_rate">Flow Rate</option>
           <option value="motor_current">Motor I</option>
           <option value="fluid_temp">Fluid Temp</option>
+          <option value="shaft_rpm">Shaft RPM</option>
         </select>
       </div>
       <div class="chart-canvas-wrap">
@@ -1103,6 +1149,7 @@ const SENSOR_META = [
   { key:'flow_rate',          label:'FLOW RATE',    unit:'L/min',max:180 },
   { key:'motor_current',      label:'MOTOR CURR',   unit:'A',    max:35  },
   { key:'fluid_temp',         label:'FLUID TEMP',   unit:'°C',   max:80  },
+  { key:'shaft_rpm',          label:'SHAFT RPM',    unit:'rpm',  max:1600 },
 ];
 const SUBSYSTEM_ORDER = ['bearing_front','bearing_rear','seal','impeller','casing'];
 const SUBSYSTEM_LABEL = { bearing_front:'BEARING FWD', bearing_rear:'BEARING AFT',
@@ -1329,6 +1376,32 @@ function applyState(s) {
   if (healthHistory.length > 120) healthHistory.shift();
   updateSparkline();
 
+  // UPGRADE 1 & 2: NPSH, Pump Curve, Throttle UI Sync
+  if (s.throttle_factor !== undefined && !document.getElementById('throttleSlider').matches(':active')) {
+    document.getElementById('throttleSlider').value = s.throttle_factor;
+    document.getElementById('throttleValue').textContent = s.throttle_factor.toFixed(1) + 'x';
+  }
+  
+  if (s.pump_curve) {
+    const eff = s.pump_curve.efficiency_pct || 0;
+    document.getElementById('effVal').textContent = eff.toFixed(1) + '%';
+    document.getElementById('effFill').style.width = Math.min(100, eff) + '%';
+    
+    const dev = s.pump_curve.deviation_pct || 0;
+    const devEl = document.getElementById('devVal');
+    devEl.textContent = (dev > 0 ? '+' : '') + dev.toFixed(1) + '%';
+    devEl.style.color = s.pump_curve.within_tolerance ? 'var(--cyan)' : 'var(--red)';
+    
+    document.getElementById('dutyStatusVal').textContent = (s.pump_curve.duty_status || '--').toUpperCase();
+  }
+  if (health.npsh) {
+    document.getElementById('npshMargin').textContent = (health.npsh.margin || 0).toFixed(2) + ' m';
+    const nStatEl = document.getElementById('npshStatus');
+    const nStat = health.npsh.status || 'safe';
+    nStatEl.textContent = nStat.toUpperCase().replace('_', ' ');
+    nStatEl.style.color = nStat === 'safe' ? 'var(--green)' : nStat === 'warning' ? 'var(--amber)' : 'var(--red)';
+  }
+
 
 
   // Maintenance countdown (#10)
@@ -1371,7 +1444,7 @@ function applyState(s) {
 //  Sensor History Chart (#1) 
 var _sensorHistory = {
   vibration_rms:[], discharge_pressure:[], suction_pressure:[],
-  flow_rate:[], motor_current:[], fluid_temp:[]
+  flow_rate:[], motor_current:[], fluid_temp:[], shaft_rpm:[]
 };
 var _chartSensor = 'vibration_rms';
 var _sensorChart = null;
@@ -1459,6 +1532,33 @@ function exportReport() {
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
+// UPGRADE 4: Throttle control
+function setThrottle(val) {
+  fetch(API_URL + '/throttle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ flow_pct: parseFloat(val) })
+  }).catch(e => console.warn('POST /throttle failed', e));
+}
+
+// UPGRADE 7: Fetch history on startup
+async function loadHistory() {
+  try {
+    const res = await fetch(API_URL + '/history');
+    if (res.ok) {
+      const histData = await res.json();
+      if (Array.isArray(histData) && histData.length > 0) {
+        healthHistory = histData.map(h => h.health ? h.health.overall_health : 0).filter(v => v !== undefined);
+        updateSparkline();
+        applyState(histData[histData.length - 1]); // Apply latest frame
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load history on init', e);
+  }
+}
+loadHistory();
+
 function connect() {
   const dot   = document.getElementById('wsDot');
   const label = document.getElementById('wsLabel');
@@ -1516,8 +1616,8 @@ setInterval(async () => {
 
   //  Scene + Renderer 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x080b10);
-  scene.fog = new THREE.FogExp2(0x080b10, 0.045);
+  scene.background = new THREE.Color(0xffffff);
+  scene.fog = new THREE.FogExp2(0xffffff, 0.025);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -1549,7 +1649,7 @@ setInterval(async () => {
   fill.position.set(-6, 2, -4);
   scene.add(fill);
 
-  const underLight = new THREE.PointLight(0x00d4ff, 2, 12);
+  const underLight = new THREE.PointLight(0xffffff, 1.0, 12);
   underLight.position.set(0, -1.5, 0);
   scene.add(underLight);
 
@@ -1562,18 +1662,19 @@ setInterval(async () => {
     steel:    new THREE.MeshStandardMaterial({ color:0x1e2e3e, roughness:0.35, metalness:0.90 }),
     steelHi:  new THREE.MeshStandardMaterial({ color:0x263545, roughness:0.25, metalness:0.95 }),
     castIron: new THREE.MeshStandardMaterial({ color:0x141e28, roughness:0.60, metalness:0.70 }),
+    glass:    new THREE.MeshPhysicalMaterial({ color:0x88bbdd, metalness:0.1, roughness:0.05, transmission:0.8, transparent:true, opacity:0.3 }),
     flange:   new THREE.MeshStandardMaterial({ color:0x1a2b3a, roughness:0.45, metalness:0.82 }),
     bolt:     new THREE.MeshStandardMaterial({ color:0x3a4a58, roughness:0.30, metalness:0.95 }),
-    impeller: new THREE.MeshStandardMaterial({ color:0x006688, roughness:0.15, metalness:0.98, emissive:0x002233, emissiveIntensity:0.4 }),
+    impeller: new THREE.MeshStandardMaterial({ color:0xd4af37, roughness:0.15, metalness:0.98, emissive:0x664400, emissiveIntensity:0.2 }),
     shaft:    new THREE.MeshStandardMaterial({ color:0x5a7080, roughness:0.10, metalness:1.00 }),
     seal:     new THREE.MeshStandardMaterial({ color:0x00b8d9, roughness:0.50, metalness:0.20, emissive:0x001a22, emissiveIntensity:0.6 }),
-    motor:    new THREE.MeshStandardMaterial({ color:0x2a3040, roughness:0.40, metalness:0.80 }),
+    motor:    new THREE.MeshPhysicalMaterial({ color:0x88bbdd, metalness:0.1, roughness:0.05, transmission:0.8, transparent:true, opacity:0.25 }),
     motorEnd: new THREE.MeshStandardMaterial({ color:0x1e2838, roughness:0.35, metalness:0.85 }),
     fin:      new THREE.MeshStandardMaterial({ color:0x1a2535, roughness:0.55, metalness:0.70 }),
     tbox:     new THREE.MeshStandardMaterial({ color:0x222f3e, roughness:0.45, metalness:0.75 }),
     fanCover: new THREE.MeshStandardMaterial({ color:0x1c2630, roughness:0.50, metalness:0.68, wireframe:false }),
     base:     new THREE.MeshStandardMaterial({ color:0x0f181f, roughness:0.80, metalness:0.50 }),
-    pipe:     new THREE.MeshStandardMaterial({ color:0x1f2d3c, roughness:0.40, metalness:0.85 }),
+    pipe:     new THREE.MeshPhysicalMaterial({ color:0x88bbdd, metalness:0.1, roughness:0.05, transmission:0.8, transparent:true, opacity:0.25 }),
     gauge:    new THREE.MeshStandardMaterial({ color:0x3a5060, roughness:0.25, metalness:0.90 }),
     glow:     new THREE.MeshStandardMaterial({ color:0x00d4ff, roughness:0.05, metalness:0.05,
                                                emissive:0x00d4ff, emissiveIntensity:2.0,
@@ -1670,14 +1771,14 @@ setInterval(async () => {
   // Volute body  scaled sphere gives the snail-shell silhouette
   const voluteGeo = new THREE.SphereGeometry(0.98,48,36);
   voluteGeo.scale(1.05, 0.75, 1.25);
-  const volute = mesh(voluteGeo, M.castIron, 0,0,0);
+  const volute = mesh(voluteGeo, M.glass, 0,0,0);
 
   // Front cover plate (inspection cover)
-  mesh(new THREE.CylinderGeometry(0.70,0.70,0.08,32),M.flange, 0,0,1.22, Math.PI/2,0,0);
+  mesh(new THREE.CylinderGeometry(0.70,0.70,0.08,32),M.glass, 0,0,1.22, Math.PI/2,0,0);
   boltCircle(10,0.62,0.035,0.12,M.bolt, 0,0,1.22, false);
 
   // Back cover
-  mesh(new THREE.CylinderGeometry(0.65,0.65,0.06,32),M.flange, 0,0,-1.02, Math.PI/2,0,0);
+  mesh(new THREE.CylinderGeometry(0.65,0.65,0.06,32),M.castIron, 0,0,-1.02, Math.PI/2,0,0);
   boltCircle(8,0.57,0.035,0.10,M.bolt, 0,0,-1.02, false);
 
   // Wear/casing ring (visible at front cover edge)
@@ -1850,6 +1951,24 @@ setInterval(async () => {
   const motorX = -3.5;  // motor centred here along Z=-3.5.. wait we build along Z axis
   // Motor frame body
   const motorFrame = mesh(new THREE.CylinderGeometry(0.68,0.68,2.40,32),M.motor, 0,0,-4.60, Math.PI/2,0,0);
+  // Stator coils
+  mesh(new THREE.CylinderGeometry(0.64,0.64,2.0,32,1,true), new THREE.MeshStandardMaterial({color:0xd12b48, wireframe:true, emissive:0x661122}), 0,0,-4.60, Math.PI/2,0,0);
+  
+  // Rotor (spinning inner core)
+  const rotorGroup = new THREE.Group();
+  rotorGroup.position.set(0,0,-4.60);
+  pumpGroup.add(rotorGroup);
+  const rotorBody = new THREE.Mesh(new THREE.CylinderGeometry(0.58,0.58,2.1,24), M.steelHi);
+  rotorBody.rotation.x = Math.PI/2;
+  rotorGroup.add(rotorBody);
+  // Copper windings
+  const copperMat = new THREE.MeshStandardMaterial({color:0xc07000, metalness:0.6, roughness:0.4});
+  for(let i=0;i<16;i++){
+    const rw = new THREE.Mesh(new THREE.BoxGeometry(0.1,2.15,0.06), copperMat);
+    rw.position.set(Math.cos(i/16*Math.PI*2)*0.55, 0, Math.sin(i/16*Math.PI*2)*0.55);
+    rw.rotation.x = Math.PI/2;
+    rotorGroup.add(rw);
+  }
 
   // 12 axial cooling fins (press-formed ribs)
   for(let i=0;i<12;i++){
@@ -1940,20 +2059,38 @@ setInterval(async () => {
   const particles = new THREE.Points(pGeo, pMat);
   pumpGroup.add(particles);
 
+  // 11b. FLUID FLOW PARTICLES
+  const FPC = 1000;
+  const fGeo = new THREE.BufferGeometry();
+  const fPos = new Float32Array(FPC*3);
+  for(let i=0;i<FPC;i++){
+    fPos[i*3]   = (Math.random()-0.5)*0.2;
+    fPos[i*3+1] = 0;
+    fPos[i*3+2] = Math.random()*2.0;
+  }
+  fGeo.setAttribute('position', new THREE.BufferAttribute(fPos,3));
+  fGeo.setAttribute('phase', new THREE.BufferAttribute(new Float32Array(FPC).map(()=>Math.random()*3.0), 1));
+  const fMat = new THREE.PointsMaterial({
+    color:0x007fc4, size:0.04, transparent:true, opacity:0.6,
+    blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  const fPoints = new THREE.Points(fGeo, fMat);
+  pumpGroup.add(fPoints);
+
   // 
   // 12. ENVIRONMENT
   // 
   // Floor
   const floor = new THREE.Mesh(
     new THREE.PlaneGeometry(40,40),
-    new THREE.MeshStandardMaterial({color:0x050810,roughness:1,metalness:0})
+    new THREE.MeshStandardMaterial({color:0xf0f4f8,roughness:1,metalness:0})
   );
   floor.rotation.x=-Math.PI/2;
   floor.position.y=-1.16;
   floor.receiveShadow=true;
   scene.add(floor);
 
-  const grid = new THREE.GridHelper(30,60,0x0a1520,0x0a1520);
+  const grid = new THREE.GridHelper(30,60,0xd0d7de,0xd0d7de);
   grid.position.y=-1.15;
   scene.add(grid);
 
@@ -1979,8 +2116,9 @@ setInterval(async () => {
     const cur     = sensors.motor_current     || 18.5;
     curMode = mode;
 
-    // Impeller speed  flow rate
-    impSpeed = 0.008 + (Math.max(0,flow)/120)*0.075;
+    // Impeller speed  shaft_rpm
+    const rpm = sensors.shaft_rpm || 1480;
+    impSpeed = (rpm / 1500) * 0.12;
     fanSpeed = impSpeed * 1.4;
 
     // Status ring color  health
@@ -1993,9 +2131,10 @@ setInterval(async () => {
     // Vibration shake  vib_rms
     shakeAmt = Math.max(0,(vib-2.1)/2.1)*0.07;
 
-    // Cavitation particles  suction pressure drop
-    const cavLevel = Math.max(0,(1.8-sp)/1.8);
-    pMat.opacity = cavLevel>0.3 ? Math.min(0.9, cavLevel*1.2) : 0;
+    // Cavitation particles  NPSH Margin
+    const npshM = state.health && state.health.npsh ? state.health.npsh.margin : 5;
+    const cavLevel = Math.max(0, 1.2 - npshM);
+    pMat.opacity = cavLevel > 0.05 ? Math.min(0.9, cavLevel * 0.8) : 0;
 
     // Bearing heat  fluid temp / motor current
     const heat = Math.min(1, Math.max(0,(temp-42)/35));
@@ -2055,6 +2194,65 @@ setInterval(async () => {
 
     // Fan spin
     fanGroup.rotation.z -= fanSpeed;
+
+    if (typeof rotorGroup !== 'undefined') {
+      rotorGroup.rotation.z += impSpeed;
+    }
+
+    // Fluid flow animation
+    if(typeof fPoints !== 'undefined') {
+      const fpos = fGeo.attributes.position.array;
+      const fphase = fGeo.attributes.phase.array;
+      const flowVel = Math.max(0.01, impSpeed * 0.8);
+      for(let i=0;i<FPC;i++){
+        fphase[i] += flowVel;
+        if(fphase[i] > 3.0) { fphase[i] = 0; }
+        
+        let p = fphase[i];
+        let rx = (i%13)/13*0.35 - 0.175; // stable pseudorandom offsets
+        let ry = (i%7)/7*0.35 - 0.175;
+        let rz = (i%11)/11*0.35 - 0.175;
+
+        if (p < 1.0) {
+           // Suction Z=4.0 -> Z=0, with curve over the elbow!
+           // Elbow is Z=3.38 to 2.5, Y=0.42 to 0
+           fpos[i*3] = rx;
+           if (p < 0.2) {
+             fpos[i*3+1] = 0.85 + ry;
+             fpos[i*3+2] = 3.8;
+           } else if (p < 0.6) {
+             let tp = (p - 0.2) / 0.4;
+             fpos[i*3+1] = 0.85 - tp*0.85 + ry; // Drop down
+             fpos[i*3+2] = 3.8 - tp*1.3; // Travel inward
+           } else {
+             let tp = (p - 0.6) / 0.4;
+             fpos[i*3+1] = ry;
+             fpos[i*3+2] = 2.5 - tp*2.5; // Final straight
+           }
+        } else if (p < 1.4) {
+           // Volute swirl (spinning around Z axis, in XY plane)
+           let tp = (p - 1.0) / 0.4; // 0 to 1
+           let angle = tp * Math.PI*3; // 1.5 circle swirl
+           let radius = 0.4 + tp*0.4 + rx; // push out
+           fpos[i*3] = Math.cos(angle - Math.PI/2)*radius;
+           fpos[i*3+1] = Math.sin(angle)*radius + tp*1.4; // rising to Y=1.4
+           fpos[i*3+2] = rz*0.5;
+        } else if (p < 2.0) {
+           // Discharge vertical Y=1.4 to 2.18
+           let tp = (p - 1.4) / 0.6;
+           fpos[i*3] = rx;
+           fpos[i*3+1] = 1.4 + tp*(2.18 - 1.4);
+           fpos[i*3+2] = rz;
+        } else {
+           // Discharge horizontal X=0 to X=2.0
+           let tp = (p - 2.0) / 1.0; // 0 to 1
+           fpos[i*3] = tp * 2.5 + rx;  // moving right
+           fpos[i*3+1] = 2.18 + ry;
+           fpos[i*3+2] = rz;
+        }
+      }
+      fGeo.attributes.position.needsUpdate = true;
+    }
 
     // Vibration shake on volute
     if(shakeAmt>0.001){

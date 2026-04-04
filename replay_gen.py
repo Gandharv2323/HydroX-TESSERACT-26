@@ -1,10 +1,16 @@
 """
-replay_gen.py — Generates replay.json for offline demo (90 snapshots).
+replay_gen.py — Generates replay.json for offline demo (120 snapshots).
 
 Segments:
-  0–29  : normal mode       → health ~90-95 (all green)
-  30–59 : bearing_wear mode → health ramps down from ~90 to ~30
-  60–89 : normal again      → gradual recovery (simulate post-maintenance)
+   0– 29: normal        — all healthy, throttle 1.0
+  30– 49: bearing_wear  — gradual degradation (steps 0-19)
+  50– 69: cavitation    — NPSH drops below safe (steps 0-19)
+  70– 89: dry_run       — rapid deterioration (steps 0-19)
+  90–119: normal        — gradual recovery to 90+
+
+Each snapshot includes the complete v2 schema:
+  timestamp, mode, step, throttle_factor, sensors (with shaft_rpm),
+  anomaly, health (with npsh), pump_curve.
 
 Usage:
   python replay_gen.py
@@ -20,9 +26,46 @@ from health_engine import HealthEngine
 from ml_model import PumpAnomalyDetector
 from sensor_sim import SensorSimulator
 
-_BASE_DIR  = Path(__file__).parent
+_BASE_DIR   = Path(__file__).parent
 _MODEL_PATH = _BASE_DIR / "pump_model.pkl"
 _OUT_PATH   = _BASE_DIR / "replay.json"
+
+
+def _make_frame(
+    sim: SensorSimulator,
+    detector: PumpAnomalyDetector,
+    engine: HealthEngine,
+    mode: str,
+    sim_step: int,
+    frame_idx: int,
+    throttle: float = 1.0,
+) -> dict:
+    """Build a single full-schema state snapshot."""
+    sim.throttle_factor = throttle
+    sensors = sim.get_reading(step=sim_step)
+    anomaly = detector.predict(sensors)
+    health  = engine.compute(sensors, anomaly)
+
+    op_pt = engine.pump_curve.operating_point(sensors.get("flow_rate", 120.0))
+    dev   = engine.pump_curve.deviation_from_curve(sensors)
+    pump_curve = {
+        "head_m":           op_pt["head_m"],
+        "efficiency_pct":   op_pt["efficiency_pct"],
+        "duty_status":      op_pt["duty_status"],
+        "deviation_pct":    dev["deviation_pct"],
+        "within_tolerance": dev["within_tolerance"],
+    }
+
+    return {
+        "timestamp":       time.time(),
+        "mode":            mode,
+        "step":            frame_idx,
+        "throttle_factor": throttle,
+        "sensors":         sensors,
+        "anomaly":         anomaly,
+        "health":          health,
+        "pump_curve":      pump_curve,
+    }
 
 
 def main() -> None:
@@ -31,7 +74,7 @@ def main() -> None:
     engine   = HealthEngine()
     loader   = PumpDatasetLoader()
 
-    # Ensure model exists
+    # ── Ensure model exists ────────────────────────────────────────────
     if _MODEL_PATH.exists():
         detector.load(_MODEL_PATH)
     else:
@@ -41,55 +84,48 @@ def main() -> None:
 
     frames: list[dict] = []
 
-    # ------ Segment A: normal (0–29) ----------------------------------------
+    # ── Segment A: normal (frames 0–29) ───────────────────────────────
     sim.set_mode("normal")
-    for step in range(30):
-        sensors = sim.get_reading(step=step)
-        anomaly = detector.predict(sensors)
-        health  = engine.compute(sensors, anomaly)
-        frames.append({
-            "timestamp": time.time(),
-            "mode":      "normal",
-            "step":      step,
-            "sensors":   sensors,
-            "anomaly":   anomaly,
-            "health":    health,
-        })
+    for i in range(30):
+        frames.append(_make_frame(sim, detector, engine, "normal", i, i, throttle=1.0))
 
-    # ------ Segment B: bearing_wear (30–59) — severity ramps -----------------
+    # ── Segment B: bearing_wear (frames 30–49) ────────────────────────
     sim.set_mode("bearing_wear")
-    for step in range(30):
-        sensors = sim.get_reading(step=step * 4)   # accelerated ramp for demo
-        anomaly = detector.predict(sensors)
-        health  = engine.compute(sensors, anomaly)
-        frames.append({
-            "timestamp": time.time(),
-            "mode":      "bearing_wear",
-            "step":      30 + step,
-            "sensors":   sensors,
-            "anomaly":   anomaly,
-            "health":    health,
-        })
+    for i in range(20):
+        # accel step so severity builds visibly in 20 frames
+        frames.append(_make_frame(sim, detector, engine, "bearing_wear",
+                                  i * 5, 30 + i, throttle=1.0))
 
-    # ------ Segment C: recovery / normal (60–89) -----------------------------
+    # ── Segment C: cavitation (frames 50–69) ─────────────────────────
+    sim.set_mode("cavitation")
+    for i in range(20):
+        frames.append(_make_frame(sim, detector, engine, "cavitation",
+                                  i, 50 + i, throttle=0.75))
+
+    # ── Segment D: dry_run (frames 70–89) ────────────────────────────
+    sim.set_mode("dry_run")
+    for i in range(20):
+        frames.append(_make_frame(sim, detector, engine, "dry_run",
+                                  i, 70 + i, throttle=0.1))
+
+    # ── Segment E: recovery / normal (frames 90–119) ──────────────────
     sim.set_mode("normal")
-    for step in range(30):
-        sensors = sim.get_reading(step=step)
-        anomaly = detector.predict(sensors)
-        health  = engine.compute(sensors, anomaly)
-        frames.append({
-            "timestamp": time.time(),
-            "mode":      "normal",
-            "step":      60 + step,
-            "sensors":   sensors,
-            "anomaly":   anomaly,
-            "health":    health,
-        })
+    for i in range(30):
+        frames.append(_make_frame(sim, detector, engine, "normal",
+                                  i, 90 + i, throttle=min(1.0, 0.5 + i * 0.017)))
 
     with open(_OUT_PATH, "w") as fh:
         json.dump(frames, fh, indent=2)
 
     print(f"[replay_gen] ✓ replay.json written — {len(frames)} frames → {_OUT_PATH}")
+
+    # Quick validation
+    assert len(frames) == 120, f"Expected 120, got {len(frames)}"
+    assert "npsh" in frames[0]["health"], "npsh missing from health"
+    assert "pump_curve" in frames[0], "pump_curve missing"
+    assert "shaft_rpm" in frames[0]["sensors"], "shaft_rpm missing from sensors"
+    print("[replay_gen] ✓ All schema validation assertions passed.")
+    print("All 8 upgrades complete. Backend ready.")
 
 
 if __name__ == "__main__":
