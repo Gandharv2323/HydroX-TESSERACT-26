@@ -1,8 +1,8 @@
 {
-  "if_threshold": 0.42259986276217343,
+  "if_threshold": 0.268935816986438,
   "method": "quantile_normal",
   "meta": {
     "quantile": 95.0,
-    "n_normal": 85
+    "n_normal": 45
   }
 }

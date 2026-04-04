@@ -35,6 +35,7 @@ This repository now includes an applied implementation of the representation-con
 Implementation details and gap-by-gap mapping are documented in:
 
 - `IMPLEMENTATION_LOG.md`
+- `HARDENING_LOG_2026-04-04.md`
 
 ---
 

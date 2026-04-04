@@ -13,6 +13,7 @@ Run:  python training/train_all.py
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
 import time
@@ -31,7 +32,8 @@ from training.generate_data import generate
 from pipeline.fault_classifier import FaultClassifier
 from pipeline.rul_lstm import RULPredictor
 from pipeline.buffer import WINDOW_SIZE, SENSORS
-from pipeline.features import extract_batch, extract_phase_features
+from pipeline.features import extract_batch
+from pipeline.representation import build_hybrid_feature_batch, HYBRID_DIM
 from models.shared_latent import SharedLatentRuntime
 from data_pipeline.loader import SensorDataLoader
 from data_pipeline.preprocessing import (
@@ -52,6 +54,7 @@ from evaluation.pipeline import (
     evaluate_lstm_holdout,
     save_metrics_json,
     time_aware_split_indices,
+    validate_temporal_split,
 )
 
 logging.basicConfig(
@@ -65,12 +68,15 @@ MODELS_DIR = _ROOT / "models"
 MODELS_DIR.mkdir(exist_ok=True)
 CONFIGS_DIR = _ROOT / "configs"
 CONFIGS_DIR.mkdir(exist_ok=True)
+with open(_ROOT / "config.json", "r", encoding="utf-8") as _cf:
+    _CONFIG = json.load(_cf)
 
 
-def _windows_from_df(df_internal, step: int = 1):
-    values = df_internal[SENSORS].to_numpy(dtype=np.float32)
+def _windows_from_df(df_internal, step: int = 1, cols: list[str] | None = None):
+    use_cols = cols or SENSORS
+    values = df_internal[use_cols].to_numpy(dtype=np.float32)
     if len(values) < WINDOW_SIZE:
-        return np.empty((0, WINDOW_SIZE, len(SENSORS)), dtype=np.float32)
+        return np.empty((0, WINDOW_SIZE, len(use_cols)), dtype=np.float32)
     windows = []
     for i in range(0, len(values) - WINDOW_SIZE + 1, step):
         windows.append(values[i:i + WINDOW_SIZE])
@@ -122,19 +128,27 @@ def _load_real_data(real_csv: str | None) -> dict:
         y_rul_full = strict_df["rul_hours"].to_numpy(dtype=np.float32)
         y_rul = y_rul_full[WINDOW_SIZE - 1:]
 
+    mask_cols = [f"mask_{i}" for i in range(1, 8)]
+    mask_windows = _windows_from_df(strict_df, cols=mask_cols) if all(c in strict_df.columns for c in mask_cols) else None
+
     return {
         "available": True,
         "strict_df": strict_df,
         "internal_df": internal_df,
         "windows": windows,
         "features": feats,
+        "mask_windows": mask_windows,
         "y_cls": y_cls,
         "y_rul": y_rul,
         "bounds": bounds,
     }
 
 
-def train_isolation_forest(X_features: np.ndarray, y_class: np.ndarray) -> dict:
+def train_isolation_forest(
+    X_features: np.ndarray,
+    y_class: np.ndarray,
+    contamination: float,
+) -> dict:
     """
     Spec §6: Train IF on NORMAL class only (class_id=0).
     Normalise scores to [0, 1] using training-set min/max.
@@ -149,7 +163,7 @@ def train_isolation_forest(X_features: np.ndarray, y_class: np.ndarray) -> dict:
     X_n_s  = scaler.fit_transform(X_normal)
 
     t0  = time.perf_counter()
-    iso = IsolationForest(n_estimators=200, contamination=0.05, random_state=42)
+    iso = IsolationForest(n_estimators=200, contamination=contamination, random_state=42)
     iso.fit(X_n_s)
     elapsed = time.perf_counter() - t0
     log.info(f"  Trained in {elapsed:.2f}s")
@@ -276,20 +290,25 @@ def main(real_csv: str | None = None) -> None:
 
     # Step 1: Generate synthetic data
     log.info("Step 1/5 — Generating synthetic training data...")
-    X_wins, y_cls, y_rul, X_feats = generate(n_per_class=300)
+    X_wins, y_cls, y_rul, X_feats, t_idx = generate(n_per_class=300, shuffle=False, return_time_index=True)
+    X_masks = np.zeros_like(X_wins, dtype=np.float32)
+    X_wins_seq = np.concatenate([X_wins, X_masks], axis=2)
+
+    if not np.all(np.diff(t_idx) >= 0):
+        raise RuntimeError("Temporal ordering violation: synthetic timeline not monotonic")
 
     # Step 2: Shared latent representation
     log.info("Step 2/5 — Shared latent encoder...")
-    enc, shared_metrics = train_shared_latent(X_wins, y_cls, y_rul)
-    H_syn = enc.encode_batch(X_wins)
-    P_syn = np.vstack([extract_phase_features(w) for w in X_wins]).astype(np.float32)
-    X_hybrid = np.hstack([X_feats, P_syn, H_syn]).astype(np.float32)
+    enc, shared_metrics = train_shared_latent(X_wins_seq, y_cls, y_rul)
+    X_hybrid, _, _, H_syn = build_hybrid_feature_batch(X_wins, enc, mask_windows=X_masks)
+    assert X_hybrid.shape[1] == HYBRID_DIM, f"Unexpected training hybrid dim: {X_hybrid.shape[1]}"
 
     X_real_hybrid = None
     if real.get("available") and len(real.get("windows", [])) > 0 and len(real.get("features", [])) > 0:
-        P_real = np.vstack([extract_phase_features(w) for w in real["windows"]]).astype(np.float32)
-        H_real = enc.encode_batch(real["windows"])
-        X_real_hybrid = np.hstack([real["features"], P_real, H_real]).astype(np.float32)
+        real_masks = real.get("mask_windows")
+        if real_masks is None or len(real_masks) != len(real["windows"]):
+            real_masks = np.zeros_like(real["windows"], dtype=np.float32)
+        X_real_hybrid, _, _, _ = build_hybrid_feature_batch(real["windows"], enc, mask_windows=real_masks)
 
     # Domain-shift mitigation: IF scaler/fit on real normal when available
     if X_real_hybrid is not None and len(X_real_hybrid) > 0:
@@ -317,7 +336,9 @@ def main(real_csv: str | None = None) -> None:
         X_if_full = X_hybrid
         y_if_full = y_cls
 
-    if_metrics = train_isolation_forest(X_if_full, y_if_full)
+    contamination = float(_CONFIG.get("isolation_forest", {}).get("contamination", 0.05))
+    log.info(f"  Using IF contamination from config: {contamination}")
+    if_metrics = train_isolation_forest(X_if_full, y_if_full, contamination=contamination)
 
     # Step 4: 5-class RF
     log.info("Step 4/5 — 5-class Random Forest...")
@@ -339,10 +360,14 @@ def main(real_csv: str | None = None) -> None:
     log.info("Step 5/5 — LSTM RUL predictor...")
     try:
         if real.get("available") and real.get("y_rul") is not None and len(real["windows"]) == len(real["y_rul"]):
-            X_lstm = np.concatenate([X_wins, real["windows"]], axis=0)
+            real_masks = real.get("mask_windows")
+            if real_masks is None or len(real_masks) != len(real["windows"]):
+                real_masks = np.zeros_like(real["windows"], dtype=np.float32)
+            X_real_seq = np.concatenate([real["windows"], real_masks], axis=2)
+            X_lstm = np.concatenate([X_wins_seq, X_real_seq], axis=0)
             y_lstm = np.concatenate([y_rul, real["y_rul"]], axis=0)
         else:
-            X_lstm, y_lstm = X_wins, y_rul
+            X_lstm, y_lstm = X_wins_seq, y_rul
         lstm_metrics = train_lstm(X_lstm, y_lstm)
     except Exception as exc:
         log.warning(f"  LSTM training skipped: {exc}")
@@ -351,6 +376,7 @@ def main(real_csv: str | None = None) -> None:
     # Step 5: Threshold calibration + evaluation
     try:
         idx_tr, _, idx_te = time_aware_split_indices(len(X_rf))
+        validate_temporal_split(idx_tr, np.array([], dtype=np.int64), idx_te)
         if_eval = evaluate_if(X_rf[idx_tr], y_rf[idx_tr], X_rf[idx_te], y_rf[idx_te])
         rf_hold = evaluate_rf_holdout(X_rf[idx_tr], y_rf[idx_tr], X_rf[idx_te], y_rf[idx_te])
         rf_cv = evaluate_rf_cv(X_rf, y_rf, k=5)
@@ -395,7 +421,14 @@ def main(real_csv: str | None = None) -> None:
             from pipeline.rul_lstm import RULPredictor
             rp = RULPredictor()
             rp.load(MODELS_DIR / "rul_lstm.pt")
-            preds = np.array([rp.predict(w) for w in real["windows"]], dtype=np.float32)
+            expected_in = int(rp._kwargs.get("input_size", real["windows"].shape[2]))
+            X_eval = real["windows"]
+            if expected_in == real["windows"].shape[2] * 2:
+                real_masks = real.get("mask_windows")
+                if real_masks is None or len(real_masks) != len(real["windows"]):
+                    real_masks = np.zeros_like(real["windows"], dtype=np.float32)
+                X_eval = np.concatenate([real["windows"], real_masks], axis=2)
+            preds = np.array([rp.predict(w) for w in X_eval], dtype=np.float32)
             lstm_eval = evaluate_lstm_holdout(real["y_rul"], preds)
 
         metrics = {

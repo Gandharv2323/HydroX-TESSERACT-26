@@ -194,6 +194,7 @@ class RULPredictor:
         self._std:         Optional[list]  = None
         self._trained:     bool            = False
         self._device:      str             = "cpu"
+        self._conformal_q90: float         = 0.0
 
         if _TORCH_AVAILABLE:
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -359,6 +360,8 @@ class RULPredictor:
         preds_real = np.expm1(log_preds) if self._log_targets else log_preds
         y_real     = np.expm1(y_val)     if self._log_targets else y_val
         preds_real = np.clip(preds_real, 0.0, None)
+        residuals = np.abs(preds_real - y_real)
+        self._conformal_q90 = float(np.quantile(residuals, 0.90))
 
         mae  = float(np.mean(np.abs(preds_real - y_real)))
         rmse = float(np.sqrt(np.mean((preds_real - y_real) ** 2)))
@@ -376,6 +379,7 @@ class RULPredictor:
             "val_mae_h":   round(mae,  2),
             "val_rmse_h":  round(rmse, 2),
             "coverage":    round(cov,  3),
+            "conformal_q90_h": round(self._conformal_q90, 2),
             "train_loss":  train_hist,
             "val_loss":    val_hist,
         }
@@ -448,10 +452,17 @@ class RULPredictor:
                 preds.append(max(0.0, real_pred))
 
         arr = np.asarray(preds, dtype=np.float32)
+        mean_pred = float(np.mean(arr))
+        conformal_q = float(max(0.0, self._conformal_q90))
+        conf_low = max(0.0, mean_pred - conformal_q)
+        conf_high = mean_pred + conformal_q
         return {
-            "mean": round(float(np.mean(arr)), 1),
+            "mean": round(mean_pred, 1),
             "low": round(float(np.percentile(arr, 10)), 1),
             "high": round(float(np.percentile(arr, 90)), 1),
+            "conformal_low": round(conf_low, 1),
+            "conformal_high": round(conf_high, 1),
+            "conformal_q90_h": round(conformal_q, 2),
             "std": round(float(np.std(arr)), 3),
             "samples": int(len(arr)),
         }
@@ -468,6 +479,7 @@ class RULPredictor:
             "mean":         self._mean,
             "std":          self._std,
             "state_dict":   self._model.state_dict(),
+            "conformal_q90": self._conformal_q90,
         }
         torch.save(checkpoint, path)
         logger.info(f"[LSTM-v3] Saved → {path}")
@@ -479,6 +491,7 @@ class RULPredictor:
         self._log_targets = ckpt.get("log_targets", False)   # back-compat
         self._mean        = ckpt["mean"]
         self._std         = ckpt["std"]
+        self._conformal_q90 = float(ckpt.get("conformal_q90", 0.0))
         self._model       = _LSTMNet(**self._kwargs).to(self._device)
         self._model.load_state_dict(ckpt["state_dict"])
         self._model.eval()

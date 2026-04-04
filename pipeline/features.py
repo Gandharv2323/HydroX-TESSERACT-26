@@ -55,7 +55,9 @@ def _fft_features(signal: np.ndarray) -> np.ndarray:
 
     Order (fixed): fft_mean, fft_max, fft_energy, dominant_freq, spectral_entropy
     """
-    mag = np.abs(np.fft.rfft(signal))   # magnitude spectrum, length n//2 + 1
+    win = np.hanning(len(signal))
+    sig_w = signal * win
+    mag = np.abs(np.fft.rfft(sig_w))   # magnitude spectrum, length n//2 + 1
 
     fft_mean   = float(np.mean(mag))
     fft_max    = float(np.max(mag))
@@ -77,7 +79,9 @@ def _phase_features(signal: np.ndarray) -> np.ndarray:
     -------
     [phase_variance, phase_drift]
     """
-    ph = np.angle(np.fft.rfft(signal))
+    win = np.hanning(len(signal))
+    sig_w = signal * win
+    ph = np.angle(np.fft.rfft(sig_w))
     if len(ph) <= 1:
         return np.array([0.0, 0.0], dtype=np.float32)
     phase_var = float(np.var(ph, ddof=0))
@@ -151,7 +155,8 @@ def extract_phase_features(window: np.ndarray) -> np.ndarray:
     for col_idx in range(window.shape[1]):
         sig = window[:, col_idx].astype(np.float64)
         parts.append(_phase_features(sig))
-        phases.append(np.angle(np.fft.rfft(sig)))
+        win = np.hanning(len(sig))
+        phases.append(np.angle(np.fft.rfft(sig * win)))
 
     diffs = []
     for i in range(len(phases)):

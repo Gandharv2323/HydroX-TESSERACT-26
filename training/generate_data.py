@@ -145,7 +145,9 @@ def _rul_for(mode: str, severity: float) -> float:
 def generate(
     n_per_class: int = 300,
     seed:        int = 42,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    shuffle: bool = True,
+    return_time_index: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Generate balanced multi-class training data.
 
@@ -171,12 +173,12 @@ def generate(
         ("misalignment",  4),
     ]
 
-    windows_list: list[np.ndarray] = []
-    labels_list:  list[int]        = []
-    rul_list:     list[float]      = []
+    per_mode_windows: dict[str, list[np.ndarray]] = {m: [] for m, _ in modes}
+    per_mode_labels: dict[str, list[int]] = {m: [] for m, _ in modes}
+    per_mode_rul: dict[str, list[float]] = {m: [] for m, _ in modes}
 
     for mode_name, class_id in modes:
-        n = n_per_class * 2 if mode_name == "normal" else n_per_class
+        n = n_per_class
         sev_values = (
             np.zeros(n) if mode_name == "normal"
             else _RNG.uniform(0.1, 0.95, size=n)
@@ -184,9 +186,21 @@ def generate(
         for k in range(n):
             sev = float(sev_values[k])
             w   = _make_window(mode_name, severity=sev)
-            windows_list.append(w)
-            labels_list.append(class_id)
-            rul_list.append(_rul_for(mode_name, sev))
+            per_mode_windows[mode_name].append(w)
+            per_mode_labels[mode_name].append(class_id)
+            per_mode_rul[mode_name].append(_rul_for(mode_name, sev))
+
+    # Temporal interleave (no leakage via shuffling, but avoids one-class contiguous blocks)
+    windows_list: list[np.ndarray] = []
+    labels_list: list[int] = []
+    rul_list: list[float] = []
+    max_len = max(len(per_mode_windows[m]) for m, _ in modes)
+    for i in range(max_len):
+        for mode_name, _ in modes:
+            if i < len(per_mode_windows[mode_name]):
+                windows_list.append(per_mode_windows[mode_name][i])
+                labels_list.append(per_mode_labels[mode_name][i])
+                rul_list.append(per_mode_rul[mode_name][i])
 
     X_wins = np.stack(windows_list, axis=0)          # (n, 50, 7)
     y_cls  = np.array(labels_list,  dtype=np.int32)  # (n,)
@@ -195,11 +209,14 @@ def generate(
     print(f"[generate_data] Extracting features for {len(X_wins)} windows...")
     X_feats = extract_batch(X_wins)                  # (n, 84)
 
-    # Shuffle
-    idx = _RNG.permutation(len(X_wins))
-    X_wins, y_cls, y_rul, X_feats = X_wins[idx], y_cls[idx], y_rul[idx], X_feats[idx]
+    t_idx = np.arange(len(X_wins), dtype=np.int64)
+    if shuffle:
+        idx = _RNG.permutation(len(X_wins))
+        X_wins, y_cls, y_rul, X_feats, t_idx = X_wins[idx], y_cls[idx], y_rul[idx], X_feats[idx], t_idx[idx]
 
     class_counts = {m: int((y_cls == c).sum()) for m, c in modes}
     print(f"[generate_data] Done — total={len(X_wins)}, class_counts={class_counts}")
 
+    if return_time_index:
+        return X_wins, y_cls, y_rul, X_feats, t_idx
     return X_wins, y_cls, y_rul, X_feats

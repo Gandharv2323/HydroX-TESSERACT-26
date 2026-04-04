@@ -28,6 +28,15 @@ def time_aware_split_indices(n: int, train: float = 0.70, val: float = 0.15) -> 
     return train_idx, val_idx, test_idx
 
 
+def validate_temporal_split(train_idx: np.ndarray, val_idx: np.ndarray, test_idx: np.ndarray) -> None:
+    if len(train_idx) and len(val_idx):
+        if int(np.max(train_idx)) >= int(np.min(val_idx)):
+            raise ValueError("Temporal leakage: train overlaps val")
+    if len(val_idx) and len(test_idx):
+        if int(np.max(val_idx)) >= int(np.min(test_idx)):
+            raise ValueError("Temporal leakage: val overlaps test")
+
+
 def evaluate_if(
     X_train: np.ndarray,
     y_train: np.ndarray,

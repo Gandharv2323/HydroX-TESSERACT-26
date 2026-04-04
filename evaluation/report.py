@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import pickle
 import sys
 from pathlib import Path
@@ -29,9 +30,12 @@ from sklearn.metrics import (
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT))
 
-from pipeline.features import extract_batch
+from models.shared_latent import SharedLatentRuntime
+from pipeline.representation import build_hybrid_feature_batch, HYBRID_DIM
 from pipeline.fault_classifier import FAULT_LABELS
 from training.generate_data import generate
+from data_pipeline.loader import SensorDataLoader
+from data_pipeline.preprocessing import append_missingness_mask_columns
 
 logging.basicConfig(
     level=logging.INFO,
@@ -70,6 +74,20 @@ def _load_lstm():
     rp = RULPredictor()
     rp.load(MODELS_DIR / "rul_lstm.pt")
     return rp
+
+
+def _load_shared() -> SharedLatentRuntime | None:
+    path = MODELS_DIR / "shared_latent.pt"
+    if not path.exists():
+        return None
+    return SharedLatentRuntime.load(path)
+
+
+def _build_eval_features(X_wins: np.ndarray, mask_wins: np.ndarray | None = None) -> np.ndarray:
+    shared = _load_shared()
+    X_hybrid, _, _, _ = build_hybrid_feature_batch(X_wins, shared, mask_windows=mask_wins)
+    assert X_hybrid.shape[-1] == HYBRID_DIM == 227
+    return X_hybrid
 
 
 # ------------------------------------------------------------------
@@ -128,7 +146,11 @@ def evaluate_lstm(X_wins: np.ndarray, y_rul: np.ndarray) -> dict:
         log.warning(f"  LSTM load failed: {exc}")
         return {"error": str(exc)}
 
-    preds = np.array([rp.predict(X_wins[i]) for i in range(len(X_wins))])
+    expected_in = int(rp._kwargs.get("input_size", X_wins.shape[2]))  # type: ignore[attr-defined]
+    X_eval = X_wins
+    if expected_in == X_wins.shape[2] * 2:
+        X_eval = np.concatenate([X_wins, np.zeros_like(X_wins, dtype=np.float32)], axis=2)
+    preds = np.array([rp.predict(X_eval[i]) for i in range(len(X_eval))])
     mae   = float(np.mean(np.abs(preds - y_rul)))
     rmse  = float(np.sqrt(np.mean((preds - y_rul) ** 2)))
     log.info(f"  LSTM MAE={mae:.2f}h  RMSE={rmse:.2f}h")
@@ -139,14 +161,13 @@ def evaluate_lstm(X_wins: np.ndarray, y_rul: np.ndarray) -> dict:
 # Main report
 # ------------------------------------------------------------------
 
-def generate_report(n_per_class: int = 200) -> dict:
-    log.info("=" * 60)
-    log.info("  Generating Evaluation Report")
-    log.info("=" * 60)
-
-    log.info("Generating test data...")
-    X_wins, y_cls, y_rul, X_feats = generate(n_per_class=n_per_class, seed=99)
-
+def _evaluate_bundle(
+    X_wins: np.ndarray,
+    y_cls: np.ndarray,
+    y_rul: np.ndarray,
+    mask_wins: np.ndarray | None = None,
+) -> dict:
+    X_feats = _build_eval_features(X_wins, mask_wins=mask_wins)
     report: dict = {}
 
     try:
@@ -167,6 +188,49 @@ def generate_report(n_per_class: int = 200) -> dict:
         log.error(f"LSTM eval error: {exc}")
         report["lstm_rul"] = {"error": str(exc)}
 
+    return report
+
+
+def generate_report(n_per_class: int = 200, real_csv: str | None = None) -> dict:
+    log.info("=" * 60)
+    log.info("  Generating Evaluation Report")
+    log.info("=" * 60)
+
+    log.info("Generating synthetic test data...")
+    X_wins, y_cls, y_rul, _ = generate(n_per_class=n_per_class, seed=99, shuffle=False)
+
+    report: dict = {
+        "synthetic": _evaluate_bundle(X_wins, y_cls, y_rul, mask_wins=np.zeros_like(X_wins, dtype=np.float32))
+    }
+
+    if real_csv:
+        try:
+            loader = SensorDataLoader()
+            strict_df = loader.load_csv(real_csv)
+            strict_df = append_missingness_mask_columns(strict_df, [f"sensor_{i}" for i in range(1, 8)])
+            internal_df = loader.to_internal_schema(strict_df)
+
+            vals = internal_df[[
+                "vibration_rms", "vibration_peak", "discharge_pressure", "suction_pressure",
+                "flow_rate", "motor_current", "fluid_temp"
+            ]].to_numpy(dtype=np.float32)
+            masks = strict_df[[f"mask_{i}" for i in range(1, 8)]].to_numpy(dtype=np.float32)
+
+            wins = []
+            mwins = []
+            for i in range(0, len(vals) - 50 + 1):
+                wins.append(vals[i:i+50])
+                mwins.append(masks[i:i+50])
+            if wins:
+                Xr = np.stack(wins)
+                Mr = np.stack(mwins)
+                # Real labels may be unavailable; use placeholder to run feature-alignment and anomaly-only.
+                yr_cls = np.zeros(len(Xr), dtype=np.int32)
+                yr_rul = np.zeros(len(Xr), dtype=np.float32)
+                report["real"] = _evaluate_bundle(Xr, yr_cls, yr_rul, mask_wins=Mr)
+        except Exception as exc:
+            report["real"] = {"error": str(exc)}
+
     # Save JSON (remove non-serialisable items)
     def _clean(d: dict) -> dict:
         return {k: (_clean(v) if isinstance(v, dict) else v)
@@ -181,4 +245,4 @@ def generate_report(n_per_class: int = 200) -> dict:
 
 
 if __name__ == "__main__":
-    generate_report()
+    generate_report(real_csv=os.environ.get("HYDROX_REAL_EVAL_CSV"))

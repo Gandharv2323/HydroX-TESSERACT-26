@@ -24,11 +24,14 @@ INTERNAL_SENSORS = [
 
 INTERNAL_TO_STRICT = dict(zip(INTERNAL_SENSORS, SCHEMA_SENSORS))
 STRICT_TO_INTERNAL = dict(zip(SCHEMA_SENSORS, INTERNAL_SENSORS))
+MAX_GAP_SECONDS = 5
+MAX_GAP_STEPS = int(MAX_GAP_SECONDS / 0.5)
 
 
 @dataclass
 class SensorDataLoader:
     target_freq: str = "500ms"
+    max_gap_steps: int = MAX_GAP_STEPS
 
     def load_csv(self, path: str) -> pd.DataFrame:
         src = Path(path)
@@ -51,11 +54,14 @@ class SensorDataLoader:
             .reset_index()
         )
 
-        # Interpolate short gaps (< 5 steps) + forward fill fallback
+        # Interpolate short gaps (< 5 steps) + bounded forward fill fallback
         df[SCHEMA_SENSORS] = df[SCHEMA_SENSORS].interpolate(
             method="linear", limit=4, limit_direction="both"
         )
-        df[SCHEMA_SENSORS] = df[SCHEMA_SENSORS].ffill()
+        df[SCHEMA_SENSORS] = df[SCHEMA_SENSORS].ffill(limit=self.max_gap_steps)
+
+        # Drop rows that still contain NaNs after bounded filling (long gaps).
+        df = df.dropna(subset=SCHEMA_SENSORS)
 
         # Validation filters
         df = self._drop_high_nan_ratio(df, max_nan_ratio=0.30)

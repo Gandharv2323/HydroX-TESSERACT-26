@@ -8,7 +8,7 @@
     "macro_f1": 1.0,
     "confusion_matrix": [
       [
-        85,
+        45,
         0,
         0,
         0,
@@ -16,7 +16,7 @@
       ],
       [
         0,
-        40,
+        45,
         0,
         0,
         0
@@ -24,7 +24,7 @@
       [
         0,
         0,
-        37,
+        45,
         0,
         0
       ],
@@ -32,7 +32,7 @@
         0,
         0,
         0,
-        50,
+        45,
         0
       ],
       [
@@ -40,7 +40,7 @@
         0,
         0,
         0,
-        58
+        45
       ]
     ]
   },
@@ -72,18 +72,18 @@
   },
   "lstm_holdout": {},
   "calibration": {
-    "if_threshold": 0.42259986276217343,
+    "if_threshold": 0.268935816986438,
     "method": "quantile_normal"
   },
   "shared_latent": {
     "class_acc": 1.0,
-    "rul_mae_rel": 0.1374,
-    "anomaly_mae": 0.0001
+    "rul_mae_rel": 0.1384,
+    "anomaly_mae": 0.0002
   },
   "fusion_meta": {
     "roc_auc": 1.0,
     "avg_precision": 1.0,
-    "n_samples": 270,
+    "n_samples": 225,
     "n_features": 130
   }
 }

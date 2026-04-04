@@ -25,7 +25,7 @@ from typing import Any, Optional
 import numpy as np
 
 from pipeline.buffer import SlidingWindowBuffer
-from pipeline.features import extract_features, extract_phase_features
+from pipeline.representation import build_hybrid_feature_vector
 from pipeline.fault_classifier import FaultClassifier
 from pipeline.rul_lstm import RULPredictor
 from models.shared_latent import SharedLatentRuntime
@@ -53,6 +53,19 @@ _BOUNDS: dict[str, tuple[float, float]] = {
 }
 
 _DEFAULT_ANOMALY_THRESHOLD = 0.55
+_HYST_ENTER = 0.60
+_HYST_EXIT = 0.40
+_HYST_PERSIST = 3
+_MAX_GAP_STEPS = 10
+
+_FAULT_TO_COMPONENT = {
+    "normal": "none",
+    "bearing_fault": "motor_bearing",
+    "cavitation": "pump_inlet_hydraulics",
+    "dry_run": "seal_and_fluid_path",
+    "misalignment": "shaft_coupling",
+    "unknown": "unknown_component",
+}
 
 
 def _validate(sensor_dict: dict) -> list[str]:
@@ -92,6 +105,7 @@ class InferenceEngine:
     def __init__(self, models_dir: Path) -> None:
         self._models_dir = models_dir
         self._buffer     = SlidingWindowBuffer()
+        self._mask_buffer = SlidingWindowBuffer()
         self._clf        = FaultClassifier()
         self._rul        = RULPredictor()
         self._iso        = None    # dict: model, scaler, score_min, score_max
@@ -117,6 +131,12 @@ class InferenceEngine:
             "low_anomaly_critical": 0,
         }
         self._recent_events: deque[dict[str, Any]] = deque(maxlen=100)
+        self._latency_hist_ms: deque[float] = deque(maxlen=500)
+        self._missing_counts: dict[str, int] = {k: 0 for k in _BOUNDS}
+        self._anom_streak = 0
+        self._normal_streak = 0
+        self._state = "normal"
+        self._missing_streak: dict[str, int] = {k: 0 for k in _BOUNDS}
 
     # ------------------------------------------------------------------
     # Setup
@@ -185,7 +205,17 @@ class InferenceEngine:
 
         # ---- Validation layer -------------------------------------------
         cleaned, missing = self._pre.transform(sensor_dict)
+        for s, is_missing in missing.items():
+            if int(is_missing) == 1:
+                self._missing_streak[s] += 1
+                self._missing_counts[s] += 1
+            else:
+                self._missing_streak[s] = 0
+
+        long_gap = [s for s, n in self._missing_streak.items() if n > _MAX_GAP_STEPS]
         violations = _validate(cleaned)
+        if long_gap:
+            violations.extend([f"{s}: missing gap>{_MAX_GAP_STEPS} steps" for s in long_gap])
         if violations:
             return {
                 "sensor_error": True,
@@ -201,6 +231,7 @@ class InferenceEngine:
 
         # ---- Buffer update ----------------------------------------------
         self._buffer.push(cleaned)
+        self._mask_buffer.push(missing)
         if not self._buffer.is_ready():
             return {
                 "sensor_error":  False,
@@ -213,10 +244,8 @@ class InferenceEngine:
 
         # ---- Feature extraction -----------------------------------------
         window   = self._buffer.get_window()          # (50, 7)
-        feat_vec = extract_features(window)            # engineered z
-        phase_vec = extract_phase_features(window)
-        latent_h = self._latent(window)
-        hybrid_vec = np.concatenate([feat_vec, phase_vec, latent_h], axis=0)
+        mask_window = self._mask_buffer.get_window()
+        hybrid_vec, _, _, latent_h = build_hybrid_feature_vector(window, self._shared, mask_window=mask_window)
 
         # ---- Isolation Forest → anomaly score ---------------------------
         if_normal_score = self._if_score(hybrid_vec)
@@ -247,7 +276,11 @@ class InferenceEngine:
 
         # ---- LSTM → RUL -------------------------------------------------
         if self._rul.is_trained():
-            rul_uq = self._rul.predict_with_uncertainty(window, n_samples=30)
+            rul_window = window
+            expected_in = int(self._rul._kwargs.get("input_size", window.shape[1])) if hasattr(self._rul, "_kwargs") else window.shape[1]
+            if expected_in == window.shape[1] * 2 and mask_window is not None:
+                rul_window = np.concatenate([window.astype(np.float32), mask_window.astype(np.float32)], axis=1)
+            rul_uq = self._rul.predict_with_uncertainty(rul_window, n_samples=30)
             rul_hours = float(rul_uq["mean"])
         else:
             # Fallback: linear estimate from anomaly score
@@ -301,10 +334,12 @@ class InferenceEngine:
             self._recent_events.append(event)
             log.warning(f"[InferenceEngine] Contradiction detected: {event}")
 
-        # ---- Decision engine --------------------------------------------
-        state = "anomalous" if fused_anomaly > self._anomaly_threshold else "normal"
+        # ---- Decision engine (hysteresis + persistence) -----------------
+        state = self._update_state_hysteresis(fused_anomaly)
 
         latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+        self._latency_hist_ms.append(float(latency_ms))
+        p95 = float(np.percentile(np.asarray(self._latency_hist_ms, dtype=np.float32), 95)) if self._latency_hist_ms else 0.0
 
         return {
             "sensor_error":  False,
@@ -318,8 +353,14 @@ class InferenceEngine:
                 "rf_fault_prob_calibrated": round(float(rf_fault_prob_cal), 4),
                 "fused": round(float(fused_anomaly), 4),
                 "fusion_mode": "meta" if self._fusion_meta is not None else "weighted",
+                "hysteresis": {
+                    "enter": _HYST_ENTER,
+                    "exit": _HYST_EXIT,
+                    "persist": _HYST_PERSIST,
+                },
             },
             "fault_class":   cls_result.get("fault_label", "unknown"),
+            "component":     _FAULT_TO_COMPONENT.get(cls_result.get("fault_label", "unknown"), "unknown_component"),
             "fault_class_id":cls_result.get("fault_class_id", -1),
             "probabilities": cls_result.get("probabilities", {}),
             "RUL":           round(float(rul_hours), 1),
@@ -330,6 +371,11 @@ class InferenceEngine:
             "telemetry": {
                 "contradiction_counts": dict(self._contradiction_counts),
                 "recent_contradictions": list(self._recent_events)[-5:],
+                "missing_counts": dict(self._missing_counts),
+                "latency": {
+                    "samples": len(self._latency_hist_ms),
+                    "p95_ms": round(p95, 2),
+                },
             },
             "latency_ms":    latency_ms,
             "missing_mask":  missing,
@@ -352,16 +398,6 @@ class InferenceEngine:
         s_max = self._iso["score_max"]
         return float(np.clip((raw - s_min) / (s_max - s_min + 1e-12), 0.0, 1.0))
 
-    def _latent(self, window: np.ndarray) -> np.ndarray:
-        if self._shared is None:
-            return np.zeros((128,), dtype=np.float32)
-        try:
-            h = self._shared.encode_window(window)
-            return np.asarray(h, dtype=np.float32)
-        except Exception as exc:
-            log.warning(f"[InferenceEngine] shared encode failed: {exc}")
-            return np.zeros((128,), dtype=np.float32)
-
     def _align_to_if(self, feat_vec: np.ndarray) -> np.ndarray:
         expected = int(getattr(self._iso["scaler"], "n_features_in_", len(feat_vec)))
         v = np.asarray(feat_vec, dtype=np.float32).reshape(-1)
@@ -370,3 +406,20 @@ class InferenceEngine:
         if len(v) > expected:
             return v[:expected]
         return np.pad(v, (0, expected - len(v)), mode="constant", constant_values=0.0)
+
+    def _update_state_hysteresis(self, anomaly_score: float) -> str:
+        if anomaly_score >= _HYST_ENTER:
+            self._anom_streak += 1
+            self._normal_streak = 0
+        elif anomaly_score <= _HYST_EXIT:
+            self._normal_streak += 1
+            self._anom_streak = 0
+        else:
+            self._anom_streak = 0
+            self._normal_streak = 0
+
+        if self._anom_streak >= _HYST_PERSIST:
+            self._state = "anomalous"
+        elif self._normal_streak >= _HYST_PERSIST:
+            self._state = "normal"
+        return self._state

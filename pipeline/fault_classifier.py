@@ -40,6 +40,7 @@ FAULT_LABELS: dict[int, str] = {
     3: "dry_run",
     4: "misalignment",
 }
+_UNKNOWN_CONFIDENCE_THRESHOLD = 0.60
 
 
 class FaultClassifier:
@@ -148,12 +149,20 @@ class FaultClassifier:
             FAULT_LABELS[c]: round(float(proba[i]), 4)
             for i, c in enumerate(infer_model.classes_)
         }
+        max_conf = float(proba.max())
+        predicted_label = FAULT_LABELS.get(cls_id, "unknown")
+        predicted_id = cls_id
+        if max_conf < _UNKNOWN_CONFIDENCE_THRESHOLD:
+            predicted_label = "unknown"
+            predicted_id = -1
+
         return {
-            "fault_class_id": cls_id,
-            "fault_label":    FAULT_LABELS.get(cls_id, "unknown"),
+            "fault_class_id": predicted_id,
+            "fault_label":    predicted_label,
             "probabilities":  proba_map,
-            "confidence":     round(float(proba.max()), 4),
+            "confidence":     round(max_conf, 4),
             "calibration":    self._calibration_method,
+            "unknown_threshold": _UNKNOWN_CONFIDENCE_THRESHOLD,
         }
 
     # ------------------------------------------------------------------

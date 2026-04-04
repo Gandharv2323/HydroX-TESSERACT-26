@@ -1,12 +1,53 @@
 {
-  "isolation_forest": {
-    "error": "X has 84 features, but StandardScaler is expecting 227 features as input."
-  },
-  "random_forest": {
-    "error": "X has 84 features, but StandardScaler is expecting 227 features as input."
-  },
-  "lstm_rul": {
-    "mae_hours": 58.95,
-    "rmse_hours": 85.48
+  "synthetic": {
+    "isolation_forest": {
+      "roc_auc": 1.0,
+      "avg_precision": 1.0
+    },
+    "random_forest": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "confusion_matrix": [
+        [
+          200,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          200,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          200,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          200,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          200
+        ]
+      ]
+    },
+    "lstm_rul": {
+      "mae_hours": 43.09,
+      "rmse_hours": 67.58
+    }
   }
 }
