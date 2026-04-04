@@ -11,6 +11,7 @@ import asyncio
 import json
 import os
 import time
+from collections import deque
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
@@ -52,6 +53,7 @@ loader    = PumpDatasetLoader()
 _current_state: dict[str, Any] = {}
 _clients:       set[WebSocket]  = set()
 _step_counter:  int             = 0
+_history:       deque[dict]     = deque(maxlen=60)   # UPGRADE 7
 
 # Replay
 _replay_frames: list[dict] = []
@@ -68,13 +70,27 @@ def _build_state() -> dict:
     _step_counter += 1
     anomaly  = detector.predict(sensors)
     health   = engine.compute(sensors, anomaly)
+
+    # UPGRADE 2 — pump curve
+    op_pt   = engine.pump_curve.operating_point(sensors.get("flow_rate", 120.0))
+    dev     = engine.pump_curve.deviation_from_curve(sensors)
+    pump_curve = {
+        "head_m":           op_pt["head_m"],
+        "efficiency_pct":   op_pt["efficiency_pct"],
+        "duty_status":      op_pt["duty_status"],
+        "deviation_pct":    dev["deviation_pct"],
+        "within_tolerance": dev["within_tolerance"],
+    }
+
     return {
-        "timestamp": time.time(),
-        "mode":      simulator.mode,
-        "step":      _step_counter,
-        "sensors":   sensors,
-        "anomaly":   anomaly,
-        "health":    health,
+        "timestamp":       time.time(),
+        "mode":            simulator.mode,
+        "step":            _step_counter,
+        "throttle_factor": simulator.throttle_factor,
+        "sensors":         sensors,
+        "anomaly":         anomaly,
+        "health":          health,
+        "pump_curve":      pump_curve,
     }
 
 
@@ -99,6 +115,7 @@ async def _broadcast_loop() -> None:
             else:
                 state = _build_state()
             _current_state.update(state)
+            _history.append(dict(state))   # UPGRADE 7
 
             dead: list[WebSocket] = []
             for ws in list(_clients):
@@ -200,10 +217,14 @@ class ScenarioRequest(BaseModel):
     mode: str
 
 
+class ThrottleRequest(BaseModel):      # UPGRADE 4
+    flow_pct: float
+
 
 class ChatRequest(BaseModel):
     prompt: str
     context: dict = {}
+
 
 class ConfigRequest(BaseModel):
     broadcast_hz: Optional[float] = None
@@ -270,6 +291,23 @@ async def update_config(body: ConfigRequest) -> dict:
         simulator._noise_pct = npt
         changes["noise_pct"] = simulator._noise_pct
     return {"success": True, "applied": changes}
+
+
+@app.post("/throttle", summary="Set flow throttle factor (0.0–1.5, 1.0 = rated)")
+async def set_throttle(body: ThrottleRequest) -> dict:
+    """UPGRADE 4 — multiplies flow_rate baseline by flow_pct."""
+    factor = float(max(0.0, min(1.5, body.flow_pct)))
+    simulator.throttle_factor = factor
+    expected_flow = round(
+        simulator._baselines.get("flow_rate", 120.0) * factor, 1
+    )
+    return {"success": True, "throttle_factor": factor, "expected_flow": expected_flow}
+
+
+@app.get("/history", summary="Last 60 state snapshots")
+async def get_history() -> list:
+    """UPGRADE 7 — returns rolling buffer of last 60 broadcast states."""
+    return list(_history)
 
 
 # ---------------------------------------------------------------------------
