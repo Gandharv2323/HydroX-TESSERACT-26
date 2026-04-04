@@ -9,8 +9,8 @@
       "steps": 80,
       "final_state": "normal",
       "state_changes": 1,
-      "mean_anomaly_score": 0.0052,
-      "max_anomaly_score": 0.023,
+      "mean_anomaly_score": 0.0021,
+      "max_anomaly_score": 0.0106,
       "expected_final": "normal",
       "passed": true
     },
@@ -19,8 +19,8 @@
       "steps": 100,
       "final_state": "anomalous",
       "state_changes": 1,
-      "mean_anomaly_score": 0.6617,
-      "max_anomaly_score": 0.9896,
+      "mean_anomaly_score": 0.6624,
+      "max_anomaly_score": 0.9891,
       "expected_final": "anomalous",
       "passed": true
     },
@@ -29,8 +29,8 @@
       "steps": 80,
       "final_state": "anomalous",
       "state_changes": 2,
-      "mean_anomaly_score": 0.4456,
-      "max_anomaly_score": 0.9929,
+      "mean_anomaly_score": 0.4638,
+      "max_anomaly_score": 0.9932,
       "expected_final": null,
       "passed": true
     },
@@ -39,8 +39,8 @@
       "steps": 80,
       "final_state": "normal",
       "state_changes": 5,
-      "mean_anomaly_score": 0.4355,
-      "max_anomaly_score": 0.9899,
+      "mean_anomaly_score": 0.4414,
+      "max_anomaly_score": 0.9886,
       "expected_final": "normal",
       "passed": true
     }
