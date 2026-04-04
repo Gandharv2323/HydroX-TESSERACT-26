@@ -1,0 +1,21 @@
+{
+  "fine_tune": {
+    "status": "ok",
+    "tail_q": 61.948828887939456,
+    "tail_count": 264.0,
+    "samples_after_aug": 1672.0,
+    "last_loss": 0.8115197803292956
+  },
+  "recalibration": {
+    "status": "ok",
+    "n_cal": 220.0,
+    "q90": 94.42734815424139,
+    "level": 0.9045454545454545,
+    "tail_threshold": 51.901385116577146,
+    "tail_coverage_local": 1.0,
+    "conformal_scale": 1.15
+  },
+  "n_train": 880,
+  "n_cal": 220,
+  "model_path": "C:\\Users\\HP\\Projects\\HYDROX\\models\\rul_lstm.pt"
+}

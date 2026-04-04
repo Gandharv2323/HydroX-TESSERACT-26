@@ -22,10 +22,11 @@ def train_fusion_model(
     rf_fault_probs: np.ndarray,
     latent: np.ndarray,
     rul_pred: np.ndarray,
+    hysteresis_signal: np.ndarray,
     y_binary: np.ndarray,
     out_path: Path | str,
 ) -> dict[str, Any]:
-    """Train a rebalanced meta fusion model y = f(z_if, z_rf, z_pca, z_rul).
+    """Train a rebalanced meta fusion model y = f(z_if, z_rf, z_hyst, z_pca, z_rul).
 
     Phase 5: latent vector is PCA-compressed to _LATENT_PCA_DIM components
     before fusion to prevent high-dimensional latent from dominating.
@@ -34,6 +35,7 @@ def train_fusion_model(
     rf_s = np.asarray(rf_fault_probs, dtype=np.float32).reshape(-1, 1)
     h    = np.asarray(latent,         dtype=np.float32)
     rul  = np.asarray(rul_pred,       dtype=np.float32).reshape(-1, 1)
+    hyst = np.asarray(hysteresis_signal, dtype=np.float32).reshape(-1, 1)
     y    = np.asarray(y_binary,       dtype=np.int32)
 
     # ── PCA compress latent ──────────────────────────────────────────────
@@ -56,13 +58,16 @@ def train_fusion_model(
     pca_std   = h_pca.std(axis=0,  keepdims=True) + 1e-6
     rul_mean  = float(rul.mean())
     rul_std   = float(rul.std()   + 1e-6)
+    hyst_mean = float(hyst.mean())
+    hyst_std  = float(hyst.std() + 1e-6)
 
     z_if  = (if_s  - if_mean)  / if_std
     z_rf  = (rf_s  - rf_mean)  / rf_std
+    z_hyst = (hyst - hyst_mean) / hyst_std
     z_pca = (h_pca - pca_mean) / pca_std
     z_rul = (rul   - rul_mean) / rul_std
 
-    X = np.hstack([z_if, z_rf, z_pca, z_rul])
+    X = np.hstack([z_if, z_rf, z_hyst, z_pca, z_rul])
 
     clf = LogisticRegression(max_iter=300, class_weight="balanced", C=0.3)
     clf.fit(X, y)
@@ -71,13 +76,15 @@ def train_fusion_model(
     coef  = clf.coef_[0]
     if_l1     = float(abs(coef[0]))
     rf_l1     = float(abs(coef[1]))
-    latent_l1 = float(np.sum(np.abs(coef[2:2 + actual_pca_dim])))
+    hyst_l1   = float(abs(coef[2]))
+    latent_l1 = float(np.sum(np.abs(coef[3:3 + actual_pca_dim])))
     rul_l1    = float(abs(coef[-1]))
-    total_l1  = if_l1 + rf_l1 + latent_l1 + rul_l1 + 1e-9
+    total_l1  = if_l1 + rf_l1 + hyst_l1 + latent_l1 + rul_l1 + 1e-9
 
     contributions = {
         "if":     round(if_l1     / total_l1, 4),
         "rf":     round(rf_l1     / total_l1, 4),
+        "hysteresis": round(hyst_l1 / total_l1, 4),
         "latent": round(latent_l1 / total_l1, 4),
         "rul":    round(rul_l1    / total_l1, 4),
     }
@@ -108,6 +115,7 @@ def train_fusion_model(
         "feature_layout": {
             "if":          1,
             "rf":          1,
+            "hysteresis":  1,
             "latent_pca":  actual_pca_dim,
             "latent_orig": int(h.shape[1]),
             "rul":         1,
@@ -115,6 +123,7 @@ def train_fusion_model(
         "normalization": {
             "if":  {"mean": if_mean,  "std": if_std},
             "rf":  {"mean": rf_mean,  "std": rf_std},
+            "hysteresis": {"mean": hyst_mean, "std": hyst_std},
             "pca": {
                 "mean": pca_mean.reshape(-1).tolist(),
                 "std":  pca_std.reshape(-1).tolist(),
@@ -146,6 +155,7 @@ def predict_fused_score(
     rf_fault_prob: float,
     latent:       np.ndarray,
     rul_pred:     float,
+    hysteresis_score: float = 0.0,
 ) -> float:
     layout     = model_bundle.get("feature_layout", {})
     latent_pca = int(layout.get("latent_pca", layout.get("latent", 0)))
@@ -173,6 +183,7 @@ def predict_fused_score(
     norm    = model_bundle.get("normalization", {})
     if_norm = norm.get("if",  {"mean": 0.0, "std": 1.0})
     rf_norm = norm.get("rf",  {"mean": 0.0, "std": 1.0})
+    hyst_norm = norm.get("hysteresis", {"mean": 0.0, "std": 1.0})
     # Support both new key 'pca' and legacy key 'latent'
     pca_norm_key = "pca" if "pca" in norm else "latent"
     pca_norm = norm.get(pca_norm_key, {"mean": [0.0] * latent_pca, "std": [1.0] * latent_pca})
@@ -188,14 +199,26 @@ def predict_fused_score(
 
     z_if  = (float(if_score)     - float(if_norm.get("mean",  0.0))) / float(if_norm.get("std",  1.0) + 1e-6)
     z_rf  = (float(rf_fault_prob) - float(rf_norm.get("mean", 0.0))) / float(rf_norm.get("std",  1.0) + 1e-6)
+    z_hyst = (float(hysteresis_score) - float(hyst_norm.get("mean", 0.0))) / float(hyst_norm.get("std", 1.0) + 1e-6)
     z_pca = (h_pca - pca_mean) / (pca_std + 1e-6)                      # (1, pca_dim)
     z_rul = (float(rul_pred)    - float(rul_norm.get("mean", 0.0))) / float(rul_norm.get("std", 1.0) + 1e-6)
 
-    x = np.concatenate([
-        np.array([[z_if, z_rf]], dtype=np.float32),
-        z_pca.astype(np.float32),
-        np.array([[z_rul]],     dtype=np.float32),
-    ], axis=1)   # (1, 2 + pca_dim + 1)
+    layout = model_bundle.get("feature_layout", {})
+    has_hyst = int(layout.get("hysteresis", 0)) == 1
+
+    if has_hyst:
+        x = np.concatenate([
+            np.array([[z_if, z_rf, z_hyst]], dtype=np.float32),
+            z_pca.astype(np.float32),
+            np.array([[z_rul]],     dtype=np.float32),
+        ], axis=1)   # (1, 3 + pca_dim + 1)
+    else:
+        # Backward compatibility with legacy fusion bundles.
+        x = np.concatenate([
+            np.array([[z_if, z_rf]], dtype=np.float32),
+            z_pca.astype(np.float32),
+            np.array([[z_rul]],     dtype=np.float32),
+        ], axis=1)   # (1, 2 + pca_dim + 1)
 
     clf = model_bundle["model"]
     return float(np.clip(clf.predict_proba(x)[0, 1], 0.0, 1.0))

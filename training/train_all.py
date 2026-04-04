@@ -323,6 +323,20 @@ def train_lstm(X_windows: np.ndarray, y_rul: np.ndarray) -> dict:
     log.info("─" * 60)
     log.info("Training LSTM v3 (Perfect Architecture — log-space + WarmRestarts)...")
 
+    # Phase 6: augment steep/fall-off tail cases to improve conformal coverage in extremes.
+    low_q = float(np.percentile(y_rul, 20.0))
+    tail_idx = np.where(y_rul <= low_q)[0]
+    if len(tail_idx) > 0:
+        X_tail = X_windows[tail_idx].copy()
+        # Late-window decay ramp emphasizes abrupt end-of-life trajectories.
+        ramp = np.ones((WINDOW_SIZE, 1), dtype=np.float32)
+        ramp[int(WINDOW_SIZE * 0.6):] = np.linspace(1.0, 0.70, WINDOW_SIZE - int(WINDOW_SIZE * 0.6)).reshape(-1, 1)
+        X_tail[:, :, :7] = X_tail[:, :, :7] * ramp[np.newaxis, :, :]
+        y_tail = np.clip(y_rul[tail_idx] * 0.85, 1.0, None)
+        X_windows = np.concatenate([X_windows, X_tail], axis=0)
+        y_rul = np.concatenate([y_rul, y_tail], axis=0)
+        log.info(f"  Tail augmentation: +{len(X_tail)} windows (q20={low_q:.1f}h)")
+
     predictor = RULPredictor(
         input_size    = X_windows.shape[2],
         hidden_size   = 128,
@@ -350,6 +364,25 @@ def train_lstm(X_windows: np.ndarray, y_rul: np.ndarray) -> dict:
         f"Coverage={result.get('coverage', 0):.1%}"
     )
     return result
+
+
+def _domain_profile(bundle: dict, X_domain: np.ndarray) -> dict:
+    """Compute p5/p95 anomaly normalization profile for one domain."""
+    if len(X_domain) == 0:
+        return {}
+    scaler = bundle["scaler"]
+    model = bundle["model"]
+    X_s = scaler.transform(X_domain)
+    raw = model.decision_function(X_s)
+    p5 = float(np.percentile(raw, 5.0))
+    p95 = float(np.percentile(raw, 95.0))
+    if p95 <= p5:
+        p95 = p5 + 1e-6
+    return {
+        "p5": p5,
+        "p95": p95,
+        "n": int(len(raw)),
+    }
 
 
 
@@ -414,6 +447,30 @@ def main(real_csv: str | None = None) -> None:
     contamination = float(_CONFIG.get("isolation_forest", {}).get("contamination", 0.05))
     log.info(f"  Using IF contamination from config: {contamination}")
     if_metrics = train_isolation_forest(X_if_full, y_if_full, contamination=contamination)
+
+    # Phase 6: keep domain-specific normalization profiles for real vs synthetic.
+    try:
+        if_bundle_path = MODELS_DIR / "isolation_forest.pkl"
+        with open(if_bundle_path, "rb") as fh:
+            if_bundle = pickle.load(fh)
+
+        synth_norm = X_hybrid[y_cls == 0] if np.any(y_cls == 0) else X_hybrid
+        profiles = {"synthetic": _domain_profile(if_bundle, synth_norm)}
+
+        if X_real_hybrid is not None and len(X_real_hybrid) > 0:
+            y_real = real.get("y_cls")
+            if y_real is not None and len(y_real) == len(X_real_hybrid):
+                real_norm = X_real_hybrid[y_real == 0] if np.any(y_real == 0) else X_real_hybrid
+            else:
+                real_norm = X_real_hybrid
+            profiles["real"] = _domain_profile(if_bundle, real_norm)
+
+        if_bundle["domain_profiles"] = profiles
+        with open(if_bundle_path, "wb") as fh:
+            pickle.dump(if_bundle, fh)
+        log.info(f"  IF domain profiles saved: {list(profiles.keys())}")
+    except Exception as exc:
+        log.warning(f"  IF domain profile export skipped: {exc}")
 
     # Step 4: 5-class RF
     log.info("Step 4/5 — 5-class Random Forest...")
@@ -499,11 +556,19 @@ def main(real_csv: str | None = None) -> None:
             X_te_seq = X_te_wins
         rul_preds_te = np.array([rp_fusion.predict(w) for w in X_te_seq], dtype=np.float32)
 
+        # Phase 6: hysteresis branch training signal from IF anomaly EMA.
+        hyst_te = np.zeros_like(anomaly_scores, dtype=np.float32)
+        ema = 0.0
+        for i, s in enumerate(anomaly_scores):
+            ema = 0.8 * ema + 0.2 * float(s)
+            hyst_te[i] = ema
+
         fusion_metrics = train_fusion_model(
             if_scores=anomaly_scores,
             rf_fault_probs=rf_fault_probs,
             latent=latent_te,
             rul_pred=rul_preds_te,
+            hysteresis_signal=hyst_te,
             y_binary=y_bin_te,
             out_path=MODELS_DIR / "fusion_meta.pkl",
         )
@@ -511,7 +576,6 @@ def main(real_csv: str | None = None) -> None:
         # LSTM holdout metrics (if trained)
         lstm_eval = {}
         if real.get("available") and real.get("y_rul") is not None and len(real["windows"]) > 0:
-            from pipeline.rul_lstm import RULPredictor
             rp = RULPredictor()
             rp.load(MODELS_DIR / "rul_lstm.pt")
             expected_in = int(rp._kwargs.get("input_size", real["windows"].shape[2]))

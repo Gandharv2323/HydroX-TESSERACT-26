@@ -1,0 +1,48 @@
+{
+  "total_scenarios": 4,
+  "passed": 4,
+  "failed": 0,
+  "all_pass": true,
+  "scenarios": [
+    {
+      "scenario": "normal_steady_state",
+      "steps": 80,
+      "final_state": "normal",
+      "state_changes": 1,
+      "mean_anomaly_score": 0.0052,
+      "max_anomaly_score": 0.023,
+      "expected_final": "normal",
+      "passed": true
+    },
+    {
+      "scenario": "gradual_degradation",
+      "steps": 100,
+      "final_state": "anomalous",
+      "state_changes": 1,
+      "mean_anomaly_score": 0.6617,
+      "max_anomaly_score": 0.9896,
+      "expected_final": "anomalous",
+      "passed": true
+    },
+    {
+      "scenario": "sudden_failure",
+      "steps": 80,
+      "final_state": "anomalous",
+      "state_changes": 2,
+      "mean_anomaly_score": 0.4456,
+      "max_anomaly_score": 0.9929,
+      "expected_final": null,
+      "passed": true
+    },
+    {
+      "scenario": "sensor_dropout_recovery",
+      "steps": 80,
+      "final_state": "normal",
+      "state_changes": 5,
+      "mean_anomaly_score": 0.4355,
+      "max_anomaly_score": 0.9899,
+      "expected_final": "normal",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "n": 800,
+  "coverage": 0.86375,
+  "outside_count": 109,
+  "outside_fraction": 0.13625,
+  "residual_mean": 55.526737213134766,
+  "residual_p90": 160.384228515625,
+  "residual_p95": 218.90949707031243,
+  "outside_run_max": 3,
+  "outside_slope_mag_mean": 0.04109455645084381,
+  "inside_slope_mag_mean": 0.03480682522058487,
+  "tail_threshold_residual": 218.90949707031243,
+  "tail_count": 40
+}

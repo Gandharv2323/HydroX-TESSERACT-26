@@ -3,7 +3,9 @@ validation/validate_rul_coverage.py — Phase 2: RUL conformal interval coverage
 
 Computes empirical coverage of the 90% conformal interval on a held-out test set.
 
-Pass condition: empirical coverage >= 88%
+Pass condition:
+    - empirical coverage in [88%, 92%] for a 90% target
+    - average interval width <= 220h (±110h)
 
 Run: python validation/validate_rul_coverage.py
 """
@@ -43,8 +45,8 @@ def main() -> None:
     print(f"  conformal_alpha = {rp._conformal_alpha}")
 
     # Generate held-out test data (different seed from training)
-    print("\n  Generating held-out test set (seed=42) ...")
-    X_wins, _, y_rul, _ = generate(n_per_class=150, seed=42, shuffle=False)
+    print("\n  Generating held-out test set (seed=42, n_per_class=160) ...")
+    X_wins, _, y_rul, _ = generate(n_per_class=160, seed=42, shuffle=False)
 
     # Determine LSTM input size
     expected_in = int(rp._kwargs.get("input_size", X_wins.shape[2]))
@@ -80,17 +82,21 @@ def main() -> None:
     rmse = float(np.sqrt(np.mean((preds_mean - y_true) ** 2)))
     avg_width = float(np.mean(conf_highs - conf_lows))
 
-    print(f"\n  MAE             = {mae:.2f} h")
+    print(f"\n  N windows        = {len(y_true)}")
+    print(f"  MAE             = {mae:.2f} h")
     print(f"  RMSE            = {rmse:.2f} h")
     print(f"  Avg interval    = ±{avg_width/2:.1f} h  (width={avg_width:.1f} h)")
     print(f"  Empirical coverage (90% target) = {coverage:.1%}")
 
     target      = 1.0 - rp._conformal_alpha  # e.g. 0.90
-    lower_bound = target - 0.02              # allow ≥ 88%
-    pass_cov    = coverage >= lower_bound
+    lower_bound = target - 0.02              # 88%
+    upper_bound = target + 0.02              # 92%
+    pass_cov    = lower_bound <= coverage <= upper_bound
+    pass_width  = avg_width <= 220.0
 
-    print(f"\n  Target coverage : {target:.0%}  (min acceptable {lower_bound:.0%})")
+    print(f"\n  Target coverage : {target:.0%}  (acceptable band {lower_bound:.0%}-{upper_bound:.0%})")
     print(f"  Coverage test   : {'PASS OK' if pass_cov else 'FAIL X'}  ({coverage:.1%})")
+    print(f"  Width test      : {'PASS OK' if pass_width else 'FAIL X'}  (width={avg_width:.1f}h, target<=220h)")
 
     # Distribution of residuals vs interval width
     residuals = np.abs(y_true - preds_mean)
@@ -99,9 +105,11 @@ def main() -> None:
     print(f"  conformal_q90   : {rp._conformal_q90:.1f} h")
 
     print("\n" + "=" * 62)
-    print(f"  OVERALL: {'PASS OK' if pass_cov else 'FAIL X — rerun main_train.py after rul_lstm.py fix'}")
+    overall = pass_cov and pass_width and len(y_true) >= 750
+    print(f"  Sample size test: {'PASS OK' if len(y_true) >= 750 else 'FAIL X'}  (n={len(y_true)})")
+    print(f"  OVERALL: {'PASS OK' if overall else 'FAIL X — revisit RUL calibration/training'}")
     print("=" * 62)
-    sys.exit(0 if pass_cov else 1)
+    sys.exit(0 if overall else 1)
 
 
 if __name__ == "__main__":

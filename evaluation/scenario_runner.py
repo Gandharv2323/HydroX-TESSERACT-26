@@ -101,13 +101,15 @@ def _run_scenario(eng: InferenceEngine, scenario: dict) -> dict:
 
         result = eng.infer(reading)
 
+        anomaly_val = result.get("anomaly_score")
+        rul_val = result.get("RUL") if result.get("RUL") is not None else result.get("rul_hours")
         entry = {
             "step":          step,
             "mode":          current_mode,
-            "anomaly_score": round(float(result.get("anomaly_score", 0.0)), 4),
+            "anomaly_score": round(float(anomaly_val if anomaly_val is not None else 0.0), 4),
             "health_index":  round(float(result.get("health_index",  1.0)), 4),
             "state":         result.get("state", "unknown"),
-            "rul_hours":     round(float(result.get("rul_hours", 0.0)), 1),
+            "rul_hours":     round(float(rul_val if rul_val is not None else 0.0), 1),
             "fault_class":   result.get("fault_class", "normal"),
         }
         log_entries.append(entry)
@@ -152,6 +154,7 @@ def run_all_scenarios() -> dict:
     log.info("=" * 60)
 
     eng = InferenceEngine(models_dir=_ROOT / "models")
+    eng.load()
 
     all_results = []
     all_pass    = True

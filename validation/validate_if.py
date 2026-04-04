@@ -156,28 +156,19 @@ def main() -> None:
     # ── Step 2: Stress signals ────────────────────────────────────────────
     print("\n[2/2] Stress signal ordering test ...")
 
-    # Signal A: Gaussian noise around normal baseline (should be LOW anomaly)
-    def _noise(i, s): return float(baselines[s] + np.random.normal(0, baselines[s] * 0.03))
+    base_norm = normal_wins[:20].copy()
 
-    # Signal B: Linear drift — 30% above normal by end of window (moderate anomaly)
-    def _drift(i, s):
-        t = np.linspace(0, 1, WINDOW_SIZE)
-        return baselines[s] * (1.0 + 0.30 * t) + np.random.normal(0, baselines[s] * 0.01, WINDOW_SIZE)
+    # Signal A: mild gaussian perturbation around known-normal windows.
+    noise_wins = base_norm + np.random.normal(0, np.maximum(1e-3, np.abs(base_norm) * 0.02), size=base_norm.shape)
 
-    # Signal C: Step-change — first ~half normal, then 3× the baseline (high anomaly)
-    def _step(i, s):
-        w = np.full(WINDOW_SIZE, baselines[s], dtype=np.float32)
-        w[WINDOW_SIZE // 2:] = baselines[s] * 3.0
-        w += np.random.normal(0, baselines[s] * 0.01, WINDOW_SIZE)
-        return w
+    # Signal B: gradual drift over time.
+    drift_wins = base_norm.copy()
+    ramp = np.linspace(1.0, 1.08, WINDOW_SIZE, dtype=np.float32).reshape(1, WINDOW_SIZE, 1)
+    drift_wins *= ramp
 
-    rng_save = np.random.get_state()
-
-    noise_wins = _make_windows(_noise, n=20)
-    drift_wins = _make_windows(_drift, n=20)
-    step_wins  = _make_windows(_step,  n=20)
-
-    np.random.set_state(rng_save)
+    # Signal C: step-change in second half of the window.
+    step_wins = base_norm.copy()
+    step_wins[:, WINDOW_SIZE // 2 :, :] *= 1.25
 
     noise_scores = _score_batch(bundle, noise_wins, shared)
     drift_scores = _score_batch(bundle, drift_wins, shared)
@@ -187,13 +178,37 @@ def main() -> None:
     print(f"  Linear drift    : mean={drift_scores.mean():.4f}")
     print(f"  Step change     : mean={step_scores.mean():.4f}")
 
-    order_ok = noise_scores.mean() < step_scores.mean()
-    print(f"\n  Ordering (noise < step): {'PASS OK' if order_ok else 'FAIL X'}")
-    drift_higher = drift_scores.mean() >= noise_scores.mean()
-    print(f"  Drift >= noise         : {'PASS OK' if drift_higher else 'WARN  (may be mild)'}")
+    order_ok = (noise_scores.mean() < drift_scores.mean()) and (step_scores.mean() >= drift_scores.mean())
+    print(f"\n  Ordering (noise < drift and step >= drift): {'PASS OK' if order_ok else 'FAIL X'}")
+
+    # Optional real-data separation gap check.
+    real_gap_ok = True
+    real_profile = bundle.get("domain_profiles", {}).get("real")
+    has_real_profile = isinstance(real_profile, dict) and ("p5" in real_profile and "p95" in real_profile)
+    real_csv = _ROOT / "pump-sensor-data-small.csv"
+    if real_csv.exists() and has_real_profile:
+        try:
+            import pandas as pd
+
+            cols = [
+                "vibration_rms", "vibration_peak", "discharge_pressure",
+                "suction_pressure", "flow_rate", "motor_current", "fluid_temp",
+            ]
+            df = pd.read_csv(real_csv)
+            if all(c in df.columns for c in cols) and len(df) >= WINDOW_SIZE:
+                vals = df[cols].to_numpy(dtype=np.float32)
+                real_wins = np.stack([vals[i:i + WINDOW_SIZE] for i in range(0, len(vals) - WINDOW_SIZE + 1)], axis=0)
+                real_scores = _score_batch(bundle, real_wins[:80], shared)
+                sep_gap = float(fault_scores.mean() - real_scores.mean())
+                real_gap_ok = sep_gap >= 0.5
+                print(f"  Real separation gap (fault-real): {sep_gap:.4f}  ({'PASS OK' if real_gap_ok else 'FAIL X'})")
+        except Exception as exc:
+            print(f"  Real-data gap check skipped: {exc}")
+    elif real_csv.exists() and not has_real_profile:
+        print("  Real separation gap check skipped: IF bundle has no real-domain profile.")
 
     # ── Summary ───────────────────────────────────────────────────────────
-    all_pass = sep_ok and norm_ok and fault_ok and order_ok
+    all_pass = sep_ok and norm_ok and fault_ok and order_ok and real_gap_ok
     print("\n" + "=" * 62)
     print(f"  OVERALL: {'ALL TESTS PASSED OK' if all_pass else 'SOME TESTS FAILED X — review above'}")
     print("=" * 62)

@@ -1,13 +1,10 @@
-"""
-validation/validate_hysteresis.py — Phase 3: Hysteresis edge-case tests.
+"""validation/validate_hysteresis.py - Phase 3: Hysteresis edge-case tests.
 
 Tests 4 signal sequences:
-  1. Single spike (score=0.95)  → must trigger immediately (immediate override)
-  2. Repeated spikes (score=0.80) → must trigger within ≤2 windows
-  3. Noisy oscillation           → must NOT trigger (stays normal)
-  4. Gradual rise               → must trigger at some point
-
-Run: python validation/validate_hysteresis.py
+    1. Single spike (score=0.95) -> must trigger immediately (immediate override)
+    2. Repeated spikes (score=0.80) -> must trigger within <=2 windows
+    3. Noisy oscillation -> must NOT trigger (stays normal)
+    4. Gradual rise -> must trigger at some point
 """
 from __future__ import annotations
 
@@ -42,7 +39,7 @@ def main() -> None:
 
     all_pass = True
 
-    # ── Test 1: Single spike at 0.95 → immediate anomalous ────────────────
+    # Test 1: Single spike at 0.95 -> immediate anomalous
     eng = _make_engine()
     scores = [0.20, 0.20, 0.95, 0.20, 0.20]
     states = _feed(eng, scores)
@@ -52,7 +49,7 @@ def main() -> None:
     print(f"  Spike detected immediately: {'PASS OK' if spike_ok else 'FAIL X'}")
     all_pass = all_pass and spike_ok
 
-    # ── Test 2: Repeated high scores (0.80) → triggers within 2 windows ───
+    # Test 2: Repeated high scores (0.80) -> triggers within 2 windows
     eng = _make_engine()
     scores = [0.80, 0.80, 0.80, 0.80, 0.80]
     states = _feed(eng, scores)
@@ -64,23 +61,23 @@ def main() -> None:
     print(f"  Triggered at window {triggered_at}: {'PASS OK' if rep_ok else 'FAIL X'}")
     all_pass = all_pass and rep_ok
 
-    # ── Test 3: Noisy oscillation (0.45–0.65) → should stay normal ─────────
+    # Test 3: Noisy oscillation (0.45-0.65) -> should stay normal
     eng = _make_engine()
     scores = [0.55, 0.45, 0.60, 0.48, 0.57, 0.42, 0.58, 0.44, 0.56, 0.43]
     states = _feed(eng, scores)
     noisy_ok = states.count("anomalous") == 0
-    print(f"\n[3/4] Noisy oscillation (0.45–0.65):")
+    print(f"\n[3/4] Noisy oscillation (0.45-0.65):")
     print(f"  States: {states}")
     print(f"  No false triggers: {'PASS OK' if noisy_ok else 'FAIL X'}")
     all_pass = all_pass and noisy_ok
 
-    # ── Test 4: Gradual rise to 0.75+ → must eventually trigger ────────────
+    # Test 4: Gradual rise to 0.75+ -> must eventually trigger
     eng = _make_engine()
     scores = [0.20, 0.30, 0.40, 0.52, 0.60, 0.68, 0.75, 0.80, 0.82, 0.83]
     states = _feed(eng, scores)
     grad_ok = "anomalous" in states
     triggered_at = next((i for i, s in enumerate(states) if s == "anomalous"), -1)
-    print(f"\n[4/4] Gradual rise (0.20 → 0.83):")
+    print(f"\n[4/4] Gradual rise (0.20 -> 0.83):")
     print(f"  States: {states}")
     print(f"  Eventually triggered (at window {triggered_at}): {'PASS OK' if grad_ok else 'FAIL X'}")
     all_pass = all_pass and grad_ok

@@ -206,6 +206,9 @@ class InferenceEngine:
                         state, latency_ms, sensor_error, violations
         """
         t0 = time.perf_counter()
+        t_stage = t0
+        t_validation = 0.0
+        t_buffer = 0.0
 
         # ---- Validation layer -------------------------------------------
         cleaned, missing = self._pre.transform(sensor_dict)
@@ -232,6 +235,8 @@ class InferenceEngine:
                 "missing_mask":  missing,
                 "latency_ms":    round((time.perf_counter() - t0) * 1000, 2),
             }
+            t_validation = time.perf_counter() - t_stage
+            t_stage = time.perf_counter()
 
         # ---- Buffer update ----------------------------------------------
         self._buffer.push(cleaned)
@@ -245,11 +250,15 @@ class InferenceEngine:
                 "missing_mask":  missing,
                 "latency_ms":    round((time.perf_counter() - t0) * 1000, 2),
             }
+            t_buffer = time.perf_counter() - t_stage
+            t_stage = time.perf_counter()
 
         # ---- Feature extraction -----------------------------------------
         window   = self._buffer.get_window()          # (50, 7)
         mask_window = self._mask_buffer.get_window()
         hybrid_vec, _, _, latent_h = build_hybrid_feature_vector(window, self._shared, mask_window=mask_window)
+        t_features = time.perf_counter() - t_stage
+        t_stage = time.perf_counter()
 
         # ---- Isolation Forest → anomaly score ---------------------------
         if_normal_score = self._if_score(hybrid_vec)
@@ -264,21 +273,10 @@ class InferenceEngine:
 
         probs = cls_result.get("probabilities", {})
         rf_fault_prob_raw = 1.0 - float(probs.get("normal", 0.0)) if probs else 0.0
+        t_models_primary = time.perf_counter() - t_stage
+        t_stage = time.perf_counter()
 
-        # ---- Score calibration + fusion ---------------------------------
-        if_anomaly_cal = calibrate_if_score(if_anomaly_raw, self._fusion_cfg)
-        rf_fault_prob_cal = calibrate_rf_probability(rf_fault_prob_raw, self._fusion_cfg)
-        if self._fusion_meta is not None:
-            fused_anomaly = predict_fused_score(
-                self._fusion_meta,
-                if_anomaly_cal,
-                rf_fault_prob_cal,
-                latent_h,
-            )
-        else:
-            fused_anomaly = fuse_scores(if_anomaly_cal, rf_fault_prob_cal, self._fusion_cfg)
-
-        # ---- LSTM → RUL -------------------------------------------------
+        # ---- LSTM pre-score for fusion branch ----------------------------
         if self._rul.is_trained():
             rul_window = window
             expected_in = int(self._rul._kwargs.get("input_size", window.shape[1])) if hasattr(self._rul, "_kwargs") else window.shape[1]
@@ -287,8 +285,7 @@ class InferenceEngine:
             rul_uq = self._rul.predict_with_uncertainty(rul_window, n_samples=30)
             rul_hours = float(rul_uq["mean"])
         else:
-            # Fallback: linear estimate from anomaly score
-            rul_hours = round(max(0.0, (1.0 - fused_anomaly) * 500.0), 1)
+            rul_hours = round(max(0.0, (1.0 - if_anomaly_raw) * 500.0), 1)
             rul_uq = {
                 "mean": float(rul_hours),
                 "low": float(rul_hours),
@@ -296,6 +293,26 @@ class InferenceEngine:
                 "std": 0.0,
                 "samples": 1,
             }
+        t_rul = time.perf_counter() - t_stage
+        t_stage = time.perf_counter()
+
+        # ---- Score calibration + fusion ---------------------------------
+        if_anomaly_cal = calibrate_if_score(if_anomaly_raw, self._fusion_cfg)
+        rf_fault_prob_cal = calibrate_rf_probability(rf_fault_prob_raw, self._fusion_cfg)
+        hyst_signal = float(np.clip(self._state_score, 0.0, 1.0))
+        if self._fusion_meta is not None:
+            fused_anomaly = predict_fused_score(
+                self._fusion_meta,
+                if_anomaly_cal,
+                rf_fault_prob_cal,
+                latent_h,
+                rul_hours,
+                hyst_signal,
+            )
+        else:
+            fused_anomaly = fuse_scores(if_anomaly_cal, rf_fault_prob_cal, self._fusion_cfg)
+        t_fusion = time.perf_counter() - t_stage
+        t_stage = time.perf_counter()
 
         # ---- Consistency constraints ------------------------------------
         consistency_actions: list[str] = []
@@ -340,6 +357,7 @@ class InferenceEngine:
 
         # ---- Decision engine (hysteresis + persistence) -----------------
         state = self._update_state_hysteresis(fused_anomaly)
+        t_decision = time.perf_counter() - t_stage
 
         latency_ms = round((time.perf_counter() - t0) * 1000, 2)
         self._latency_hist_ms.append(float(latency_ms))
@@ -361,6 +379,8 @@ class InferenceEngine:
                     "enter": _HYST_ENTER,
                     "exit": _HYST_EXIT,
                     "persist": _HYST_PERSIST,
+                    "persist_high": _HYST_PERSIST_HI,
+                    "immediate": _HYST_IMMEDIATE,
                 },
             },
             "fault_class":   cls_result.get("fault_label", "unknown"),
@@ -379,6 +399,15 @@ class InferenceEngine:
                 "latency": {
                     "samples": len(self._latency_hist_ms),
                     "p95_ms": round(p95, 2),
+                    "stages_ms": {
+                        "validation": round(t_validation * 1000.0, 3),
+                        "buffer": round(t_buffer * 1000.0, 3),
+                        "features": round(t_features * 1000.0, 3),
+                        "if_rf": round(t_models_primary * 1000.0, 3),
+                        "rul": round(t_rul * 1000.0, 3),
+                        "fusion": round(t_fusion * 1000.0, 3),
+                        "decision": round(t_decision * 1000.0, 3),
+                    },
                 },
             },
             "latency_ms":    latency_ms,
@@ -403,8 +432,13 @@ class InferenceEngine:
         X_s = self._iso["scaler"].transform(X)
         raw = float(self._iso["model"].decision_function(X_s)[0])
 
-        # Prefer p5/p95 (training-consistent); fall back to min/max for old bundles
-        if "score_p5" in self._iso and "score_p95" in self._iso:
+        # Prefer domain profile for live streams; fall back to global p5/p95.
+        profiles = self._iso.get("domain_profiles", {}) if isinstance(self._iso, dict) else {}
+        real_profile = profiles.get("real") if isinstance(profiles, dict) else None
+        if isinstance(real_profile, dict) and "p5" in real_profile and "p95" in real_profile:
+            p5 = float(real_profile["p5"])
+            p95 = float(real_profile["p95"])
+        elif "score_p5" in self._iso and "score_p95" in self._iso:
             p5  = float(self._iso["score_p5"])
             p95 = float(self._iso["score_p95"])
         else:
