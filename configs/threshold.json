@@ -1,0 +1,7 @@
+{
+  "if_threshold": 0.55,
+  "method": "bootstrap_default",
+  "meta": {
+    "note": "Replace by calibration/threshold.py output after first validation run"
+  }
+}

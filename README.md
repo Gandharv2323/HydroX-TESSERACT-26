@@ -35,6 +35,11 @@ The repository now contains both:
 
 `sensor_dict -> validation -> sliding window (50x7) -> feature extraction (84 dims) -> IF anomaly -> RF fault class -> LSTM RUL -> decision JSON`
 
+Feature vector rationale:
+
+- The 84-dimensional vector is built from 7 sensors using time-domain and FFT-derived descriptors.
+- It captures both stationary statistics and non-stationary transients, allowing detection of persistent drift and impulsive degradation.
+
 Returned advanced fields include:
 
 - `anomaly_score` (1 = worst, 0 = healthy in advanced pipeline output)
@@ -125,12 +130,31 @@ python evaluation/report.py
 ## Training and Evaluation Notes
 
 - Isolation Forest is trained unsupervised on normal-class features.
+  It does not explicitly learn a manifold; it models normal operating regions implicitly through recursive random partitioning, where anomalous points require fewer splits to isolate.
+- The anomaly score is based on ensemble path-length behavior and is normalized for runtime decisioning.
 - Random Forest is a supervised 5-class classifier on extracted window features.
+  Class probabilities are posterior estimates derived from tree-vote distributions across the ensemble.
 - LSTM predicts RUL from sequential sensor windows.
+  The architecture uses channel-wise sensor gating and temporal attention to emphasize diagnostically salient signals and timesteps.
 - `evaluation/report.py` reports:
   - IF: ROC-AUC, average precision
   - RF: accuracy, macro-F1, confusion matrix
   - LSTM: MAE/RMSE (hours)
+
+### Fault Signature Notes (precision)
+
+- Cavitation is treated as broadband spectral excitation with elevated mid/high-frequency energy from bubble-collapse dynamics; it is not modeled as ideal white noise.
+- Misalignment is characterized by strong 1x and 2x shaft-frequency harmonics, with possible higher-order harmonics as severity increases.
+
+### Why Hybrid Instead of Monolithic
+
+The system decomposes the problem into orthogonal tasks:
+
+- Unsupervised anomaly detection (Isolation Forest)
+- Supervised fault typing (Random Forest)
+- Temporal prognostics (LSTM RUL)
+
+This modular design improves interpretability, reduces dependence on fully labeled fault histories, and allows independent tuning and validation of each subsystem.
 
 ---
 

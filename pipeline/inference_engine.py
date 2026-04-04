@@ -27,6 +27,8 @@ from pipeline.buffer import SlidingWindowBuffer
 from pipeline.features import extract_features
 from pipeline.fault_classifier import FaultClassifier
 from pipeline.rul_lstm import RULPredictor
+from calibration.threshold import load_threshold_config
+from data_pipeline.preprocessing import ReadingPreprocessor
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +43,7 @@ _BOUNDS: dict[str, tuple[float, float]] = {
     "fluid_temp":         (0.0, 200.0),
 }
 
-_ANOMALY_THRESHOLD = 0.55   # above 0.55 → anomalous (IF score normalised to [0,1])
+_DEFAULT_ANOMALY_THRESHOLD = 0.55
 
 
 def _validate(sensor_dict: dict) -> list[str]:
@@ -77,6 +79,17 @@ class InferenceEngine:
         self._rul        = RULPredictor()
         self._iso        = None    # dict: model, scaler, score_min, score_max
         self._ready      = False
+        self._threshold_path = models_dir.parent / "configs" / "threshold.json"
+        self._anomaly_threshold = load_threshold_config(
+            self._threshold_path,
+            default=_DEFAULT_ANOMALY_THRESHOLD,
+        )
+        self._online_bounds = {k: (v[0], v[1]) for k, v in _BOUNDS.items()}
+        self._pre = ReadingPreprocessor(
+            sensor_names=list(_BOUNDS.keys()),
+            smooth_window=3,
+            clip_bounds=self._online_bounds,
+        )
 
     # ------------------------------------------------------------------
     # Setup
@@ -128,7 +141,8 @@ class InferenceEngine:
         t0 = time.perf_counter()
 
         # ---- Validation layer -------------------------------------------
-        violations = _validate(sensor_dict)
+        cleaned, missing = self._pre.transform(sensor_dict)
+        violations = _validate(cleaned)
         if violations:
             return {
                 "sensor_error": True,
@@ -138,17 +152,19 @@ class InferenceEngine:
                 "RUL":           None,
                 "confidence":    None,
                 "state":         "sensor_error",
+                "missing_mask":  missing,
                 "latency_ms":    round((time.perf_counter() - t0) * 1000, 2),
             }
 
         # ---- Buffer update ----------------------------------------------
-        self._buffer.push(sensor_dict)
+        self._buffer.push(cleaned)
         if not self._buffer.is_ready():
             return {
                 "sensor_error":  False,
                 "state":         "buffering",
                 "buffer_fill":   self._buffer.fill_count(),
                 "buffer_target": self._buffer.window_size,
+                "missing_mask":  missing,
                 "latency_ms":    round((time.perf_counter() - t0) * 1000, 2),
             }
 
@@ -174,7 +190,7 @@ class InferenceEngine:
             rul_hours = round(max(0.0, anomaly_score * 500.0), 1)
 
         # ---- Decision engine --------------------------------------------
-        state = "anomalous" if (1.0 - anomaly_score) > _ANOMALY_THRESHOLD else "normal"
+        state = "anomalous" if (1.0 - anomaly_score) > self._anomaly_threshold else "normal"
 
         latency_ms = round((time.perf_counter() - t0) * 1000, 2)
 
@@ -188,6 +204,7 @@ class InferenceEngine:
             "RUL":           rul_hours,
             "confidence":    cls_result.get("confidence", 0.0),
             "latency_ms":    latency_ms,
+            "missing_mask":  missing,
             "violations":    [],
         }
 

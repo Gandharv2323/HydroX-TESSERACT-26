@@ -12,6 +12,7 @@ Run:  python training/train_all.py
 """
 from __future__ import annotations
 
+import argparse
 import logging
 import sys
 import time
@@ -29,6 +30,24 @@ sys.path.insert(0, str(_ROOT))
 from training.generate_data import generate
 from pipeline.fault_classifier import FaultClassifier
 from pipeline.rul_lstm import RULPredictor
+from pipeline.buffer import WINDOW_SIZE, SENSORS
+from pipeline.features import extract_batch
+from data_pipeline.loader import SensorDataLoader
+from data_pipeline.preprocessing import (
+    append_missingness_mask_columns,
+    build_percentile_bounds,
+    clip_outliers_percentile,
+    smooth_noise_rolling_mean,
+)
+from calibration.threshold import calibrate_threshold, save_threshold_config
+from evaluation.pipeline import (
+    evaluate_if,
+    evaluate_rf_cv,
+    evaluate_rf_holdout,
+    evaluate_lstm_holdout,
+    save_metrics_json,
+    time_aware_split_indices,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,6 +58,75 @@ log = logging.getLogger("train_all")
 
 MODELS_DIR = _ROOT / "models"
 MODELS_DIR.mkdir(exist_ok=True)
+CONFIGS_DIR = _ROOT / "configs"
+CONFIGS_DIR.mkdir(exist_ok=True)
+
+
+def _windows_from_df(df_internal, step: int = 1):
+    values = df_internal[SENSORS].to_numpy(dtype=np.float32)
+    if len(values) < WINDOW_SIZE:
+        return np.empty((0, WINDOW_SIZE, len(SENSORS)), dtype=np.float32)
+    windows = []
+    for i in range(0, len(values) - WINDOW_SIZE + 1, step):
+        windows.append(values[i:i + WINDOW_SIZE])
+    return np.stack(windows, axis=0)
+
+
+def _load_real_data(real_csv: str | None) -> dict:
+    if not real_csv:
+        return {"available": False}
+
+    path = Path(real_csv)
+    if not path.exists():
+        log.warning(f"Real CSV path not found: {path}")
+        return {"available": False}
+
+    log.info("Step 0 — Loading and preprocessing real sensor data...")
+    loader = SensorDataLoader()
+    strict_df = loader.load_csv(str(path))
+    strict_df = append_missingness_mask_columns(strict_df, [f"sensor_{i}" for i in range(1, 8)])
+
+    internal_df = loader.to_internal_schema(strict_df)
+    internal_df = clip_outliers_percentile(internal_df, SENSORS)
+    internal_df = smooth_noise_rolling_mean(internal_df, SENSORS, window=3)
+
+    bounds = build_percentile_bounds(internal_df, SENSORS)
+    log.info(f"  Real rows after cleanup: {len(internal_df)}")
+
+    windows = _windows_from_df(internal_df)
+    feats = extract_batch(windows) if len(windows) else np.empty((0, 84), dtype=np.float32)
+
+    # Optional labels from real data if available
+    y_cls = None
+    if "fault_class" in strict_df.columns:
+        label_map = {
+            "normal": 0,
+            "bearing_fault": 1,
+            "cavitation": 2,
+            "dry_run": 3,
+            "misalignment": 4,
+        }
+        labels = strict_df["fault_class"].astype(str).str.lower().map(label_map)
+        labels = labels.dropna().astype(int)
+        if len(labels) >= WINDOW_SIZE:
+            # align to window end index
+            y_cls = labels.to_numpy()[WINDOW_SIZE - 1:]
+
+    y_rul = None
+    if "rul_hours" in strict_df.columns and len(strict_df["rul_hours"].dropna()) >= WINDOW_SIZE:
+        y_rul_full = strict_df["rul_hours"].to_numpy(dtype=np.float32)
+        y_rul = y_rul_full[WINDOW_SIZE - 1:]
+
+    return {
+        "available": True,
+        "strict_df": strict_df,
+        "internal_df": internal_df,
+        "windows": windows,
+        "features": feats,
+        "y_cls": y_cls,
+        "y_rul": y_rul,
+        "bounds": bounds,
+    }
 
 
 def train_isolation_forest(X_features: np.ndarray, y_class: np.ndarray) -> dict:
@@ -139,32 +227,119 @@ def train_lstm(X_windows: np.ndarray, y_rul: np.ndarray) -> dict:
 
 
 
-def main() -> None:
+def main(real_csv: str | None = None) -> None:
     t_start = time.perf_counter()
 
     log.info("=" * 60)
     log.info("  Intelligent Predictive Maintenance — Training Pipeline")
     log.info("=" * 60)
 
-    # Step 1: Generate data
+    real = _load_real_data(real_csv)
+
+    # Step 1: Generate synthetic data
     log.info("Step 1/4 — Generating synthetic training data...")
     X_wins, y_cls, y_rul, X_feats = generate(n_per_class=300)
 
+    # Domain-shift mitigation: IF scaler/fit on real normal when available
+    if real.get("available") and len(real["features"]) > 0:
+        # Train IF on real normal (or full real if labels unavailable)
+        y_real = real.get("y_cls")
+        if y_real is not None and len(y_real) == len(real["features"]):
+            normal_idx = (y_real == 0)
+            X_if_train = real["features"][normal_idx] if normal_idx.any() else real["features"]
+            y_if_aux = y_real
+        else:
+            X_if_train = real["features"]
+            y_if_aux = np.zeros(len(real["features"]), dtype=int)
+    else:
+        X_if_train = X_feats[y_cls == 0]
+        y_if_aux = y_cls
+
     # Step 2: Isolation Forest
     log.info("Step 2/4 — Isolation Forest...")
-    if_metrics = train_isolation_forest(X_feats, y_cls)
+    # Reconstruct IF training arrays to preserve function signature
+    if real.get("available") and len(real.get("features", [])) > 0:
+        # Compose pseudo full set for score normalization
+        X_if_full = real["features"]
+        y_if_full = y_if_aux
+    else:
+        X_if_full = X_feats
+        y_if_full = y_cls
+
+    if_metrics = train_isolation_forest(X_if_full, y_if_full)
 
     # Step 3: 5-class RF
     log.info("Step 3/4 — 5-class Random Forest...")
-    rf_metrics = train_random_forest(X_feats, y_cls)
+    # Mixed RF training when labeled real data exists
+    if real.get("available") and real.get("y_cls") is not None:
+        y_real = real["y_cls"]
+        X_real = real["features"]
+        if len(y_real) == len(X_real):
+            X_rf = np.vstack([X_feats, X_real])
+            y_rf = np.concatenate([y_cls, y_real])
+        else:
+            X_rf, y_rf = X_feats, y_cls
+    else:
+        X_rf, y_rf = X_feats, y_cls
+
+    rf_metrics = train_random_forest(X_rf, y_rf)
 
     # Step 4: LSTM
     log.info("Step 4/4 — LSTM RUL predictor...")
     try:
-        lstm_metrics = train_lstm(X_wins, y_rul)
+        if real.get("available") and real.get("y_rul") is not None and len(real["windows"]) == len(real["y_rul"]):
+            X_lstm = np.concatenate([X_wins, real["windows"]], axis=0)
+            y_lstm = np.concatenate([y_rul, real["y_rul"]], axis=0)
+        else:
+            X_lstm, y_lstm = X_wins, y_rul
+        lstm_metrics = train_lstm(X_lstm, y_lstm)
     except Exception as exc:
         log.warning(f"  LSTM training skipped: {exc}")
         lstm_metrics = {"note": str(exc)}
+
+    # Step 5: Threshold calibration + evaluation
+    try:
+        idx_tr, _, idx_te = time_aware_split_indices(len(X_rf))
+        if_eval = evaluate_if(X_rf[idx_tr], y_rf[idx_tr], X_rf[idx_te], y_rf[idx_te])
+        rf_hold = evaluate_rf_holdout(X_rf[idx_tr], y_rf[idx_tr], X_rf[idx_te], y_rf[idx_te])
+        rf_cv = evaluate_rf_cv(X_rf, y_rf, k=5)
+
+        # derive anomaly scores from IF bundle for threshold optimization
+        with open(MODELS_DIR / "isolation_forest.pkl", "rb") as fh:
+            if_bundle = pickle.load(fh)
+        Xte = if_bundle["scaler"].transform(X_rf[idx_te])
+        raw = if_bundle["model"].decision_function(Xte)
+        norm = np.clip((raw - if_bundle["score_min"]) / (if_bundle["score_max"] - if_bundle["score_min"] + 1e-12), 0, 1)
+        anomaly_scores = 1.0 - norm
+        y_bin = (y_rf[idx_te] != 0).astype(int)
+        cal = calibrate_threshold(y_bin, anomaly_scores, method="f1_optimal")
+        save_threshold_config(cal, CONFIGS_DIR / "threshold.json")
+
+        # LSTM holdout metrics (if trained)
+        lstm_eval = {}
+        if real.get("available") and real.get("y_rul") is not None and len(real["windows"]) > 0:
+            from pipeline.rul_lstm import RULPredictor
+            rp = RULPredictor()
+            rp.load(MODELS_DIR / "rul_lstm.pt")
+            preds = np.array([rp.predict(w) for w in real["windows"]], dtype=np.float32)
+            lstm_eval = evaluate_lstm_holdout(real["y_rul"], preds)
+
+        metrics = {
+            "if": if_eval,
+            "rf_holdout": rf_hold,
+            "rf_cv": rf_cv,
+            "lstm_holdout": lstm_eval,
+            "calibration": {
+                "if_threshold": cal["if_threshold"],
+                "method": cal["method"],
+            },
+        }
+        save_metrics_json(metrics, _ROOT / "evaluation" / "reports" / "pipeline_metrics.json")
+        log.info(
+            f"  Calibrated IF threshold={cal['if_threshold']:.4f} ({cal['method']})"
+        )
+    except Exception as exc:
+        log.warning(f"  Evaluation/calibration skipped: {exc}")
 
     total = time.perf_counter() - t_start
     log.info("=" * 60)
@@ -176,4 +351,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Train HydroX models")
+    parser.add_argument(
+        "--real-csv",
+        type=str,
+        default=None,
+        help="Optional real dataset CSV path for domain-shift mitigation",
+    )
+    args = parser.parse_args()
+    main(real_csv=args.real_csv)
