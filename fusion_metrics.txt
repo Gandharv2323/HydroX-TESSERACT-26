@@ -1,0 +1,1 @@
+{'avg_precision': 1.0, 'n_features': 130, 'n_samples': 225, 'roc_auc': 1.0}

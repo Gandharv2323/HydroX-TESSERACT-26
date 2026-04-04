@@ -1,8 +1,7 @@
 {
   "synthetic": {
     "isolation_forest": {
-      "roc_auc": 1.0,
-      "avg_precision": 1.0
+      "error": "tuple indices must be integers or slices, not str"
     },
     "random_forest": {
       "accuracy": 1.0,
@@ -46,8 +45,8 @@
       ]
     },
     "lstm_rul": {
-      "mae_hours": 43.09,
-      "rmse_hours": 67.58
+      "mae_hours": 36.92,
+      "rmse_hours": 60.38
     }
   }
 }

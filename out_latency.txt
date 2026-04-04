@@ -1,0 +1,23 @@
+==============================================================
+  Phase 4 â€” Inference Latency Profiling
+  N=500 calls  |  p95 < 350.0ms  |  max < 450.0ms
+==============================================================
+
+  Warming up (10 calls) ...
+  Running 500 timed calls ...
+
+  avg   = 2.10 ms
+  p50   = 2.11 ms
+  p95   = 3.03 ms  (target < 350.0ms)
+  p99   = 3.58 ms
+  max   = 4.08 ms  (target < 450.0ms)
+
+  p95 < 350.0ms : PASS OK  (3.0ms)
+  max < 450.0ms : PASS OK  (4.1ms)
+
+  Engine internal latency (last 461 calls):
+    p50=1.9ms  p95=2.8ms  max=3.8ms
+
+==============================================================
+  OVERALL: PASS OK
+==============================================================

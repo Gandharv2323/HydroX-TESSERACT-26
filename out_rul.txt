@@ -1,0 +1,28 @@
+==============================================================
+  Phase 2 â€” RUL Conformal Interval Coverage Validation
+==============================================================
+
+  Loading LSTM model ...
+  conformal_q90   = 125.52 h
+  conformal_n     = 135
+  conformal_alpha = 0.1
+
+  Generating held-out test set (seed=42) ...
+[generate_data] Extracting features for 750 windows...
+[generate_data] Done â€” total=750, class_counts={'normal': 150, 'bearing_fault': 150, 'cavitation': 150, 'dry_run': 150, 'misalignment': 150}
+  Running 750 predictions ...
+
+  MAE             = 72.33 h
+  RMSE            = 118.52 h
+  Avg interval    = Â±106.2 h  (width=212.4 h)
+  Empirical coverage (90% target) = 79.3%
+
+  Target coverage : 90%  (min acceptable 88%)
+  Coverage test   : FAIL X  (79.3%)
+
+  Residual stats  : mean=72.3h  p90=205.4h  max=833.8h
+  conformal_q90   : 125.5 h
+
+==============================================================
+  OVERALL: FAIL X â€” rerun main_train.py after rul_lstm.py fix
+==============================================================

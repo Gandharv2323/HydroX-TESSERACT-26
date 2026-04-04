@@ -1,0 +1,28 @@
+﻿==============================================================
+  Phase 1 ÔÇö IF Score Distribution & Stress-Signal Validation
+==============================================================
+
+  Norm method : p5/p95
+  p5 = -0.029520   p95 = 0.157546
+
+[1/2] Generating synthetic normal/fault windows ...
+[generate_data] Extracting features for 500 windows...
+[generate_data] Done ÔÇö total=500, class_counts={'normal': 100, 'bearing_fault': 100, 'cavitation': 100, 'dry_run': 100, 'misalignment': 100}
+  Normal windows  : mean=1.0000  std=0.0000  p95=1.0000
+  Fault  windows  : mean=1.0000  std=0.0000  p5 =1.0000
+
+  Separation OK   : FAIL X
+  Normal mean<0.5 : FAIL X  (1.0000)
+  Fault  mean>0.3 : PASS OK  (1.0000)
+
+[2/2] Stress signal ordering test ...
+  Gaussian noise  : mean=1.0000
+  Linear drift    : mean=1.0000
+  Step change     : mean=1.0000
+
+  Ordering (noise < step): FAIL X
+  Drift >= noise         : PASS OK
+
+==============================================================
+  OVERALL: SOME TESTS FAILED X ÔÇö review above
+==============================================================

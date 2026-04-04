@@ -47,6 +47,7 @@ from calibration.threshold import (
     save_threshold_config,
 )
 from calibration.fusion_meta import train_fusion_model
+from dataset_loader import detect_kaggle_advanced_format, KaggleAdvancedLoader
 from evaluation.pipeline import (
     evaluate_if,
     evaluate_rf_cv,
@@ -92,7 +93,16 @@ def _load_real_data(real_csv: str | None) -> dict:
         log.warning(f"Real CSV path not found: {path}")
         return {"available": False}
 
-    log.info("Step 0 — Loading and preprocessing real sensor data...")
+    # ── Kaggle auto-detect ────────────────────────────────────────────────────
+    if detect_kaggle_advanced_format(str(path)):
+        log.info("Step 0 — Kaggle pump-sensor-data format detected. Using KaggleAdvancedLoader...")
+        try:
+            return _load_kaggle_real_data(str(path))
+        except Exception as exc:
+            log.warning(f"  KaggleAdvancedLoader failed: {exc} — falling back to SensorDataLoader")
+
+    # ── Strict internal schema CSV ────────────────────────────────────────────
+    log.info("Step 0 — Loading and preprocessing real sensor data (strict schema)...")
     loader = SensorDataLoader()
     strict_df = loader.load_csv(str(path))
     strict_df = append_missingness_mask_columns(strict_df, [f"sensor_{i}" for i in range(1, 8)])
@@ -107,20 +117,15 @@ def _load_real_data(real_csv: str | None) -> dict:
     windows = _windows_from_df(internal_df)
     feats = extract_batch(windows) if len(windows) else np.empty((0, 84), dtype=np.float32)
 
-    # Optional labels from real data if available
     y_cls = None
     if "fault_class" in strict_df.columns:
         label_map = {
-            "normal": 0,
-            "bearing_fault": 1,
-            "cavitation": 2,
-            "dry_run": 3,
-            "misalignment": 4,
+            "normal": 0, "bearing_fault": 1, "cavitation": 2,
+            "dry_run": 3, "misalignment": 4,
         }
         labels = strict_df["fault_class"].astype(str).str.lower().map(label_map)
         labels = labels.dropna().astype(int)
         if len(labels) >= WINDOW_SIZE:
-            # align to window end index
             y_cls = labels.to_numpy()[WINDOW_SIZE - 1:]
 
     y_rul = None
@@ -144,6 +149,60 @@ def _load_real_data(real_csv: str | None) -> dict:
     }
 
 
+def _load_kaggle_real_data(csv_path: str) -> dict:
+    """Load and map Kaggle pump-sensor-data.csv for the advanced pipeline."""
+    import numpy as np
+
+    adv_loader = KaggleAdvancedLoader()
+    df = adv_loader.load(csv_path)
+
+    # Build windows from the 7 mapped sensor columns
+    windows = _windows_from_df(df, cols=SENSORS)
+    log.info(f"  Kaggle windows: {len(windows)}, sensor cols: {SENSORS}")
+
+    feats = extract_batch(windows) if len(windows) else np.empty((0, 84), dtype=np.float32)
+
+    # Class labels: align to window-end index
+    y_cls_full = df["fault_class"].to_numpy(dtype=np.int32)
+    y_cls = y_cls_full[WINDOW_SIZE - 1:] if len(y_cls_full) >= WINDOW_SIZE else None
+
+    # RUL labels: align to window-end index
+    y_rul_full = df["rul_hours"].to_numpy(dtype=np.float32)
+    y_rul = y_rul_full[WINDOW_SIZE - 1:] if len(y_rul_full) >= WINDOW_SIZE else None
+
+    # No structured missingness masks for Kaggle data — use zero masks
+    mask_windows = np.zeros_like(windows, dtype=np.float32) if len(windows) else None
+
+    # Clip extreme outliers per-column
+    bounds = {}
+    for col in SENSORS:
+        col_data = df[col].to_numpy(dtype=np.float32)
+        bounds[col] = {
+            "p01": float(np.percentile(col_data, 1)),
+            "p99": float(np.percentile(col_data, 99)),
+        }
+
+    n_normal = int((y_cls == 0).sum()) if y_cls is not None else 0
+    n_fault  = int((y_cls != 0).sum()) if y_cls is not None else 0
+    log.info(
+        f"  Kaggle advanced: {len(windows):,} windows — "
+        f"normal={n_normal:,}, fault={n_fault:,} | "
+        f"rul range=[{float(y_rul.min()):.1f}, {float(y_rul.max()):.1f}]h"
+        if y_rul is not None else "  Kaggle advanced: no RUL labels"
+    )
+
+    return {
+        "available": True,
+        "windows": windows,
+        "features": feats,
+        "mask_windows": mask_windows,
+        "y_cls": y_cls,
+        "y_rul": y_rul,
+        "bounds": bounds,
+        "source": "kaggle_advanced",
+    }
+
+
 def train_isolation_forest(
     X_features: np.ndarray,
     y_class: np.ndarray,
@@ -151,7 +210,7 @@ def train_isolation_forest(
 ) -> dict:
     """
     Spec §6: Train IF on NORMAL class only (class_id=0).
-    Normalise scores to [0, 1] using training-set min/max.
+    Normalise scores to [0, 1] using robust training percentiles (p5/p95).
     """
     log.info("─" * 60)
     log.info("Training Isolation Forest (unsupervised, normal data only)...")
@@ -168,16 +227,25 @@ def train_isolation_forest(
     elapsed = time.perf_counter() - t0
     log.info(f"  Trained in {elapsed:.2f}s")
 
+    # Robust score scaling from normal-train score distribution.
+    scores_train = iso.decision_function(X_n_s)
+    score_p5 = float(np.percentile(scores_train, 5.0))
+    score_p95 = float(np.percentile(scores_train, 95.0))
+    if score_p95 <= score_p5:
+        score_p95 = score_p5 + 1e-6
+
     # Score calibration on full training set
     X_all_s = scaler.transform(X_features)
     raw_scores = iso.decision_function(X_all_s)   # higher = more normal
     score_min = float(raw_scores.min())
     score_max = float(raw_scores.max())
-    norm_scores = np.clip((raw_scores - score_min) / (score_max - score_min + 1e-12), 0, 1)
+    norm_scores = np.clip((raw_scores - score_p5) / (score_p95 - score_p5 + 1e-12), 0, 1)
 
     bundle = {
         "model":      iso,
         "scaler":     scaler,
+        "score_p5":   score_p5,
+        "score_p95":  score_p95,
         "score_min":  score_min,
         "score_max":  score_max,
     }
@@ -192,7 +260,14 @@ def train_isolation_forest(
     # score for fault = 1 - norm_score  (lower IF score → more anomalous)
     auc  = roc_auc_score(y_bin, 1.0 - norm_scores)
     ap   = average_precision_score(y_bin, 1.0 - norm_scores)
-    log.info(f"  ROC-AUC={auc:.4f}  Avg-Precision={ap:.4f}")
+    normal_scores = (1.0 - norm_scores)[y_bin == 0]
+    anomaly_scores = (1.0 - norm_scores)[y_bin == 1]
+    overlap = float(np.mean(anomaly_scores <= np.percentile(normal_scores, 95.0))) if len(normal_scores) and len(anomaly_scores) else 0.0
+    log.info(f"  ROC-AUC={auc:.4f}  Avg-Precision={ap:.4f}  overlap@normal95={overlap:.4f}")
+    log.info(
+        "  IF scaling (robust): "
+        f"p5={score_p5:.6f}, p95={score_p95:.6f}, raw_min={score_min:.6f}, raw_max={score_max:.6f}"
+    )
 
     return {"roc_auc": round(auc, 4), "avg_precision": round(ap, 4)}
 
@@ -375,8 +450,8 @@ def main(real_csv: str | None = None) -> None:
 
     # Step 5: Threshold calibration + evaluation
     try:
-        idx_tr, _, idx_te = time_aware_split_indices(len(X_rf))
-        validate_temporal_split(idx_tr, np.array([], dtype=np.int64), idx_te)
+        idx_tr, idx_val, idx_te = time_aware_split_indices(len(X_rf))
+        validate_temporal_split(idx_tr, idx_val, idx_te)
         if_eval = evaluate_if(X_rf[idx_tr], y_rf[idx_tr], X_rf[idx_te], y_rf[idx_te])
         rf_hold = evaluate_rf_holdout(X_rf[idx_tr], y_rf[idx_tr], X_rf[idx_te], y_rf[idx_te])
         rf_cv = evaluate_rf_cv(X_rf, y_rf, k=5)
@@ -386,12 +461,18 @@ def main(real_csv: str | None = None) -> None:
             if_bundle = pickle.load(fh)
         Xte = if_bundle["scaler"].transform(X_rf[idx_te])
         raw = if_bundle["model"].decision_function(Xte)
-        norm = np.clip((raw - if_bundle["score_min"]) / (if_bundle["score_max"] - if_bundle["score_min"] + 1e-12), 0, 1)
+        p5 = float(if_bundle.get("score_p5", if_bundle["score_min"]))
+        p95 = float(if_bundle.get("score_p95", if_bundle["score_max"]))
+        norm = np.clip((raw - p5) / (p95 - p5 + 1e-12), 0, 1)
         anomaly_scores = 1.0 - norm
-        y_bin = (y_rf[idx_te] != 0).astype(int)
-        normal_scores = anomaly_scores[y_bin == 0]
+        Xval = if_bundle["scaler"].transform(X_rf[idx_val])
+        raw_val = if_bundle["model"].decision_function(Xval)
+        norm_val = np.clip((raw_val - p5) / (p95 - p5 + 1e-12), 0, 1)
+        anomaly_scores_val = 1.0 - norm_val
+        y_bin_val = (y_rf[idx_val] != 0).astype(int)
+        normal_scores = anomaly_scores_val[y_bin_val == 0]
         if len(normal_scores) == 0:
-            normal_scores = anomaly_scores
+            normal_scores = anomaly_scores_val
         cal = calibrate_threshold_unsupervised(normal_scores, quantile=95.0)
         save_threshold_config(cal, CONFIGS_DIR / "threshold.json")
 
@@ -407,10 +488,22 @@ def main(real_csv: str | None = None) -> None:
         latent_dim = H_syn.shape[1]
         latent_te = X_rf[idx_te][:, -latent_dim:]
         y_bin_te = (y_rf[idx_te] != 0).astype(int)
+        rp_fusion = RULPredictor()
+        rp_fusion.load(MODELS_DIR / "rul_lstm.pt")
+        X_te_wins = X_wins[idx_te]
+        X_te_masks = X_masks[idx_te]
+        expected_in = int(rp_fusion._kwargs.get("input_size", X_te_wins.shape[2])) if hasattr(rp_fusion, "_kwargs") else X_te_wins.shape[2]
+        if expected_in == X_te_wins.shape[2] * 2:
+            X_te_seq = np.concatenate([X_te_wins, X_te_masks], axis=2)
+        else:
+            X_te_seq = X_te_wins
+        rul_preds_te = np.array([rp_fusion.predict(w) for w in X_te_seq], dtype=np.float32)
+
         fusion_metrics = train_fusion_model(
             if_scores=anomaly_scores,
             rf_fault_probs=rf_fault_probs,
             latent=latent_te,
+            rul_pred=rul_preds_te,
             y_binary=y_bin_te,
             out_path=MODELS_DIR / "fusion_meta.pkl",
         )

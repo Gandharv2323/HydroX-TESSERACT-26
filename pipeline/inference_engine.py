@@ -53,9 +53,12 @@ _BOUNDS: dict[str, tuple[float, float]] = {
 }
 
 _DEFAULT_ANOMALY_THRESHOLD = 0.55
-_HYST_ENTER = 0.60
-_HYST_EXIT = 0.40
-_HYST_PERSIST = 3
+_HYST_ENTER   = 0.60
+_HYST_EXIT    = 0.40
+_HYST_PERSIST = 3       # default; overridden adaptively per-call
+_HYST_PERSIST_HI = 2   # N used when score > 0.70
+_HYST_IMMEDIATE  = 0.90 # score above this → instant anomalous state
+_HYST_DECAY      = 0.50 # exponential decay weight for state score smoothing
 _MAX_GAP_STEPS = 10
 
 _FAULT_TO_COMPONENT = {
@@ -133,9 +136,10 @@ class InferenceEngine:
         self._recent_events: deque[dict[str, Any]] = deque(maxlen=100)
         self._latency_hist_ms: deque[float] = deque(maxlen=500)
         self._missing_counts: dict[str, int] = {k: 0 for k in _BOUNDS}
-        self._anom_streak = 0
+        self._anom_streak   = 0
         self._normal_streak = 0
-        self._state = "normal"
+        self._state         = "normal"
+        self._state_score   = 0.0   # exponentially smoothed anomaly score
         self._missing_streak: dict[str, int] = {k: 0 for k in _BOUNDS}
 
     # ------------------------------------------------------------------
@@ -387,16 +391,30 @@ class InferenceEngine:
     # ------------------------------------------------------------------
 
     def _if_score(self, feat_vec: np.ndarray) -> float:
-        """Returns normalised IF score: 1.0=normal, 0.0=anomaly."""
+        """Returns normalised IF score: 1.0=normal, 0.0=anomaly.
+
+        Uses p5/p95 percentile scaling (from training) for consistency.
+        Falls back to score_min/score_max for legacy bundles.
+        """
         if self._iso is None:
             return 1.0   # Fallback when model not loaded
 
         X = self._align_to_if(feat_vec).reshape(1, -1)
         X_s = self._iso["scaler"].transform(X)
         raw = float(self._iso["model"].decision_function(X_s)[0])
-        s_min = self._iso["score_min"]
-        s_max = self._iso["score_max"]
-        return float(np.clip((raw - s_min) / (s_max - s_min + 1e-12), 0.0, 1.0))
+
+        # Prefer p5/p95 (training-consistent); fall back to min/max for old bundles
+        if "score_p5" in self._iso and "score_p95" in self._iso:
+            p5  = float(self._iso["score_p5"])
+            p95 = float(self._iso["score_p95"])
+        else:
+            p5  = float(self._iso.get("score_min", raw - 1e-6))
+            p95 = float(self._iso.get("score_max", raw + 1e-6))
+
+        if p95 <= p5:
+            p95 = p5 + 1e-6
+
+        return float(np.clip((raw - p5) / (p95 - p5 + 1e-12), 0.0, 1.0))
 
     def _align_to_if(self, feat_vec: np.ndarray) -> np.ndarray:
         expected = int(getattr(self._iso["scaler"], "n_features_in_", len(feat_vec)))
@@ -408,18 +426,43 @@ class InferenceEngine:
         return np.pad(v, (0, expected - len(v)), mode="constant", constant_values=0.0)
 
     def _update_state_hysteresis(self, anomaly_score: float) -> str:
-        if anomaly_score >= _HYST_ENTER:
-            self._anom_streak += 1
-            self._normal_streak = 0
-        elif anomaly_score <= _HYST_EXIT:
-            self._normal_streak += 1
-            self._anom_streak = 0
-        else:
-            self._anom_streak = 0
-            self._normal_streak = 0
+        """Hysteresis state machine with immediate override and adaptive persistence.
 
-        if self._anom_streak >= _HYST_PERSIST:
+        Rules (in priority order):
+          1. score >= 0.90  → immediate 'anomalous' (bypass streak counter)
+          2. score >= 0.70  → N=2 consecutive windows needed
+          3. score >= 0.50  → N=3 consecutive windows needed
+          4. Exponential smoothing on state_score for exit decisions
+        """
+        # Exponential decay on state score (prevents flickering)
+        self._state_score = _HYST_DECAY * self._state_score + (1.0 - _HYST_DECAY) * anomaly_score
+        smoothed = self._state_score
+
+        # Rule 1: Immediate override for extreme scores
+        if anomaly_score >= _HYST_IMMEDIATE:
+            self._anom_streak   += 1
+            self._normal_streak  = 0
+            self._state          = "anomalous"
+            return self._state
+
+        # Adaptive persistence N
+        n_persist = _HYST_PERSIST_HI if smoothed > 0.70 else _HYST_PERSIST
+
+        # Enter anomalous
+        if smoothed >= _HYST_ENTER:
+            self._anom_streak   += 1
+            self._normal_streak  = 0
+        # Return to normal (use smoothed score for exit to prevent flickering)
+        elif smoothed <= _HYST_EXIT:
+            self._normal_streak += 1
+            self._anom_streak    = 0
+        else:
+            # In dead-band — don't change streaks
+            pass
+
+        if self._anom_streak >= n_persist:
             self._state = "anomalous"
-        elif self._normal_streak >= _HYST_PERSIST:
+        elif self._normal_streak >= n_persist:
             self._state = "normal"
+
         return self._state

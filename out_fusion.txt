@@ -1,0 +1,17 @@
+==============================================================
+  Phase 5 â€” Fusion Balance Ablation Test
+  Dominance limit: 60%
+==============================================================
+
+  Generating 200-window test set ...
+[generate_data] Extracting features for 250 windows...
+[generate_data] Done â€” total=250, class_counts={'normal': 50, 'bearing_fault': 50, 'cavitation': 50, 'dry_run': 50, 'misalignment': 50}
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\HP\Projects\HYDROX\validation\validate_fusion.py", line 120, in <module>
+    main()
+  File "C:\Users\HP\Projects\HYDROX\validation\validate_fusion.py", line 43, in main
+    result = eng._infer_window(w)
+             ^^^^^^^^^^^^^^^^^
+AttributeError: 'InferenceEngine' object has no attribute '_infer_window'

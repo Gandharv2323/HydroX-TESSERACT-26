@@ -1,0 +1,27 @@
+﻿==============================================================
+  Phase 3 ÔÇö Hysteresis Logic Edge-Case Validation
+==============================================================
+
+[1/4] Single spike (0.95):
+  States: ['normal', 'normal', 'anomalous', 'anomalous', 'anomalous']
+  Spike detected immediately: PASS OK
+
+[2/4] Repeated high scores (0.80):
+  States: ['normal', 'normal', 'anomalous', 'anomalous', 'anomalous']
+  Triggered at window 2: PASS OK
+
+[3/4] Noisy oscillation (0.45ÔÇô0.65):
+  States: ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
+  No false triggers: PASS OK
+
+[4/4] Gradual rise (0.20 ÔåÆ 0.83):
+  States: ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'anomalous', 'anomalous', 'anomalous']
+  Eventually triggered (at window 7): PASS OK
+
+[bonus] Recovery after spike:
+  States: ['anomalous', 'anomalous', 'anomalous', 'normal', 'normal', 'normal']
+  Returned to normal: PASS OK
+
+==============================================================
+  OVERALL: ALL TESTS PASSED OK
+==============================================================

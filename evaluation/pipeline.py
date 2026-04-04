@@ -49,10 +49,14 @@ def evaluate_if(
     model.fit(Xn)
 
     Xt = scaler.transform(X_test)
+    raw_train = model.decision_function(Xn)
+    p5 = float(np.percentile(raw_train, 5.0))
+    p95 = float(np.percentile(raw_train, 95.0))
+    if p95 <= p5:
+        p95 = p5 + 1e-6
+
     raw = model.decision_function(Xt)
-    score_min = float(raw.min())
-    score_max = float(raw.max())
-    norm = np.clip((raw - score_min) / (score_max - score_min + 1e-12), 0, 1)
+    norm = np.clip((raw - p5) / (p95 - p5 + 1e-12), 0, 1)
     anomaly_score = 1.0 - norm
 
     y_bin = (y_test != 0).astype(int)

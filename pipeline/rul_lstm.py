@@ -195,6 +195,8 @@ class RULPredictor:
         self._trained:     bool            = False
         self._device:      str             = "cpu"
         self._conformal_q90: float         = 0.0
+        self._conformal_n:   int           = 0
+        self._conformal_alpha: float       = 0.10
 
         if _TORCH_AVAILABLE:
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -353,25 +355,44 @@ class RULPredictor:
 
         # ---- Final metrics (real-space) ------------------------------------
         self._model.eval()
+        # Val set real-space performance (early stopping split only)
         with torch.no_grad():
-            log_preds = self._model(X_val_t).cpu().numpy()
+            log_preds_val = self._model(X_val_t).cpu().numpy()
 
-        # Convert back to real space for reporting
-        preds_real = np.expm1(log_preds) if self._log_targets else log_preds
-        y_real     = np.expm1(y_val)     if self._log_targets else y_val
-        preds_real = np.clip(preds_real, 0.0, None)
-        residuals = np.abs(preds_real - y_real)
-        self._conformal_q90 = float(np.quantile(residuals, 0.90))
+        preds_val_real = np.expm1(log_preds_val) if self._log_targets else log_preds_val
+        y_val_real     = np.expm1(y_val)         if self._log_targets else y_val
+        preds_val_real = np.clip(preds_val_real, 0.0, None)
 
-        mae  = float(np.mean(np.abs(preds_real - y_real)))
-        rmse = float(np.sqrt(np.mean((preds_real - y_real) ** 2)))
-        # Coverage: how well the model spans the target RUL range
-        cov  = float((preds_real.max() - preds_real.min()) / (y_real.max() - y_real.min() + 1e-6))
+        mae  = float(np.mean(np.abs(preds_val_real - y_val_real)))
+        rmse = float(np.sqrt(np.mean((preds_val_real - y_val_real) ** 2)))
+        cov  = float((preds_val_real.max() - preds_val_real.min()) / (y_val_real.max() - y_val_real.min() + 1e-6))
+
+        # ---- Conformal calibration (dedicated held-out split) ---------------
+        # Use the last 10% of TRAINING data (after early-stop val split) as conformal set.
+        # This avoids leaking the val-split residuals into the conformal quantile.
+        n_conformal = max(10, int(len(X_tr) * 0.10))
+        X_conf = torch.tensor(X_tr[-n_conformal:]).to(dev)
+        y_conf = y_tr[-n_conformal:]
+        with torch.no_grad():
+            log_preds_conf = self._model(X_conf).cpu().numpy()
+        preds_conf_real = np.expm1(log_preds_conf) if self._log_targets else log_preds_conf
+        preds_conf_real = np.clip(preds_conf_real, 0.0, None)
+        y_conf_real     = np.expm1(y_conf)         if self._log_targets else y_conf
+        residuals_conf  = np.abs(y_conf_real - preds_conf_real)
+
+        # Finite-sample corrected quantile (Venn-Alroth formula)
+        alpha   = 0.10   # target: 90% coverage
+        n_cal   = len(residuals_conf)
+        level   = min(1.0, np.ceil((n_cal + 1) * (1.0 - alpha)) / n_cal)
+        self._conformal_q90     = float(np.quantile(residuals_conf, level))
+        self._conformal_n       = n_cal
+        self._conformal_alpha   = alpha
 
         self._trained = True
         logger.info(
             f"[LSTM-v3] Done — best_ep={best_ep}  "
-            f"MAE={mae:.1f}h  RMSE={rmse:.1f}h  Coverage={cov:.1%}"
+            f"MAE={mae:.1f}h  RMSE={rmse:.1f}h  Coverage={cov:.1%}  "
+            f"Conformal_q90={self._conformal_q90:.1f}h (n={n_cal}, level={level:.4f})"
         )
 
         return {
@@ -379,7 +400,9 @@ class RULPredictor:
             "val_mae_h":   round(mae,  2),
             "val_rmse_h":  round(rmse, 2),
             "coverage":    round(cov,  3),
-            "conformal_q90_h": round(self._conformal_q90, 2),
+            "conformal_q90_h":    round(self._conformal_q90, 2),
+            "conformal_n":        n_cal,
+            "conformal_level":    round(level, 4),
             "train_loss":  train_hist,
             "val_loss":    val_hist,
         }
@@ -474,12 +497,14 @@ class RULPredictor:
     def save(self, path: Path) -> None:
         """Persist model + normalisation stats."""
         checkpoint = {
-            "kwargs":       self._kwargs,
-            "log_targets":  self._log_targets,
-            "mean":         self._mean,
-            "std":          self._std,
-            "state_dict":   self._model.state_dict(),
-            "conformal_q90": self._conformal_q90,
+            "kwargs":          self._kwargs,
+            "log_targets":     self._log_targets,
+            "mean":            self._mean,
+            "std":             self._std,
+            "state_dict":      self._model.state_dict(),
+            "conformal_q90":   self._conformal_q90,
+            "conformal_n":     self._conformal_n,
+            "conformal_alpha": self._conformal_alpha,
         }
         torch.save(checkpoint, path)
         logger.info(f"[LSTM-v3] Saved → {path}")
@@ -487,13 +512,19 @@ class RULPredictor:
     def load(self, path: Path) -> None:
         """Load from checkpoint — compatible with weights_only=True."""
         ckpt = torch.load(path, map_location=self._device, weights_only=True)
-        self._kwargs      = ckpt["kwargs"]
-        self._log_targets = ckpt.get("log_targets", False)   # back-compat
-        self._mean        = ckpt["mean"]
-        self._std         = ckpt["std"]
-        self._conformal_q90 = float(ckpt.get("conformal_q90", 0.0))
-        self._model       = _LSTMNet(**self._kwargs).to(self._device)
+        self._kwargs        = ckpt["kwargs"]
+        self._log_targets   = ckpt.get("log_targets", False)   # back-compat
+        self._mean          = ckpt["mean"]
+        self._std           = ckpt["std"]
+        self._conformal_q90   = float(ckpt.get("conformal_q90", 0.0))
+        self._conformal_n     = int(ckpt.get("conformal_n", 0))
+        self._conformal_alpha = float(ckpt.get("conformal_alpha", 0.10))
+        self._model         = _LSTMNet(**self._kwargs).to(self._device)
         self._model.load_state_dict(ckpt["state_dict"])
         self._model.eval()
         self._trained = True
-        logger.info(f"[LSTM-v3] Loaded ← {path}  (log_targets={self._log_targets})")
+        logger.info(
+            f"[LSTM-v3] Loaded ← {path}  "
+            f"(log_targets={self._log_targets}, conformal_q90={self._conformal_q90:.1f}h, "
+            f"conformal_n={self._conformal_n})"
+        )

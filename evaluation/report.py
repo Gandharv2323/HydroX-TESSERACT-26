@@ -96,19 +96,48 @@ def _build_eval_features(X_wins: np.ndarray, mask_wins: np.ndarray | None = None
 
 def evaluate_isolation_forest(X_feats: np.ndarray, y_cls: np.ndarray) -> dict:
     log.info("Evaluating Isolation Forest...")
-    iso, scaler, s_min, s_max = _load_if()
-    X_s = scaler.transform(X_feats)
-    raw = iso.decision_function(X_s)
-    norm_scores = np.clip((raw - s_min) / (s_max - s_min + 1e-12), 0, 1)
-    anomaly_score = 1.0 - norm_scores   # 1 = anomaly, 0 = normal
+    bundle = _load_if()
+    iso    = bundle["model"]
+    scaler = bundle["scaler"]
+
+    # Use p5/p95 normalization — consistent with train_all.py
+    if "score_p5" in bundle and "score_p95" in bundle:
+        p5  = float(bundle["score_p5"])
+        p95 = float(bundle["score_p95"])
+        norm_method = "p5_p95"
+    else:
+        p5  = float(bundle["score_min"])
+        p95 = float(bundle["score_max"])
+        norm_method = "min_max_legacy"
+    if p95 <= p5:
+        p95 = p5 + 1e-6
+
+    X_s       = scaler.transform(X_feats)
+    raw       = iso.decision_function(X_s)
+    norm      = np.clip((raw - p5) / (p95 - p5 + 1e-12), 0, 1)
+    anomaly_score = 1.0 - norm   # 1 = anomaly, 0 = normal
 
     y_bin = (y_cls != 0).astype(int)
     auc   = roc_auc_score(y_bin, anomaly_score)
     ap    = average_precision_score(y_bin, anomaly_score)
 
-    log.info(f"  IF ROC-AUC = {auc:.4f}")
+    # Overlap diagnostic: fraction of fault scores ≤ normal 95th-percentile
+    normal_scores  = anomaly_score[y_bin == 0]
+    fault_scores   = anomaly_score[y_bin == 1]
+    pct95_normal   = float(np.percentile(normal_scores, 95)) if len(normal_scores) else 0.0
+    overlap_frac   = float(np.mean(fault_scores <= pct95_normal)) if len(fault_scores) else 0.0
+
+    log.info(f"  IF ROC-AUC = {auc:.4f}  (norm_method={norm_method})")
     log.info(f"  IF Avg-Precision = {ap:.4f}")
-    return {"roc_auc": round(auc, 4), "avg_precision": round(ap, 4)}
+    log.info(f"  Overlap@normal95 = {overlap_frac:.4f}  (lower is better)")
+    return {
+        "roc_auc":       round(auc, 4),
+        "avg_precision": round(ap, 4),
+        "norm_method":   norm_method,
+        "p5":            round(p5, 6),
+        "p95":           round(p95, 6),
+        "overlap_at_normal_p95": round(overlap_frac, 4),
+    }
 
 
 def evaluate_random_forest(X_feats: np.ndarray, y_cls: np.ndarray) -> dict:
