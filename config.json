@@ -8,7 +8,8 @@
     "suction_pressure": 1.8,
     "flow_rate": 120.0,
     "motor_current": 18.5,
-    "fluid_temp": 42.0
+    "fluid_temp": 42.0,
+    "shaft_rpm": 1480.0
   },
   "noise_pct": 0.03,
   "health_thresholds": { "healthy": 70, "warning": 40 },
