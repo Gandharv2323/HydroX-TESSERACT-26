@@ -25,6 +25,7 @@ from dataset_loader import PumpDatasetLoader
 from health_engine import HealthEngine
 from ml_model import PumpAnomalyDetector
 from sensor_sim import SensorSimulator
+from pipeline.inference_engine import InferenceEngine
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -45,10 +46,11 @@ REPLAY_MODE  = os.getenv("REPLAY_MODE", "0") == "1"
 # ---------------------------------------------------------------------------
 # Singletons
 # ---------------------------------------------------------------------------
-simulator = SensorSimulator()
-detector  = PumpAnomalyDetector()
-engine    = HealthEngine()
-loader    = PumpDatasetLoader()
+simulator        = SensorSimulator()
+detector         = PumpAnomalyDetector()
+engine           = HealthEngine()
+loader           = PumpDatasetLoader()
+_adv_engine      = InferenceEngine(models_dir=_BASE_DIR / "models")
 
 _current_state: dict[str, Any] = {}
 _clients:       set[WebSocket]  = set()
@@ -71,6 +73,9 @@ def _build_state() -> dict:
     anomaly  = detector.predict(sensors)
     health   = engine.compute(sensors, anomaly)
 
+    # Advanced ML pipeline (buffer → features → IF → 5-class RF → LSTM)
+    adv = _adv_engine.infer(sensors)
+
     # UPGRADE 2 — pump curve
     op_pt   = engine.pump_curve.operating_point(sensors.get("flow_rate", 120.0))
     dev     = engine.pump_curve.deviation_from_curve(sensors)
@@ -91,6 +96,7 @@ def _build_state() -> dict:
         "anomaly":         anomaly,
         "health":          health,
         "pump_curve":      pump_curve,
+        "advanced_ml":     adv,
     }
 
 
@@ -139,6 +145,17 @@ async def _broadcast_loop() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _replay_frames
+
+    # ------ Advanced ML pipeline load ----------------------------------------
+    _models_dir = _BASE_DIR / "models"
+    if _models_dir.exists():
+        try:
+            _adv_engine.load()
+            print("[startup] Advanced ML pipeline loaded (IF + RF-5class + LSTM).")
+        except Exception as exc:
+            print(f"[startup] Advanced ML pipeline not loaded: {exc}")
+    else:
+        print("[startup] models/ dir not found — run main_train.py first.")
 
     # ------ Model init -------------------------------------------------------
     if _MODEL_PATH.exists():
@@ -291,6 +308,46 @@ async def update_config(body: ConfigRequest) -> dict:
         simulator._noise_pct = npt
         changes["noise_pct"] = simulator._noise_pct
     return {"success": True, "applied": changes}
+
+@app.get("/unity", summary="Structured output for Unity Digital Twin")
+async def unity_poll() -> dict:
+    """
+    Clean structured JSON designed for Unity WebSocket / HTTP consumers.
+    Maps directly to C# structs in the Unity side.
+    Format:
+    {
+        fault:        string  (fault label from 5-class RF)
+        severity:     string  (normal | warning | critical)
+        anomaly_score: float  (0=healthy, 1=severe)
+        RUL:          float   (hours to failure, LSTM-predicted)
+        confidence:   float   (0-1)
+        rpm:          float
+        flow:         float
+        vibration:    float
+        temp:         float
+        probabilities: dict
+    }
+    """
+    s   = _current_state
+    adv = s.get("advanced_ml", {})
+    sensors = s.get("sensors", {})
+    health  = s.get("health", {})
+    return {
+        "fault":         adv.get("fault_class", "unknown"),
+        "severity":      health.get("status", "unknown"),
+        "anomaly_score": adv.get("anomaly_score") or s.get("anomaly", {}).get("anomaly_score", 0.0),
+        "RUL":           adv.get("RUL") or health.get("rul_hours", 0.0),
+        "confidence":    adv.get("confidence", 0.0),
+        "probabilities": adv.get("probabilities", {}),
+        "rpm":           sensors.get("shaft_rpm", 0.0),
+        "flow":          sensors.get("flow_rate", 0.0),
+        "vibration":     sensors.get("vibration_rms", 0.0),
+        "temp":          sensors.get("fluid_temp", 0.0),
+        "npsh_status":   health.get("npsh", {}).get("status", "unknown"),
+        "step":          s.get("step", 0),
+        "timestamp":     s.get("timestamp", 0.0),
+    }
+
 
 
 @app.post("/throttle", summary="Set flow throttle factor (0.0–1.5, 1.0 = rated)")

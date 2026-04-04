@@ -882,6 +882,55 @@
     .hm-cell:hover { outline:1px solid var(--border-hi); }
     .hm-axislabel { font-family:var(--mono); font-size:8px; color:var(--text-muted);
       display:flex; align-items:center; justify-content:center; }
+    /*  Advanced ML Card  */
+    .adv-ml-card {
+      margin: 0 12px;
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .adv-ml-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px;
+      background: linear-gradient(90deg, rgba(0,127,196,.12), transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .adv-ml-title {
+      font-family: var(--display); font-size: 10px; font-weight: 700;
+      letter-spacing: .18em; color: var(--cyan); text-transform: uppercase;
+    }
+    .adv-ml-state {
+      font-family: var(--mono); font-size: 10px;
+      padding: 2px 8px; border-radius: 10px;
+      background: var(--green-dim); color: var(--green);
+      border: 1px solid var(--green); transition: all 400ms ease;
+    }
+    .adv-ml-state.anomalous {
+      background: var(--red-dim); color: var(--red); border-color: var(--red);
+    }
+    .adv-ml-state.buffering {
+      background: var(--amber-dim); color: var(--amber); border-color: var(--amber);
+    }
+    .adv-ml-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .adv-ml-row { display: flex; justify-content: space-between; align-items: center; }
+    .adv-ml-key {
+      font-family: var(--mono); font-size: 10px; color: var(--text-muted);
+      letter-spacing: .06em; text-transform: uppercase;
+    }
+    .adv-ml-val {
+      font-family: var(--mono); font-size: 12px; font-weight: 700;
+      color: var(--cyan); transition: color 400ms ease;
+    }
+    .prob-bars { display: flex; flex-direction: column; gap: 4px; padding-top: 2px; }
+    .prob-row { display: flex; align-items: center; gap: 6px; }
+    .prob-label { font-family: var(--mono); font-size: 9px; color: var(--text-muted); width: 80px; }
+    .prob-track { flex: 1; height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+    .prob-fill {
+      height: 100%; border-radius: 3px;
+      background: var(--cyan); transition: width 500ms ease, background 400ms ease;
+    }
+    .prob-pct { font-family: var(--mono); font-size: 9px; color: var(--text-dim); width: 28px; text-align: right; }
   </style>
 </head>
 <body>
@@ -1115,6 +1164,35 @@
         <polyline id="sparkPoly" fill="none" stroke="var(--cyan)" stroke-width="1.5" points=""/>
         <polyline id="sparkArea" fill="rgba(0,212,255,.08)" stroke="none" points=""/>
       </svg>
+    </div>
+
+    <!-- Advanced ML Card -->
+    <div class="divider"></div>
+    <div class="adv-ml-card" id="advMlCard">
+      <div class="adv-ml-header">
+        <span class="adv-ml-title">⚙ Advanced ML Pipeline</span>
+        <span class="adv-ml-state" id="advMlState">BUFFERING</span>
+      </div>
+      <div class="adv-ml-body">
+        <div class="adv-ml-row">
+          <span class="adv-ml-key">FAULT CLASS</span>
+          <span class="adv-ml-val" id="advFaultClass">--</span>
+        </div>
+        <div class="adv-ml-row">
+          <span class="adv-ml-key">LSTM RUL</span>
+          <span class="adv-ml-val" id="advRul">-- h</span>
+        </div>
+        <div class="adv-ml-row">
+          <span class="adv-ml-key">CONFIDENCE</span>
+          <span class="adv-ml-val" id="advConf">--%</span>
+        </div>
+        <div class="adv-ml-row">
+          <span class="adv-ml-key">INFERENCE</span>
+          <span class="adv-ml-val" id="advLatency">-- ms</span>
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-muted);letter-spacing:.1em;margin-top:2px">FAULT PROBABILITIES</div>
+        <div class="prob-bars" id="advProbBars"></div>
+      </div>
     </div>
 
     <!-- Export Button (#8) -->
@@ -1435,6 +1513,50 @@ function applyState(s) {
   _prevStatus    = health.status;
   // Drive Three.js
   if (typeof window.updatePump3D === 'function') window.updatePump3D(s);
+
+  // ── Advanced ML Panel ────────────────────────────────────────────────────
+  const adv = s.advanced_ml || {};
+  const advState = adv.state || 'buffering';
+  const advStateEl = document.getElementById('advMlState');
+  if (advStateEl) {
+    advStateEl.textContent = advState.toUpperCase();
+    advStateEl.className = 'adv-ml-state' + (advState === 'anomalous' ? ' anomalous' : advState === 'buffering' ? ' buffering' : '');
+  }
+  const faultClass = adv.fault_class || (adv.state === 'buffering' ? 'buffering…' : '--');
+  if (document.getElementById('advFaultClass')) {
+    const fcEl = document.getElementById('advFaultClass');
+    fcEl.textContent = faultClass.replace(/_/g, ' ').toUpperCase();
+    fcEl.style.color = advState === 'anomalous' ? 'var(--red)' : advState === 'buffering' ? 'var(--amber)' : 'var(--green)';
+  }
+  const advRul = adv.RUL;
+  if (document.getElementById('advRul')) {
+    document.getElementById('advRul').textContent = advRul != null ? advRul.toFixed(1) + ' h' : '-- h';
+  }
+  if (document.getElementById('advConf')) {
+    document.getElementById('advConf').textContent = adv.confidence != null ? (adv.confidence * 100).toFixed(0) + '%' : '--%';
+  }
+  if (document.getElementById('advLatency')) {
+    document.getElementById('advLatency').textContent = adv.latency_ms != null ? adv.latency_ms.toFixed(1) + ' ms' : '-- ms';
+  }
+  // Fault probability bars
+  const probContainer = document.getElementById('advProbBars');
+  if (probContainer && adv.probabilities && Object.keys(adv.probabilities).length > 0) {
+    const PROB_COLORS = {
+      normal: '#00a854', bearing_fault: '#e07f00',
+      cavitation: '#007fc4', dry_run: '#d12b48', misalignment: '#9333ea'
+    };
+    probContainer.innerHTML = '';
+    Object.entries(adv.probabilities).sort((a,b) => b[1]-a[1]).forEach(([label, prob]) => {
+      const pct = (prob * 100).toFixed(1);
+      const color = PROB_COLORS[label] || 'var(--cyan)';
+      const row = document.createElement('div');
+      row.className = 'prob-row';
+      row.innerHTML = `<span class="prob-label">${label.replace(/_/g,' ')}</span>
+        <div class="prob-track"><div class="prob-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="prob-pct">${pct}%</span>`;
+      probContainer.appendChild(row);
+    });
+  }
 }
 
 //  WebSocket 
@@ -2106,7 +2228,15 @@ setInterval(async () => {
 
   //  Sensor-driven 3D updates 
   window.updatePump3D = function(state) {
-    const mode    = state.mode || 'normal';
+    // Prioritise ML predicted output over ground-truth mode for visual reactions
+    let mlMode = 'normal';
+    if (state.advanced_ml && state.advanced_ml.fault_class && state.advanced_ml.fault_class !== 'normal' && state.advanced_ml.fault_class !== 'buffering') {
+        mlMode = state.advanced_ml.fault_class;
+    } else if (state.anomaly && state.anomaly.is_anomaly && state.anomaly.failure_mode && state.anomaly.failure_mode !== 'none' && state.anomaly.failure_mode !== 'degraded') {
+        mlMode = state.anomaly.failure_mode;
+    }
+    
+    const mode    = mlMode;
     const health  = (state.health  || {}).overall_health || 100;
     const sensors = state.sensors || {};
     const sp      = sensors.suction_pressure  || 1.8;
@@ -2128,16 +2258,22 @@ setInterval(async () => {
     M.glow.emissive.lerp(tgtColor, 0.10);
     M.glow.color.lerp(tgtColor,    0.10);
 
-    // Vibration shake  vib_rms
-    shakeAmt = Math.max(0,(vib-2.1)/2.1)*0.07;
+    // Vibration shake  vib_rms + ML Force
+    let extraShake = 0;
+    if (mode === 'misalignment') extraShake = 0.08;
+    if (mode === 'bearing_fault' || mode === 'bearing_wear') extraShake = 0.04;
+    shakeAmt = Math.max(0,(vib-2.1)/2.1)*0.07 + extraShake;
 
-    // Cavitation particles  NPSH Margin
+    // Cavitation particles  NPSH Margin + ML Force
     const npshM = state.health && state.health.npsh ? state.health.npsh.margin : 5;
-    const cavLevel = Math.max(0, 1.2 - npshM);
+    let cavLevel = Math.max(0, 1.2 - npshM);
+    if (mode === 'cavitation') cavLevel = Math.max(cavLevel, 0.8); // Force particles if ML detected it
+    if (mode === 'dry_run') cavLevel = 0; // dry run = no fluid = no bubbles
     pMat.opacity = cavLevel > 0.05 ? Math.min(0.9, cavLevel * 0.8) : 0;
 
-    // Bearing heat  fluid temp / motor current
-    const heat = Math.min(1, Math.max(0,(temp-42)/35));
+    // Bearing heat  fluid temp / motor current + ML Force
+    let heat = Math.min(1, Math.max(0,(temp-42)/35));
+    if (mode === 'bearing_fault' || mode === 'bearing_wear') heat = Math.max(heat, 0.85); // Force red glow
     const brTarget = new THREE.Color().lerpColors(
       new THREE.Color(0x2a3d50), new THREE.Color(0xff2a00), heat);
     M.bearing.color.lerp(brTarget, 0.06);
@@ -2145,14 +2281,27 @@ setInterval(async () => {
     M.bearing.emissive.lerp(
       new THREE.Color().lerpColors(new THREE.Color(0),new THREE.Color(0x4a0000),heat), 0.06);
 
-    // Seal glow  cavitation stress
+    // Seal glow  cavitation stress / dry run force
     M.seal.emissiveIntensity = 0.4 + cavLevel*2.5;
     M.seal.emissive.setHex(cavLevel>0.4 ? 0xf08000 : 0x003344);
+    if (mode === 'dry_run') {
+        M.seal.emissiveIntensity = 2.0;
+        M.seal.emissive.setHex(0xff0000); // red hot seal during dry run
+    }
 
     // Motor heat glow  current overload
     const overload = Math.max(0,(cur-18.5)/18.5);
     motorLight.intensity = 0.5 + overload*2.5;
     motorLight.color.setHex(overload>0.2 ? 0xff3000 : 0xff6030);
+    
+    // Fluid flow opacity (dry run)
+    if (typeof fMat !== 'undefined') {
+        if (mode === 'dry_run') {
+            fMat.opacity = 0.05; // empty pipe
+        } else {
+            fMat.opacity = 0.6;
+        }
+    }
   };
 
   //  Mouse orbit 
