@@ -1,5 +1,5 @@
 {
-  "if_threshold": 0.913708444123149,
+  "if_threshold": 0.9779450053321974,
   "method": "quantile_normal",
   "meta": {
     "quantile": 95.0,

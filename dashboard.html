@@ -931,6 +931,95 @@
       background: var(--cyan); transition: width 500ms ease, background 400ms ease;
     }
     .prob-pct { font-family: var(--mono); font-size: 9px; color: var(--text-dim); width: 28px; text-align: right; }
+
+    /* === SVG Pump Schematic === */
+    #pump-schematic-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #060e17;
+      overflow: hidden;
+    }
+    #pumpSvg {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+    }
+    .pump-arc-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      background: var(--surface-hi);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .pac-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      white-space: nowrap;
+    }
+    .pac-track {
+      flex: 1;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      min-width: 60px;
+      max-width: 120px;
+    }
+    .pac-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--amber), var(--cyan));
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+    .pac-val {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+    .pac-sep {
+      color: var(--border-hi);
+      font-size: 12px;
+    }
+
+    /* === Multi-Sensor Chart Grid === */
+    .multi-chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      flex: 1;
+      overflow-y: auto;
+      background: var(--border);
+      padding: 1px;
+    }
+    .chart-card {
+      background: var(--surface);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 120px;
+    }
+    .chart-card-label {
+      font-family: var(--display);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .chart-card canvas { flex: 1; min-height: 0; }
+
+    /* Tab pane full-height */
+    #panePump  { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    #paneCharts { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
@@ -1001,21 +1090,236 @@
     <div class="event-log" id="eventLog"></div>
   </aside>
 
-  <!--  Main (Three.js)  -->
+  <!--  Main Panel (SVG Pump Schematic + Charts)  -->
   <main class="main">
-        <!-- Tab bar (#9) -->
+    <!-- Tab bar -->
     <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchTab('3d')" id="tab3dBtn">3D Model</button>
+      <button class="tab-btn active" onclick="switchTab('pump')" id="tabPumpBtn">Pump Schematic</button>
+      <button class="tab-btn" onclick="switchTab('charts')" id="tabChartsBtn">Live Sensors</button>
       <button class="tab-btn" onclick="switchTab('heatmap')" id="tabHmBtn">Correlation</button>
     </div>
-    <div class="tab-pane active" id="pane3d">
-<div id="threejs-container">
-      <div class="mode-badge" id="modeBadge">
-        <div class="mode-badge-dot" id="modeDot"></div>
-        <span id="modeLabel">NORMAL</span>
+
+    <!-- Pump Schematic Tab -->
+    <div class="tab-pane active" id="panePump">
+      <div id="pump-schematic-container">
+        <div class="mode-badge" id="modeBadge">
+          <div class="mode-badge-dot" id="modeDot"></div>
+          <span id="modeLabel">NORMAL</span>
+        </div>
+        <div class="step-badge">STEP <span id="stepCount">0</span></div>
+
+        <!-- SVG Pump Assembly -->
+        <svg id="pumpSvg" viewBox="0 0 760 340" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="volGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#1a3a5c"/>
+              <stop offset="100%" stop-color="#0d1e2e"/>
+            </radialGradient>
+            <linearGradient id="motorGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#1a2535"/>
+              <stop offset="100%" stop-color="#263545"/>
+            </linearGradient>
+            <linearGradient id="shaftGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5a7080"/>
+              <stop offset="100%" stop-color="#3a5060"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#00d4ff" opacity="0.8"/>
+            </marker>
+            <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#00e676" opacity="0.8"/>
+            </marker>
+            <!-- Animated dash for fluid flow -->
+            <style>
+              .flow-pipe { stroke-dasharray: 12 8; animation: dashFlow 1.2s linear infinite; }
+              .flow-pipe-rev { stroke-dasharray: 12 8; animation: dashFlowRev 1.2s linear infinite; }
+              @keyframes dashFlow { to { stroke-dashoffset: -20; } }
+              @keyframes dashFlowRev { to { stroke-dashoffset: 20; } }
+              .impeller-spin { transform-origin: 380px 170px; animation: spin 2s linear infinite; }
+              @keyframes spin { to { transform: rotate(360deg); } }
+              .pulse-ring { animation: pulseRing 2s ease-out infinite; }
+              @keyframes pulseRing { 0% { r:22; opacity:0.7; } 100% { r:38; opacity:0; } }
+            </style>
+          </defs>
+
+          <!-- Base plate -->
+          <rect x="60" y="290" width="640" height="14" rx="3" fill="#0f181f" stroke="#1e2d3d" stroke-width="1"/>
+          <!-- Base ribs -->
+          <line x1="180" y1="290" x2="180" y2="304" stroke="#1e2d3d" stroke-width="2"/>
+          <line x1="380" y1="290" x2="380" y2="304" stroke="#1e2d3d" stroke-width="2"/>
+          <line x1="580" y1="290" x2="580" y2="304" stroke="#1e2d3d" stroke-width="2"/>
+
+          <!-- Suction pipe (left) -->
+          <line x1="60" y1="170" x2="230" y2="170" stroke="#1a3a5c" stroke-width="28" stroke-linecap="round"/>
+          <line x1="60" y1="170" x2="230" y2="170" class="flow-pipe" stroke="#00d4ff" stroke-width="8" stroke-linecap="round" opacity="0.6" marker-end="url(#arrowBlue)"/>
+          <!-- Suction label -->
+          <text x="80" y="155" fill="#64748b" font-size="11" font-family="monospace" letter-spacing="1">SUCTION</text>
+          <text x="80" y="167" fill="#64748b" font-size="9" font-family="monospace">INLET</text>
+
+          <!-- Suction flange -->
+          <rect x="218" y="154" width="14" height="32" rx="2" fill="#1a2b3a" stroke="#2a3d50" stroke-width="1"/>
+
+          <!-- Volute / Pump Casing -->
+          <ellipse id="pumpCasing" cx="380" cy="170" rx="110" ry="105" fill="url(#volGrad)" stroke="#2a3d50" stroke-width="2"/>
+          <ellipse cx="380" cy="170" rx="88" ry="84" fill="none" stroke="#1a3a5c" stroke-width="1" stroke-dasharray="4 3" opacity="0.4"/>
+
+          <!-- Impeller blades (spinning) -->
+          <g class="impeller-spin" id="impellerGroup">
+            <circle cx="380" cy="170" r="60" fill="none" stroke="#d4af37" stroke-width="1.5" opacity="0.3"/>
+            <path d="M380,170 Q405,140 400,115 Q375,125 380,170" fill="#d4af37" opacity="0.7"/>
+            <path d="M380,170 Q410,185 435,175 Q425,150 380,170" fill="#d4af37" opacity="0.7"/>
+            <path d="M380,170 Q385,205 405,220 Q415,195 380,170" fill="#d4af37" opacity="0.7"/>
+            <path d="M380,170 Q355,205 345,225 Q325,205 380,170" fill="#d4af37" opacity="0.7"/>
+            <path d="M380,170 Q345,185 325,180 Q330,155 380,170" fill="#d4af37" opacity="0.7"/>
+            <path d="M380,170 Q355,140 360,118 Q380,115 380,170" fill="#d4af37" opacity="0.7"/>
+            <circle cx="380" cy="170" r="18" fill="#1a2535" stroke="#d4af37" stroke-width="2"/>
+            <circle cx="380" cy="170" r="8" fill="#d4af37"/>
+          </g>
+
+          <!-- Discharge pipe (top) -->
+          <line x1="380" y1="65" x2="380" y2="10" stroke="#1a3a5c" stroke-width="28" stroke-linecap="round"/>
+          <line x1="380" y1="65" x2="380" y2="10" class="flow-pipe" stroke="#00e676" stroke-width="8" stroke-linecap="round" opacity="0.6" marker-end="url(#arrowGreen)"/>
+          <text x="392" y="30" fill="#64748b" font-size="11" font-family="monospace" letter-spacing="1">DISCHARGE</text>
+
+          <!-- Discharge flange -->
+          <rect x="366" y="62" width="28" height="14" rx="2" fill="#1a2b3a" stroke="#2a3d50" stroke-width="1"/>
+
+          <!-- Shaft -->
+          <rect x="488" y="162" width="90" height="16" rx="4" fill="url(#shaftGrad)" stroke="#4a6070" stroke-width="1"/>
+
+          <!-- Bearing (inboard) -->
+          <g id="bearingInboard">
+            <rect x="490" y="150" width="28" height="40" rx="5" fill="#1e2d3d" stroke="#2a3d50" stroke-width="1.5"/>
+            <rect x="494" y="158" width="20" height="24" rx="3" fill="#0d1520" stroke="#3a4a58" stroke-width="1"/>
+            <circle cx="504" cy="170" r="6" fill="none" stroke="#5a7080" stroke-width="3"/>
+          </g>
+          <text x="494" y="203" fill="#475569" font-size="9" font-family="monospace">BRG-FWD</text>
+
+          <!-- Bearing (outboard) -->
+          <g id="bearingOutboard">
+            <rect x="540" y="150" width="28" height="40" rx="5" fill="#1e2d3d" stroke="#2a3d50" stroke-width="1.5"/>
+            <rect x="544" y="158" width="20" height="24" rx="3" fill="#0d1520" stroke="#3a4a58" stroke-width="1"/>
+            <circle cx="554" cy="170" r="6" fill="none" stroke="#5a7080" stroke-width="3"/>
+          </g>
+          <text x="544" y="203" fill="#475569" font-size="9" font-family="monospace">BRG-AFT</text>
+
+          <!-- Seal -->
+          <g id="sealGroup">
+            <rect x="480" y="155" width="14" height="30" rx="3" fill="#003d55" stroke="#00b8d9" stroke-width="1.5"/>
+          </g>
+          <text x="477" y="203" fill="#475569" font-size="9" font-family="monospace">SEAL</text>
+
+          <!-- Coupling -->
+          <g id="couplingGroup">
+            <rect x="576" y="156" width="24" height="28" rx="4" fill="#1c2838" stroke="#2a3d50" stroke-width="1"/>
+            <line x1="582" y1="160" x2="594" y2="180" stroke="#3a4a58" stroke-width="2"/>
+            <line x1="594" y1="160" x2="582" y2="180" stroke="#3a4a58" stroke-width="2"/>
+          </g>
+          <text x="574" y="203" fill="#475569" font-size="9" font-family="monospace">COUPLING</text>
+
+          <!-- Motor body -->
+          <rect x="600" y="130" width="100" height="80" rx="8" fill="url(#motorGrad)" stroke="#2a3d50" stroke-width="1.5"/>
+          <!-- Motor cooling fins -->
+          <line x1="610" y1="130" x2="610" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <line x1="622" y1="130" x2="622" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <line x1="634" y1="130" x2="634" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <line x1="646" y1="130" x2="646" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <line x1="658" y1="130" x2="658" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <line x1="670" y1="130" x2="670" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <line x1="682" y1="130" x2="682" y2="210" stroke="#1a2535" stroke-width="2"/>
+          <!-- Motor label -->
+          <text x="650" y="165" fill="#94a3b8" font-size="13" font-family="monospace" text-anchor="middle" font-weight="bold">MOTOR</text>
+          <text x="650" y="180" fill="#475569" font-size="9" font-family="monospace" text-anchor="middle" id="motorRpmLabel">0 RPM</text>
+
+          <!-- Health pulse ring (shown on anomaly) -->
+          <circle id="anomalyRing" class="pulse-ring" cx="380" cy="170" r="22" fill="none" stroke="#ff3b5c" stroke-width="3" opacity="0" style="display:none"/>
+
+          <!-- Sensor gauge bubbles -->
+          <!-- Vibration indicator -->
+          <circle cx="300" cy="100" r="22" fill="#0d1520" stroke="#1e2d3d" stroke-width="1.5"/>
+          <text x="300" y="96" fill="#64748b" font-size="7" font-family="monospace" text-anchor="middle">VIB</text>
+          <text x="300" y="108" fill="#00d4ff" font-size="10" font-family="monospace" text-anchor="middle" id="vibBubble">--</text>
+
+          <!-- Temp indicator -->
+          <circle cx="460" cy="100" r="22" fill="#0d1520" stroke="#1e2d3d" stroke-width="1.5"/>
+          <text x="460" y="96" fill="#64748b" font-size="7" font-family="monospace" text-anchor="middle">TEMP</text>
+          <text x="460" y="108" fill="#f0a500" font-size="10" font-family="monospace" text-anchor="middle" id="tempBubble">--</text>
+
+          <!-- Pressure indicator -->
+          <circle cx="300" cy="250" r="22" fill="#0d1520" stroke="#1e2d3d" stroke-width="1.5"/>
+          <text x="300" y="246" fill="#64748b" font-size="7" font-family="monospace" text-anchor="middle">PRESS</text>
+          <text x="300" y="258" fill="#00e676" font-size="10" font-family="monospace" text-anchor="middle" id="pressBubble">--</text>
+
+          <!-- Current indicator -->
+          <circle cx="460" cy="250" r="22" fill="#0d1520" stroke="#1e2d3d" stroke-width="1.5"/>
+          <text x="460" y="246" fill="#64748b" font-size="7" font-family="monospace" text-anchor="middle">CURR</text>
+          <text x="460" y="258" fill="#9333ea" font-size="10" font-family="monospace" text-anchor="middle" id="currBubble">--</text>
+
+          <!-- Fault / State banner at bottom of SVG -->
+          <rect x="150" y="318" width="460" height="18" rx="4" fill="#0d1520" stroke="#1e2d3d" stroke-width="1"/>
+          <text x="380" y="331" fill="#00d4ff" font-size="10" font-family="monospace" text-anchor="middle" id="faultBanner">SYSTEM INITIALISING</text>
+        </svg>
+
+        <!-- Efficiency arc below SVG -->
+        <div class="pump-arc-bar">
+          <span class="pac-label">EFFICIENCY</span>
+          <div class="pac-track">
+            <div class="pac-fill" id="effArcFill" style="width:0%"></div>
+          </div>
+          <span class="pac-val" id="effArcVal">--%</span>
+          <span class="pac-sep">|</span>
+          <span class="pac-label">FAULT</span>
+          <span class="pac-val" id="faultArcVal" style="color:var(--green)">NORMAL</span>
+          <span class="pac-sep">|</span>
+          <span class="pac-label">CONFIDENCE</span>
+          <span class="pac-val" id="confArcVal">--%</span>
+        </div>
       </div>
-      <div class="step-badge">STEP <span id="stepCount">0</span></div>
     </div>
+
+    <!-- Live Sensor Charts Tab -->
+    <div class="tab-pane" id="paneCharts">
+      <div class="multi-chart-grid">
+        <div class="chart-card">
+          <div class="chart-card-label">VIBRATION RMS <span style="color:#64748b; font-weight:400">(mm/s)</span></div>
+          <canvas id="chartVib" height="80"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-label">SHAFT RPM</div>
+          <canvas id="chartRpm" height="80"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-label">FLOW RATE <span style="color:#64748b; font-weight:400">(L/min)</span></div>
+          <canvas id="chartFlow" height="80"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-label">FLUID TEMP <span style="color:#64748b; font-weight:400">(°C)</span></div>
+          <canvas id="chartTemp" height="80"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-label">DISCHARGE PRESSURE <span style="color:#64748b; font-weight:400">(bar)</span></div>
+          <canvas id="chartDisc" height="80"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-label">MOTOR CURRENT <span style="color:#64748b; font-weight:400">(A)</span></div>
+          <canvas id="chartCurr" height="80"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Heatmap tab -->
+    <div class="tab-pane" id="paneHm">
+      <div class="heatmap-wrap">
+        <div class="heatmap-title">Sensor Correlation Matrix</div>
+        <div id="hmGrid" class="hm-grid" style="grid-template-columns:repeat(8,44px)"></div>
+      </div>
+    </div>
+
+    <!-- Bottom sensor strip -->
     <div class="sensor-strip">
       <div class="strip-cell" id="strip-vib">
         <div class="strip-cell-label">Vibration RMS</div>
@@ -1036,14 +1340,6 @@
       <div class="strip-cell" id="strip-temp">
         <div class="strip-cell-label">Fluid Temp</div>
         <div class="strip-cell-val"></div>
-      </div>
-    </div>
-    </div><!-- close tab pane 3d -->
-    <!-- Heatmap tab (#9) -->
-    <div class="tab-pane" id="paneHm">
-      <div class="heatmap-wrap">
-        <div class="heatmap-title">Sensor Correlation Matrix</div>
-        <div id="hmGrid" class="hm-grid" style="grid-template-columns:repeat(8,44px)"></div>
       </div>
     </div>
   </main>
@@ -1204,9 +1500,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- Three.js CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
 'use strict';
@@ -1511,8 +1804,8 @@ function applyState(s) {
   }
   _prevIsAnomaly = anomaly.is_anomaly;
   _prevStatus    = health.status;
-  // Drive Three.js
-  if (typeof window.updatePump3D === 'function') window.updatePump3D(s);
+  // Drive SVG pump schematic
+  updatePump2D(s);
 
   // ── Advanced ML Panel ────────────────────────────────────────────────────
   const adv = s.advanced_ml || {};
