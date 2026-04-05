@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HydroX — Telemetry Pipeline Dataflow</title>
+  <meta name="description" content="Real-time per-sensor data flow visualization showing sensor readings entering the Isolation Forest, Random Forest, and BiLSTM ML models.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #080d14;
+      --surface: rgba(255,255,255,.03);
+      --border:  rgba(255,255,255,.07);
+      --cyan:    #00d4ff;
+      --green:   #00e676;
+      --amber:   #f0a500;
+      --red:     #ff3b5c;
+      --purple:  #a855f7;
+      --blue:    #3b82f6;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --mono:    'JetBrains Mono', monospace;
+      --sans:    'Inter', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,13,20,.9);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+    .logo span { color: var(--cyan); }
+    .header-title { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); transition: background .3s, box-shadow .3s; }
+    .ws-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s ease-in-out infinite; }
+    .ws-dot.error { background: var(--red); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .ws-label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+    .back-link {
+      padding: 5px 12px; border-radius: 14px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); text-decoration: none;
+      font-size: 11px; font-weight: 600; transition: color .2s, border-color .2s;
+    }
+    .back-link:hover { color: var(--cyan); border-color: rgba(0,212,255,.4); }
+
+    /* ── Layout ── */
+    .pipeline {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 280px 1fr 1fr 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── Stage columns ── */
+    .stage {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      min-height: calc(100vh - 57px);
+    }
+    .stage:last-child { border-right: none; }
+    .stage-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.015);
+    }
+    .stage-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .stage-title { font-size: 16px; font-weight: 700; }
+    .stage-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .stage-badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      border: 1px solid;
+    }
+    .badge-cyan   { color: var(--cyan);   border-color: rgba(0,212,255,.35);  background: rgba(0,212,255,.08); }
+    .badge-green  { color: var(--green);  border-color: rgba(0,230,118,.35);  background: rgba(0,230,118,.08); }
+    .badge-purple { color: var(--purple); border-color: rgba(168,85,247,.35); background: rgba(168,85,247,.08); }
+    .badge-amber  { color: var(--amber);  border-color: rgba(240,165,0,.35);  background: rgba(240,165,0,.08); }
+    .stage-body { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+
+    /* ── Sensor cards (Stage 1) ── */
+    .sensor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      position: relative;
+      transition: border-color .3s, background .3s;
+    }
+    .sensor-card.active {
+      border-color: rgba(0,212,255,.35);
+      background: rgba(0,212,255,.04);
+    }
+    .sensor-card.alert {
+      border-color: rgba(255,59,92,.4);
+      background: rgba(255,59,92,.05);
+      animation: card-pulse .8s ease-out;
+    }
+    @keyframes card-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,59,92,.4); }
+      100% { box-shadow: 0 0 0 8px rgba(255,59,92,0); }
+    }
+    .sensor-name {
+      font-size: 9px; font-weight: 700; letter-spacing: .12em;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 4px;
+    }
+    .sensor-val-row { display: flex; align-items: baseline; gap: 6px; }
+    .sensor-val {
+      font-family: var(--mono); font-size: 22px; font-weight: 700;
+      transition: color .4s;
+    }
+    .sensor-unit { font-size: 11px; color: var(--muted); }
+    .sensor-bar-wrap {
+      margin-top: 8px; height: 3px;
+      background: rgba(255,255,255,.06);
+      border-radius: 2px; overflow: hidden;
+    }
+    .sensor-bar-fill {
+      height: 100%; border-radius: 2px;
+      transition: width .5s ease, background .4s;
+    }
+    /* Flow particle indicator */
+    .flow-dot {
+      position: absolute; right: 14px; top: 50%;
+      transform: translateY(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan); opacity: 0;
+      transition: opacity .2s;
+    }
+    .sensor-card.active .flow-dot { opacity: 1; animation: dot-ping 1.2s ease-in-out infinite; }
+    @keyframes dot-ping {
+      0%,100% { transform: translateY(-50%) scale(1); opacity: 1; }
+      50%      { transform: translateY(-50%) scale(1.6); opacity: .5; }
+    }
+
+    /* ── Model panels (Stage 2/3/4) ── */
+    .model-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .model-card-title { font-size: 11px; font-weight: 700; color: var(--text); }
+    .model-row { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+    .model-key { font-size: 10px; color: var(--muted); }
+    .model-val { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+
+    /* Feed table showing all sensor values entering this model */
+    .feed-table { border-collapse: collapse; width: 100%; }
+    .feed-table td {
+      font-size: 10px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.04);
+    }
+    .feed-table td:last-child { text-align: right; font-family: var(--mono); font-weight: 700; }
+    .feed-table tr:last-child td { border-bottom: none; }
+
+    /* Fault probability bars */
+    .prob-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .prob-label { font-size: 9px; color: var(--muted); flex: 0 0 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .prob-track { flex: 1; height: 4px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+    .prob-fill   { height: 100%; border-radius: 2px; transition: width .5s ease; }
+    .prob-pct    { font-family: var(--mono); font-size: 9px; color: var(--muted); flex: 0 0 30px; text-align: right; }
+
+    /* State chip */
+    .state-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 12px; border: 1px solid;
+      font-family: var(--mono); font-size: 11px; font-weight: 700;
+    }
+    .chip-normal   { color: var(--green);  border-color: rgba(0,230,118,.4);  background: rgba(0,230,118,.08); }
+    .chip-anomalous{ color: var(--red);    border-color: rgba(255,59,92,.4);   background: rgba(255,59,92,.08); }
+    .chip-buffering{ color: var(--amber);  border-color: rgba(240,165,0,.4);   background: rgba(240,165,0,.08); }
+
+    /* RUL ring */
+    .rul-wrap { display: flex; align-items: center; gap: 14px; }
+    .rul-ring { width: 64px; height: 64px; flex-shrink: 0; }
+    .rul-info { display: flex; flex-direction: column; gap: 2px; }
+    .rul-val { font-family: var(--mono); font-size: 22px; font-weight: 700; }
+    .rul-label { font-size: 10px; color: var(--muted); }
+
+    /* Raw JSON */
+    .raw-box {
+      background: rgba(0,0,0,.5);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: #a5b4fc;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 150px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .raw-box::-webkit-scrollbar { width: 4px; }
+    .raw-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Connector animation — horizontal SVG lines */
+    .connector-col {
+      display: flex; flex-direction: column; justify-content: center;
+      align-items: center; padding: 0; width: 0; overflow: visible;
+      pointer-events: none;
+    }
+
+    /* Streaming animation: dots traveling right */
+    @keyframes travel { 0%{transform:translateX(-100%)} 100%{transform:translateX(400%)} }
+    .travel-dot {
+      position: absolute; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan); animation: travel 1.2s linear infinite;
+      opacity: 0;
+    }
+    .streaming .travel-dot { opacity: .85; }
+
+    /* Footer stats bar */
+    .stats-bar {
+      padding: 10px 24px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 32px; align-items: center;
+      background: rgba(8,13,20,.8);
+      font-family: var(--mono); font-size: 11px;
+    }
+    .stat-item { display: flex; flex-direction: column; gap: 1px; }
+    .stat-label { font-size: 8px; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+    .stat-val { font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Hydro<span>X</span></div>
+  <div class="header-title">TELEMETRY PIPELINE — REAL-TIME DATAFLOW</div>
+  <div class="header-right">
+    <div class="ws-dot" id="wsDot"></div>
+    <span class="ws-label" id="wsLabel">CONNECTING</span>
+    <a href="/" class="back-link">← Dashboard</a>
+    <a href="/docs" target="_blank" class="back-link">📖 API Docs</a>
+  </div>
+</header>
+
+<div class="pipeline">
+
+  <!-- ═══════════════════════════════════════════════════════
+       STAGE 1: SENSORS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="stage">
+    <div class="stage-header">
+      <div class="stage-label">Stage 1</div>
+      <div class="stage-title">📡 Sensor Inputs</div>
+      <div class="stage-sub">7 physical channels → sliding window buffer</div>
+      <div class="stage-badge badge-cyan">50-step window</div>
+    </div>
+    <div class="stage-body" id="sensorCards">
+
+      <div class="sensor-card" id="sc-vibration_rms">
+        <div class="sensor-name">Vibration RMS</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-vibration_rms">--</span>
+          <span class="sensor-unit">mm/s</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-vibration_rms" style="width:0%;background:var(--cyan)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+      <div class="sensor-card" id="sc-vibration_peak">
+        <div class="sensor-name">Vibration Peak</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-vibration_peak">--</span>
+          <span class="sensor-unit">mm/s</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-vibration_peak" style="width:0%;background:var(--cyan)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+      <div class="sensor-card" id="sc-discharge_pressure">
+        <div class="sensor-name">Discharge Pressure</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-discharge_pressure">--</span>
+          <span class="sensor-unit">bar</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-discharge_pressure" style="width:0%;background:var(--blue)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+      <div class="sensor-card" id="sc-suction_pressure">
+        <div class="sensor-name">Suction Pressure</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-suction_pressure">--</span>
+          <span class="sensor-unit">bar</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-suction_pressure" style="width:0%;background:var(--blue)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+      <div class="sensor-card" id="sc-flow_rate">
+        <div class="sensor-name">Flow Rate</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-flow_rate">--</span>
+          <span class="sensor-unit">L/min</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-flow_rate" style="width:0%;background:var(--green)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+      <div class="sensor-card" id="sc-motor_current">
+        <div class="sensor-name">Motor Current</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-motor_current">--</span>
+          <span class="sensor-unit">A</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-motor_current" style="width:0%;background:var(--amber)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+      <div class="sensor-card" id="sc-fluid_temp">
+        <div class="sensor-name">Fluid Temperature</div>
+        <div class="sensor-val-row">
+          <span class="sensor-val" id="sv-fluid_temp">--</span>
+          <span class="sensor-unit">°C</span>
+        </div>
+        <div class="sensor-bar-wrap"><div class="sensor-bar-fill" id="sb-fluid_temp" style="width:0%;background:var(--red)"></div></div>
+        <div class="flow-dot"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STAGE 2: ISOLATION FOREST
+  ═══════════════════════════════════════════════════════ -->
+  <div class="stage">
+    <div class="stage-header">
+      <div class="stage-label">Stage 2</div>
+      <div class="stage-title">🌲 Isolation Forest</div>
+      <div class="stage-sub">Unsupervised anomaly detection</div>
+      <div class="stage-badge badge-amber">84-dim feature vector</div>
+    </div>
+    <div class="stage-body">
+
+      <!-- Per-sensor feed into IF -->
+      <div class="model-card">
+        <div class="model-card-title">Sensor Feed → Feature Extraction</div>
+        <table class="feed-table" id="ifFeedTable">
+          <tbody>
+            <tr><td style="color:var(--muted)">vibration_rms</td><td class="sensor-feed-val" id="if-vibration_rms">--</td></tr>
+            <tr><td style="color:var(--muted)">vibration_peak</td><td class="sensor-feed-val" id="if-vibration_peak">--</td></tr>
+            <tr><td style="color:var(--muted)">discharge_pressure</td><td class="sensor-feed-val" id="if-discharge_pressure">--</td></tr>
+            <tr><td style="color:var(--muted)">suction_pressure</td><td class="sensor-feed-val" id="if-suction_pressure">--</td></tr>
+            <tr><td style="color:var(--muted)">flow_rate</td><td class="sensor-feed-val" id="if-flow_rate">--</td></tr>
+            <tr><td style="color:var(--muted)">motor_current</td><td class="sensor-feed-val" id="if-motor_current">--</td></tr>
+            <tr><td style="color:var(--muted)">fluid_temp</td><td class="sensor-feed-val" id="if-fluid_temp">--</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- IF Output -->
+      <div class="model-card">
+        <div class="model-card-title">IF Output</div>
+        <div class="model-row">
+          <span class="model-key">Raw Anomaly Score</span>
+          <span class="model-val" id="ifRawScore" style="color:var(--cyan)">--</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">IF Score (normalised)</span>
+          <span class="model-val" id="ifNormScore" style="color:var(--cyan)">--</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">Calibrated Score</span>
+          <span class="model-val" id="ifCalScore" style="color:var(--cyan)">--</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">Decision</span>
+          <span id="ifDecision" class="state-chip chip-buffering">BUFFERING</span>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-title">Anomaly Score Bar</div>
+        <div class="sensor-bar-wrap" style="height:6px;margin-top:4px">
+          <div class="sensor-bar-fill" id="ifScoreBar" style="width:0%;background:var(--cyan)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;font-family:var(--mono);color:var(--muted)">
+          <span>0.0 healthy</span><span>0.5 warn</span><span>1.0 fault</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STAGE 3: RANDOM FOREST CLASSIFIER
+  ═══════════════════════════════════════════════════════ -->
+  <div class="stage">
+    <div class="stage-header">
+      <div class="stage-label">Stage 3</div>
+      <div class="stage-title">🌿 5-Class RF Classifier</div>
+      <div class="stage-sub">Fault type classification + probability</div>
+      <div class="stage-badge badge-green">200 estimators · depth 12</div>
+    </div>
+    <div class="stage-body">
+
+      <!-- Per-sensor feed into RF -->
+      <div class="model-card">
+        <div class="model-card-title">Sensor Feed → Classifier</div>
+        <table class="feed-table">
+          <tbody>
+            <tr><td style="color:var(--muted)">vibration_rms</td><td id="rf-vibration_rms">--</td></tr>
+            <tr><td style="color:var(--muted)">vibration_peak</td><td id="rf-vibration_peak">--</td></tr>
+            <tr><td style="color:var(--muted)">discharge_pressure</td><td id="rf-discharge_pressure">--</td></tr>
+            <tr><td style="color:var(--muted)">suction_pressure</td><td id="rf-suction_pressure">--</td></tr>
+            <tr><td style="color:var(--muted)">flow_rate</td><td id="rf-flow_rate">--</td></tr>
+            <tr><td style="color:var(--muted)">motor_current</td><td id="rf-motor_current">--</td></tr>
+            <tr><td style="color:var(--muted)">fluid_temp</td><td id="rf-fluid_temp">--</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Fault classification output -->
+      <div class="model-card">
+        <div class="model-card-title">Classification Output</div>
+        <div class="model-row">
+          <span class="model-key">Predicted Fault</span>
+          <span class="model-val" id="rfFaultClass" style="color:var(--green)">--</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">Confidence</span>
+          <span class="model-val" id="rfConf" style="color:var(--green)">--</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">RF Fault Prob</span>
+          <span class="model-val" id="rfFaultProb" style="color:var(--amber)">--</span>
+        </div>
+      </div>
+
+      <!-- Probability bars -->
+      <div class="model-card">
+        <div class="model-card-title">Class Probabilities</div>
+        <div id="rfProbBars">
+          <div class="prob-row"><span class="prob-label">normal</span><div class="prob-track"><div class="prob-fill" id="prob-normal" style="width:0%;background:#00a854"></div></div><span class="prob-pct" id="pct-normal">0%</span></div>
+          <div class="prob-row"><span class="prob-label">bearing fault</span><div class="prob-track"><div class="prob-fill" id="prob-bearing_fault" style="width:0%;background:#e07f00"></div></div><span class="prob-pct" id="pct-bearing_fault">0%</span></div>
+          <div class="prob-row"><span class="prob-label">cavitation</span><div class="prob-track"><div class="prob-fill" id="prob-cavitation" style="width:0%;background:#3b82f6"></div></div><span class="prob-pct" id="pct-cavitation">0%</span></div>
+          <div class="prob-row"><span class="prob-label">dry run</span><div class="prob-track"><div class="prob-fill" id="prob-dry_run" style="width:0%;background:#ff3b5c"></div></div><span class="prob-pct" id="pct-dry_run">0%</span></div>
+          <div class="prob-row"><span class="prob-label">misalignment</span><div class="prob-track"><div class="prob-fill" id="prob-misalignment" style="width:0%;background:#a855f7"></div></div><span class="prob-pct" id="pct-misalignment">0%</span></div>
+        </div>
+      </div>
+
+      <div class="model-card">
+        <div class="model-card-title">Fused Anomaly Score</div>
+        <div class="model-row">
+          <span class="model-key">Fused (meta model)</span>
+          <span class="model-val" id="rfFusedScore">--</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">Severity</span>
+          <span class="model-val" id="rfSeverity"  >--</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STAGE 4: BiLSTM RUL PREDICTOR
+  ═══════════════════════════════════════════════════════ -->
+  <div class="stage">
+    <div class="stage-header">
+      <div class="stage-label">Stage 4</div>
+      <div class="stage-title">⚡ BiLSTM RUL Predictor</div>
+      <div class="stage-sub">Remaining Useful Life estimation</div>
+      <div class="stage-badge badge-purple">log-space · conformal UQ</div>
+    </div>
+    <div class="stage-body">
+
+      <!-- Per-sensor feed into LSTM -->
+      <div class="model-card">
+        <div class="model-card-title">Sequence Feed (50 timesteps × 7 sensors)</div>
+        <table class="feed-table">
+          <tbody>
+            <tr><td style="color:var(--muted)">vibration_rms</td><td id="lstm-vibration_rms">--</td></tr>
+            <tr><td style="color:var(--muted)">vibration_peak</td><td id="lstm-vibration_peak">--</td></tr>
+            <tr><td style="color:var(--muted)">discharge_pressure</td><td id="lstm-discharge_pressure">--</td></tr>
+            <tr><td style="color:var(--muted)">suction_pressure</td><td id="lstm-suction_pressure">--</td></tr>
+            <tr><td style="color:var(--muted)">flow_rate</td><td id="lstm-flow_rate">--</td></tr>
+            <tr><td style="color:var(--muted)">motor_current</td><td id="lstm-motor_current">--</td></tr>
+            <tr><td style="color:var(--muted)">fluid_temp</td><td id="lstm-fluid_temp">--</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- RUL output -->
+      <div class="model-card">
+        <div class="model-card-title">RUL Estimate</div>
+        <div class="rul-wrap">
+          <svg class="rul-ring" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
+            <circle id="rulRingFill" cx="32" cy="32" r="26" fill="none" stroke="var(--green)"
+              stroke-width="7" stroke-linecap="round"
+              stroke-dasharray="163" stroke-dashoffset="163"
+              transform="rotate(-90 32 32)" style="transition:stroke-dashoffset .6s ease, stroke .4s"/>
+          </svg>
+          <div class="rul-info">
+            <div class="rul-val" id="rulVal">-- h</div>
+            <div class="rul-label">Remaining Useful Life</div>
+            <div class="model-row" style="margin-top:4px">
+              <span class="model-key">Uncertainty (σ)</span>
+              <span class="model-val" id="rulStd" style="font-size:11px;color:var(--muted)">--</span>
+            </div>
+            <div class="model-row">
+              <span class="model-key">UQ [90% CI]</span>
+              <span class="model-val" id="rulCI"  style="font-size:10px;color:var(--muted)">--</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline state + latency -->
+      <div class="model-card">
+        <div class="model-card-title">Pipeline State</div>
+        <div class="model-row">
+          <span class="model-key">ML State</span>
+          <span id="mlState" class="state-chip chip-buffering">BUFFERING</span>
+        </div>
+        <div class="model-row" style="margin-top:6px">
+          <span class="model-key">End-to-end latency</span>
+          <span class="model-val" id="latencyVal" style="color:var(--green)">-- ms</span>
+        </div>
+        <div class="model-row">
+          <span class="model-key">Buffer fill</span>
+          <span class="model-val" id="bufFill" style="color:var(--amber)">--</span>
+        </div>
+      </div>
+
+      <!-- Raw JSON -->
+      <div class="model-card" style="gap:6px">
+        <div class="model-card-title">Raw WebSocket Payload</div>
+        <div class="raw-box" id="rawJson">Waiting for connection…</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer stats -->
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-label">Step</div><div class="stat-val" id="footStep">--</div></div>
+  <div class="stat-item"><div class="stat-label">Sim Mode</div><div class="stat-val" id="footMode">--</div></div>
+  <div class="stat-item"><div class="stat-label">Data Source</div><div class="stat-val" id="footSrc">--</div></div>
+  <div class="stat-item"><div class="stat-label">Health</div><div class="stat-val" id="footHealth">--</div></div>
+  <div class="stat-item"><div class="stat-label">Throttle</div><div class="stat-val" id="footThrottle">--</div></div>
+  <div class="stat-item" style="margin-left:auto"><div class="stat-label">WS Latency</div><div class="stat-val" id="footLatency">--</div></div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────
+const WS_URL  = `ws://${location.host}/ws`;
+const SENSOR_MAX = {
+  vibration_rms: 50, vibration_peak: 120,
+  discharge_pressure: 20, suction_pressure: 15,
+  flow_rate: 600, motor_current: 100, fluid_temp: 200
+};
+const SENSOR_KEYS = Object.keys(SENSOR_MAX);
+
+// ── DOM helpers ──────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function colorForSensor(key, val) {
+  const max = SENSOR_MAX[key] || 100;
+  const pct = val / max;
+  if (pct > 0.75) return 'var(--red)';
+  if (pct > 0.50) return 'var(--amber)';
+  return 'var(--cyan)';
+}
+
+function colorForAnomalyScore(s) {
+  if (s > 0.6) return 'var(--red)';
+  if (s > 0.35) return 'var(--amber)';
+  return 'var(--cyan)';
+}
+
+// ── Update UI ────────────────────────────────────────────
+function updateUI(d) {
+  const sensors = d.sensors   || {};
+  const adv     = d.advanced_ml || {};
+  const health  = d.health    || {};
+
+  // Stage 1: sensor cards + feed tables
+  SENSOR_KEYS.forEach(key => {
+    const val = sensors[key];
+    if (val == null) return;
+    const max = SENSOR_MAX[key];
+    const pct = Math.min(100, (val / max) * 100);
+    const color = colorForSensor(key, val);
+
+    // Main card
+    const card = $(`sc-${key}`);
+    const valEl = $(`sv-${key}`);
+    const barEl = $(`sb-${key}`);
+    if (card)  card.classList.toggle('active', true);
+    if (valEl) { valEl.textContent = val.toFixed(2); valEl.style.color = color; }
+    if (barEl) { barEl.style.width = pct + '%'; barEl.style.background = color; }
+
+    // Feed tables (IF, RF, LSTM columns)
+    ['if', 'rf', 'lstm'].forEach(prefix => {
+      const el = $(`${prefix}-${key}`);
+      if (el) {
+        el.textContent = val.toFixed(3);
+        el.style.color = color;
+      }
+    });
+  });
+
+  // Stage 2: Isolation Forest
+  const scores = adv.scores || {};
+  const ifRaw  = scores.if_raw        != null ? scores.if_raw.toFixed(4)        : '--';
+  const ifNorm = scores.if_raw        != null ? (1 - scores.if_raw).toFixed(4)  : '--';
+  const ifCal  = scores.if_calibrated != null ? scores.if_calibrated.toFixed(4) : '--';
+  const fused  = adv.anomaly_score    != null ? adv.anomaly_score               : null;
+
+  if ($('ifRawScore'))  $('ifRawScore').textContent  = ifRaw;
+  if ($('ifNormScore')) $('ifNormScore').textContent = ifNorm;
+  if ($('ifCalScore'))  $('ifCalScore').textContent  = ifCal;
+
+  if (fused != null) {
+    $('ifScoreBar').style.width      = (fused * 100).toFixed(1) + '%';
+    $('ifScoreBar').style.background = colorForAnomalyScore(fused);
+  }
+
+  const state = adv.state || 'buffering';
+  function applyChip(el, state) {
+    if (!el) return;
+    el.className = 'state-chip ' + (
+      state === 'anomalous' ? 'chip-anomalous' :
+      state === 'normal'    ? 'chip-normal'    : 'chip-buffering'
+    );
+    el.textContent = state.toUpperCase();
+  }
+  applyChip($('ifDecision'), state);
+  applyChip($('mlState'),    state);
+
+  // Stage 3: RF Classifier
+  const fc = adv.fault_class || '--';
+  const conf = adv.confidence;
+  if ($('rfFaultClass')) {
+    $('rfFaultClass').textContent = fc.replace(/_/g,' ').toUpperCase();
+    $('rfFaultClass').style.color = fc === 'normal' ? 'var(--green)' : 'var(--red)';
+  }
+  if ($('rfConf')) $('rfConf').textContent = conf != null ? (conf * 100).toFixed(1) + '%' : '--';
+  const rfFP = scores.rf_fault_prob_calibrated;
+  if ($('rfFaultProb')) $('rfFaultProb').textContent = rfFP != null ? rfFP.toFixed(4) : '--';
+
+  // Probability bars
+  const probs = adv.probabilities || {};
+  Object.entries(probs).forEach(([label, p]) => {
+    const fill = $(`prob-${label}`); const pct_el = $(`pct-${label}`);
+    if (fill)   fill.style.width   = (p * 100).toFixed(1) + '%';
+    if (pct_el) pct_el.textContent = (p * 100).toFixed(1) + '%';
+  });
+
+  if ($('rfFusedScore')) {
+    $('rfFusedScore').textContent = fused != null ? fused.toFixed(4) : '--';
+    $('rfFusedScore').style.color = fused != null ? colorForAnomalyScore(fused) : 'var(--muted)';
+  }
+  if ($('rfSeverity')) {
+    const sev = adv.severity || '--';
+    $('rfSeverity').textContent = sev.toUpperCase();
+    $('rfSeverity').style.color = sev === 'critical' ? 'var(--red)' : sev === 'warning' ? 'var(--amber)' : 'var(--green)';
+  }
+
+  // Stage 4: BiLSTM RUL
+  const rul = adv.RUL;
+  const rulUQ = adv.RUL_uncertainty || {};
+  const maxRUL = 720;
+  if ($('rulVal')) $('rulVal').textContent = rul != null ? rul.toFixed(1) + ' h' : '-- h';
+  if ($('rulRingFill') && rul != null) {
+    const ratio = Math.min(1, rul / maxRUL);
+    $('rulRingFill').style.strokeDashoffset = (163 - ratio * 163).toFixed(1);
+    $('rulRingFill').style.stroke = rul < 24 ? 'var(--red)' : rul < 120 ? 'var(--amber)' : 'var(--green)';
+  }
+  if ($('rulStd')) $('rulStd').textContent = rulUQ.std != null ? '± ' + rulUQ.std.toFixed(1) + ' h' : '--';
+  if ($('rulCI') && rulUQ.low != null && rulUQ.high != null) {
+    $('rulCI').textContent = `[${rulUQ.low.toFixed(0)}–${rulUQ.high.toFixed(0)} h]`;
+  }
+
+  // Latency + buffer
+  const lat = adv.latency_ms;
+  if ($('latencyVal')) {
+    $('latencyVal').textContent = lat != null ? lat.toFixed(1) + ' ms' : '-- ms';
+    $('latencyVal').style.color = lat != null && lat > 80 ? 'var(--amber)' : 'var(--green)';
+  }
+  if ($('bufFill')) {
+    if (state === 'buffering') {
+      $('bufFill').textContent = (adv.buffer_fill || 0) + ' / ' + (adv.buffer_target || 50);
+    } else {
+      $('bufFill').textContent = 'FULL (50/50)';
+      $('bufFill').style.color = 'var(--green)';
+    }
+  }
+
+  // Footer
+  if ($('footStep'))    $('footStep').textContent    = d.step    || '--';
+  if ($('footMode'))    $('footMode').textContent    = (d.mode   || '--').replace(/_/g,' ').toUpperCase();
+  if ($('footSrc'))     $('footSrc').textContent     = (d.data_source || 'sim').toUpperCase();
+  if ($('footHealth'))  {
+    const h = health.status || '--';
+    $('footHealth').textContent = h.toUpperCase();
+    $('footHealth').style.color = h === 'healthy' ? 'var(--green)' : h === 'warning' ? 'var(--amber)' : 'var(--red)';
+  }
+  if ($('footThrottle')) $('footThrottle').textContent = d.throttle_factor != null ? d.throttle_factor.toFixed(1) + 'x' : '--';
+}
+
+// ── WebSocket ────────────────────────────────────────────
+let ws, _t0, _retryDelay = 2000;
+
+function connect() {
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    _retryDelay = 2000;             // reset on success
+    $('wsDot').className = 'ws-dot live';
+    $('wsLabel').textContent = 'LIVE';
+    _t0 = performance.now();
+  };
+
+  ws.onmessage = e => {
+    const latMs = (performance.now() - _t0).toFixed(0);
+    if ($('footLatency')) $('footLatency').textContent = latMs + ' ms';
+    _t0 = performance.now();
+
+    try {
+      const d = JSON.parse(e.data);
+      updateUI(d);
+      $('rawJson').textContent = JSON.stringify(d, null, 2);
+      $('rawJson').scrollTop = 0;
+    } catch(ex) { console.error(ex); }
+  };
+
+  ws.onclose = () => {
+    $('wsDot').className = 'ws-dot error';
+    $('wsLabel').textContent = `RECONNECTING (${(_retryDelay/1000).toFixed(0)}s)…`;
+    setTimeout(connect, _retryDelay);
+    _retryDelay = Math.min(_retryDelay * 2, 20000);
+  };
+
+  ws.onerror = () => {
+    $('wsDot').className = 'ws-dot error';
+  };
+}
+
+connect();
+
+</script>
+</body>
+</html>

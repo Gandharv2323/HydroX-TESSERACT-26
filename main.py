@@ -21,12 +21,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
+# Suppress uvicorn's "Invalid HTTP request received" — caused by browser
+# HTTP/2 probes / partial WebSocket upgrades; these are harmless.
+import logging as _logging
+
+class _InvalidHTTPFilter(_logging.Filter):
+    def filter(self, record: _logging.LogRecord) -> bool:
+        return "Invalid HTTP request received" not in record.getMessage()
+
+_logging.getLogger("uvicorn.error").addFilter(_InvalidHTTPFilter())
+_logging.getLogger("uvicorn.access").addFilter(_InvalidHTTPFilter())
+
 from dataset_loader import PumpDatasetLoader
 from health_engine import HealthEngine
 from ml_model import PumpAnomalyDetector
 from model_bundle import extract_bundle
 from sensor_sim import SensorSimulator
 from pipeline.inference_engine import InferenceEngine
+from evaluation.pipeline import time_aware_split_indices
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -57,20 +69,105 @@ _adv_engine      = InferenceEngine(models_dir=_BASE_DIR / "models")
 _current_state: dict[str, Any] = {}
 _clients:       set[WebSocket]  = set()
 _step_counter:  int             = 0
-_history:       deque[dict]     = deque(maxlen=60)   # UPGRADE 7
+_history:       deque[dict]     = deque(maxlen=60)
 
 # Replay
 _replay_frames: list[dict] = []
 _replay_index:  int        = 0
+
+# Data-source mode: "sim" (live simulator) or "test" (held-out test split)
+_data_source_mode: str = "sim"
+
+
+class TestDatasetPlayer:
+    """
+    Replays the held-out test split (last 15% of synthetic data) frame-by-frame,
+    extracting raw sensor readings so they flow through the full ML pipeline
+    (IF → RF → LSTM) exactly like live simulator data.
+    Loop back to the start when exhausted.
+    """
+
+    SENSOR_KEYS = [
+        "vibration_rms", "vibration_peak", "discharge_pressure",
+        "suction_pressure", "flow_rate", "motor_current", "fluid_temp",
+    ]
+
+    def __init__(self) -> None:
+        self._frames: list[dict] = []
+        self._labels: list[int]  = []
+        self._rul:    list[float] = []
+        self._idx:    int         = 0
+        self._loaded: bool        = False
+        self._total:  int         = 0
+
+    def load(self) -> int:
+        """Generate synthetic data and extract the test split windows."""
+        import numpy as np
+        from training.generate_data import generate
+        from pipeline.buffer import SENSORS as _BUF_SENSORS
+
+        try:
+            X_wins, y_cls, y_rul, X_feats, t_idx = generate(
+                n_per_class=300, shuffle=False, return_time_index=True
+            )
+        except TypeError:
+            # Older generate() without return_time_index
+            X_wins, y_cls, y_rul, X_feats = generate(n_per_class=300, shuffle=False)
+
+        n = len(X_wins)
+        _, _, test_idx = time_aware_split_indices(n)
+
+        LABEL_MAP = {0: "normal", 1: "bearing_fault", 2: "cavitation",
+                     3: "dry_run", 4: "misalignment"}
+
+        # X_wins shape: (N, WINDOW_SIZE, 7)  — last row of each window = latest reading
+        for i in test_idx:
+            row = X_wins[i, -1, :].tolist()           # latest timestep
+            sensor_dict = dict(zip(_BUF_SENSORS, row))
+            sensor_dict["shaft_rpm"]      = float(sensor_dict.get("shaft_rpm", 1440.0))
+            sensor_dict["vibration_peak"] = float(sensor_dict.get("vibration_peak",
+                                                    sensor_dict.get("vibration_rms", 2.1) * 2.3))
+            self._frames.append(sensor_dict)
+            self._labels.append(int(y_cls[i]))
+            self._rul.append(float(y_rul[i]))
+
+        self._total  = len(self._frames)
+        self._loaded = True
+        self._idx    = 0
+        return self._total
+
+    def next_sensors(self) -> tuple[dict, int, float]:
+        """Return (sensor_dict, true_label_id, true_rul)."""
+        if not self._loaded or self._total == 0:
+            raise RuntimeError("TestDatasetPlayer not loaded — call load() first")
+        sensors = dict(self._frames[self._idx])
+        label   = self._labels[self._idx]
+        rul     = self._rul[self._idx]
+        self._idx = (self._idx + 1) % self._total
+        return sensors, label, rul
+
+    @property
+    def progress(self) -> dict:
+        return {
+            "current": self._idx,
+            "total":   self._total,
+            "pct":     round(100.0 * self._idx / max(1, self._total), 1),
+        }
+
+
+_test_player = TestDatasetPlayer()
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _build_state() -> dict:
+def _build_state(test_override: dict | None = None) -> dict:
     global _step_counter
-    sensors  = simulator.get_reading(step=_step_counter)
+    if test_override is not None:
+        sensors = test_override
+    else:
+        sensors = simulator.get_reading(step=_step_counter)
     _step_counter += 1
     anomaly  = detector.predict(sensors)
     health   = engine.compute(sensors, anomaly)
@@ -89,16 +186,18 @@ def _build_state() -> dict:
         "within_tolerance": dev["within_tolerance"],
     }
 
+    mode_val = simulator.mode if test_override is None else "test_dataset"
     return {
-        "timestamp":       time.time(),
-        "mode":            simulator.mode,
-        "step":            _step_counter,
-        "throttle_factor": simulator.throttle_factor,
-        "sensors":         sensors,
-        "anomaly":         anomaly,
-        "health":          health,
-        "pump_curve":      pump_curve,
-        "advanced_ml":     adv,
+        "timestamp":        time.time(),
+        "mode":             mode_val,
+        "data_source":      _data_source_mode,
+        "step":             _step_counter,
+        "throttle_factor":  simulator.throttle_factor,
+        "sensors":          sensors,
+        "anomaly":          anomaly,
+        "health":           health,
+        "pump_curve":       pump_curve,
+        "advanced_ml":      adv,
     }
 
 
@@ -116,14 +215,26 @@ def _next_replay_frame() -> dict:
 
 async def _broadcast_loop() -> None:
     while True:
-        interval = 1.0 / BROADCAST_HZ  # re-read each tick so PATCH /config takes effect
+        interval = 1.0 / BROADCAST_HZ
         try:
-            if REPLAY_MODE and _replay_frames:
+            if _data_source_mode == "test" and _test_player._loaded:
+                sensors, true_label, true_rul = _test_player.next_sensors()
+                state = _build_state(test_override=sensors)
+                # Annotate with ground-truth for comparison in dashboard
+                state["ground_truth"] = {
+                    "fault_class_id": true_label,
+                    "fault_label":    ["normal", "bearing_fault", "cavitation",
+                                       "dry_run", "misalignment"][true_label],
+                    "rul_hours":      round(true_rul, 1),
+                    "progress":       _test_player.progress,
+                }
+            elif REPLAY_MODE and _replay_frames:
                 state = _next_replay_frame()
             else:
                 state = _build_state()
+
             _current_state.update(state)
-            _history.append(dict(state))   # UPGRADE 7
+            _history.append(dict(state))
 
             dead: list[WebSocket] = []
             for ws in list(_clients):
@@ -211,6 +322,13 @@ async def lifespan(app: FastAPI):
         else:
             print("[startup] REPLAY_MODE=1 but replay.json not found; run replay_gen.py first.")
 
+    # ------ Test dataset player preload (lazy, fast) -------------------------
+    try:
+        n_test = _test_player.load()
+        print(f"[startup] Test dataset player ready: {n_test} test frames.")
+    except Exception as exc:
+        print(f"[startup] Test dataset player unavailable: {exc}")
+
     task = asyncio.create_task(_broadcast_loop())
 
     print("=" * 55)
@@ -275,11 +393,19 @@ async def root() -> HTMLResponse:
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
+@app.get("/dataflow", response_class=HTMLResponse, summary="Real-time telemetry pipeline visualization")
+async def dataflow_page() -> HTMLResponse:
+    html_path = _BASE_DIR / "dataflow.html"
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
 @app.get("/ping", summary="Liveness probe")
 async def ping() -> dict:
     return {
         "status":            "ok",
         "mode":              simulator.mode,
+        "data_source":       _data_source_mode,
+        "test_progress":     _test_player.progress if _test_player._loaded else None,
         "clients_connected": len(_clients),
     }
 
@@ -311,6 +437,35 @@ async def reset() -> dict:
     simulator.reset()
     _step_counter = 0
     return {"success": True, "mode": "normal"}
+
+
+class DataSourceRequest(BaseModel):
+    source: str  # "sim" | "test"
+
+
+@app.post("/data-source", summary="Switch between live simulator and test dataset replay")
+async def set_data_source(body: DataSourceRequest) -> dict:
+    global _data_source_mode, _step_counter
+    if body.source not in {"sim", "test"}:
+        return {"success": False, "error": "source must be 'sim' or 'test'"}
+    _data_source_mode = body.source
+    if body.source == "test":
+        # Reset test player to start of test split
+        _test_player._idx = 0
+        if not _test_player._loaded:
+            try:
+                n = _test_player.load()
+                return {"success": True, "source": "test",
+                        "test_frames": n, "message": "Test dataset loaded and ready"}
+            except Exception as exc:
+                _data_source_mode = "sim"
+                return {"success": False, "error": str(exc)}
+        return {"success": True, "source": "test",
+                "test_frames": _test_player._total,
+                "message": f"Replaying {_test_player._total} test frames"}
+    else:
+        _step_counter = 0
+        return {"success": True, "source": "sim", "message": "Switched to live simulator"}
 
 
 @app.patch("/config", summary="Update runtime config (Hz, noise_pct)")

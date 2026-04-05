@@ -1,0 +1,133 @@
+{
+  "csv_path": "C:\\Users\\sidde\\OneDrive\\Desktop\\FSD\\hackthon3\\pump_twin\\pump-sensor-data.csv",
+  "n_features": 51,
+  "feature_names": [
+    "sensor_00",
+    "sensor_01",
+    "sensor_02",
+    "sensor_03",
+    "sensor_04",
+    "sensor_05",
+    "sensor_06",
+    "sensor_07",
+    "sensor_08",
+    "sensor_09",
+    "sensor_10",
+    "sensor_11",
+    "sensor_12",
+    "sensor_13",
+    "sensor_14",
+    "sensor_16",
+    "sensor_17",
+    "sensor_18",
+    "sensor_19",
+    "sensor_20",
+    "sensor_21",
+    "sensor_22",
+    "sensor_23",
+    "sensor_24",
+    "sensor_25",
+    "sensor_26",
+    "sensor_27",
+    "sensor_28",
+    "sensor_29",
+    "sensor_30",
+    "sensor_31",
+    "sensor_32",
+    "sensor_33",
+    "sensor_34",
+    "sensor_35",
+    "sensor_36",
+    "sensor_37",
+    "sensor_38",
+    "sensor_39",
+    "sensor_40",
+    "sensor_41",
+    "sensor_42",
+    "sensor_43",
+    "sensor_44",
+    "sensor_45",
+    "sensor_46",
+    "sensor_47",
+    "sensor_48",
+    "sensor_49",
+    "sensor_50",
+    "sensor_51"
+  ],
+  "label_map": {
+    "NORMAL": 0,
+    "RECOVERING": 1,
+    "BROKEN": 2
+  },
+  "split": {
+    "total": 220320,
+    "train": 154222,
+    "val": 33048,
+    "test": 33050,
+    "balanced": false
+  },
+  "isolation_forest": {
+    "val_auc_roc": 0.9996,
+    "contamination": 0.0657,
+    "n_train_normal": 144085,
+    "n_val": 33048,
+    "val_anomaly_rate": 0.0658
+  },
+  "random_forest": {
+    "val": {
+      "macro_f1": 0.6666,
+      "accuracy": 1.0,
+      "n_samples": 33048,
+      "class_dist": {
+        "NORMAL": 30875,
+        "RECOVERING": 2172,
+        "BROKEN": 1
+      },
+      "confusion_matrix": [
+        [
+          30875,
+          0,
+          0
+        ],
+        [
+          0,
+          2172,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    "test": {
+      "macro_f1": 0.6505,
+      "accuracy": 0.9942,
+      "n_samples": 33050,
+      "class_dist": {
+        "NORMAL": 30876,
+        "RECOVERING": 2172,
+        "BROKEN": 2
+      },
+      "confusion_matrix": [
+        [
+          30876,
+          0,
+          0
+        ],
+        [
+          189,
+          1983,
+          0
+        ],
+        [
+          2,
+          0,
+          0
+        ]
+      ]
+    },
+    "note": "Test split is temporally last 15% \u2014 may contain fewer anomaly classes"
+  }
+}

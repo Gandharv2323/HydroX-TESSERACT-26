@@ -1,3 +1,19 @@
 __pycache__/
+**/__pycache__/
 .venv/
+
+# Raw sensor data (large / proprietary)
 pump-sensor-data.csv
+pump-sensor-data-small.csv
+
+# Numpy test-split arrays (regeneratable from CSV)
+models/real/*.npy
+
+# Scratch / temp scripts
+print_results.py
+
+# IDE / OS
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db

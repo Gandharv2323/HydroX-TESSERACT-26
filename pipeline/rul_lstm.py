@@ -387,10 +387,13 @@ class RULPredictor:
 
         # Linear bias correction on calibration set (monotonic affine map).
         if len(preds_conf_real) >= 2:
-            slope, intercept = np.polyfit(preds_conf_real, y_conf_real, deg=1)
-            if np.isfinite(slope) and np.isfinite(intercept):
-                self._cal_slope = float(slope)
-                self._cal_intercept = float(intercept)
+            try:
+                slope, intercept = np.polyfit(preds_conf_real, y_conf_real, deg=1)
+                if np.isfinite(slope) and np.isfinite(intercept):
+                    self._cal_slope = float(slope)
+                    self._cal_intercept = float(intercept)
+            except (np.linalg.LinAlgError, ValueError):
+                pass  # keep default slope=1, intercept=0
         preds_conf_cal = np.clip(self._cal_slope * preds_conf_real + self._cal_intercept, 0.0, None)
 
         residuals_conf  = np.abs(y_conf_real - preds_conf_cal)
@@ -564,10 +567,13 @@ class RULPredictor:
 
         # Global affine correction.
         if len(pred_real) >= 2:
-            slope, intercept = np.polyfit(pred_real, y_cal, deg=1)
-            if np.isfinite(slope) and np.isfinite(intercept):
-                self._cal_slope = float(slope)
-                self._cal_intercept = float(intercept)
+            try:
+                slope, intercept = np.polyfit(pred_real, y_cal, deg=1)
+                if np.isfinite(slope) and np.isfinite(intercept):
+                    self._cal_slope = float(slope)
+                    self._cal_intercept = float(intercept)
+            except (np.linalg.LinAlgError, ValueError):
+                pass  # keep existing calibration
 
         pred_aff = np.clip(self._cal_slope * pred_real + self._cal_intercept, 0.0, None)
         residuals = np.abs(y_cal - pred_aff)

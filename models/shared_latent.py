@@ -253,7 +253,7 @@ else:
         @classmethod
         def load(cls, path: Path | str, device: Optional[str] = None) -> "SharedLatentRuntime":
             p = Path(path)
-            payload = torch.load(p, map_location=device or ("cuda" if torch.cuda.is_available() else "cpu"))
+            payload = torch.load(p, map_location=device or ("cuda" if torch.cuda.is_available() else "cpu"), weights_only=False)
             obj = cls(
                 in_channels=int(payload.get("in_channels", 7)),
                 hidden_dim=int(payload.get("hidden_dim", 128)),

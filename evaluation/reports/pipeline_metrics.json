@@ -72,13 +72,13 @@
   },
   "lstm_holdout": {},
   "calibration": {
-    "if_threshold": 0.913708444123149,
+    "if_threshold": 0.8346358716936607,
     "method": "quantile_normal"
   },
   "shared_latent": {
     "class_acc": 1.0,
-    "rul_mae_rel": 0.1413,
-    "anomaly_mae": 0.0003
+    "rul_mae_rel": 0.1405,
+    "anomaly_mae": 0.0002
   },
   "fusion_meta": {
     "roc_auc": 1.0,
@@ -86,14 +86,14 @@
     "n_samples": 225,
     "n_features": 12,
     "pca_dim": 8,
-    "pca_explained_var": 0.9988,
+    "pca_explained_var": 0.9989,
     "contributions_l1": {
-      "if": 0.1573,
-      "rf": 0.2466,
-      "hysteresis": 0.0301,
-      "latent": 0.3717,
-      "rul": 0.1943
+      "if": 0.166,
+      "rf": 0.2308,
+      "hysteresis": 0.0333,
+      "latent": 0.3993,
+      "rul": 0.1706
     },
-    "dominant_share": 0.3717
+    "dominant_share": 0.3993
   }
 }
